@@ -1,9 +1,13 @@
 <script setup>
-import TheWelcome from '../components/TheWelcome.vue'
+import Header from '../components/user/Header.vue'
+import SlideShow from '../components/user/SlideShow.vue'
+import Main from '../components/user/Main.vue'
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <Header />
+    <SlideShow />
+    <Main />
   </main>
 </template>
