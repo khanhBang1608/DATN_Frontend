@@ -7,8 +7,8 @@
         </button>
       </div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-primary">
+        <table class="table table-hover align-middle custom-table">
+          <thead >
             <tr>
               <th>Mã</th>
               <th>Giảm (%)</th>

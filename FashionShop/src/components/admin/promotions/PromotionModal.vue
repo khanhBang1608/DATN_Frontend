@@ -1,5 +1,4 @@
 <template>
-
   <!-- Modal Thêm Khuyến mãi -->
   <div class="modal fade" id="promotionModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
