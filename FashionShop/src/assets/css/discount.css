@@ -1,27 +1,47 @@
+.card {
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border: none;
+  color: #fff !important;
+  background: transparent !important;
+}
+.table th,
+.table td {
+  vertical-align: middle;
+}
+.btn {
+  border-radius: 12px;
+}
+.modal-content {
+  border-radius: 16px;
+}
+.modal-header {
+  background: linear-gradient(to right, #0d6efd, #6f42c1);
+  color: white;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
 
-    .card {
-      border-radius: 20px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-      border: none;
-    }
-    .table th, .table td {
-      vertical-align: middle;
-    }
-    .btn {
-      border-radius: 12px;
-    }
-    .modal-content {
-      border-radius: 16px;
-    }
-    .modal-header {
-      background: linear-gradient(to right, #0d6efd, #6f42c1);
-      color: white;
-      border-top-left-radius: 16px;
-      border-top-right-radius: 16px;
-    }
-    .btn-icon {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-    }
+.custom-table {
+  --bs-table-color: #fff !important;
+  --bs-table-bg: transparent !important;
+  --bs-table-hover-color: #ffffff63 !important;
+  --bs-table-border-color: #ccc;
+  width: 100%;
+  margin-bottom: 1rem;
+  vertical-align: top;
+}
 
+.custom-table thead {
+  background-color: #313348 !important;
+  color: #fff;
+}
+
+.custom-table tbody, td, tfoot, th, thead, tr{
+  border-style: none !important;
+}

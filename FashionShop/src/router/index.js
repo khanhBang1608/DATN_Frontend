@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import Dashboard from '@/views/DashboardView.vue'
 import Promotion from '@/views/PromotionView.vue'
 import Discount from '@/views/DiscountView.vue'
+import AdminLayout from '@/layouts/AdminLayout.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,19 +22,25 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue'),
     },
     {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: Dashboard,
-    },
-    {
-      path: '/discount',
-      name: 'discount',
-      component: Discount,
-    },
-    {
-      path: '/promotion',
-      name: 'promotion',
-      component: Promotion,
+      path: '/',
+      component: AdminLayout,
+      children: [
+        {
+          path: 'dashboard',
+          name: 'Dashboard',
+          component: Dashboard,
+        },
+        {
+          path: 'discount',
+          name: 'Discount',
+          component: Discount,
+        },
+        {
+          path: 'promotion',
+          name: 'Promotion',
+          component: Promotion,
+        },
+      ],
     },
   ],
 })

@@ -6,8 +6,8 @@
           <i class="bi bi-plus-circle"></i> Thêm khuyến mãi
         </button>
       </div>
-      <table class="table table-hover align-middle">
-        <thead class="table-success">
+      <table class="table table-hover align-middle custom-table">
+        <thead>
           <tr>
             <th>Tên chương trình</th>
             <th>Giảm (%)</th>
