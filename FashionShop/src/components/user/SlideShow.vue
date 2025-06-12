@@ -1,33 +1,3 @@
-<script setup>
-import { onMounted, nextTick } from "vue";
-import initSlideshow from "@/assets/js/slideshow.js";
-const slides = [
-  {
-    img: "https://picsum.photos/id/1025/1920/1080",
-    title: "Galaxy S24 Ultra",
-    description:
-      "Trải nghiệm đột phá với AI. Sáng tạo, mạnh mẽ và hiệu quả hơn bao giờ hết.",
-    button: "Tìm hiểu ngay",
-  },
-  {
-    img: "https://picsum.photos/id/1026/1920/1080",
-    title: "Neo QLED 8K",
-    description: "Mở ra kỷ nguyên TV siêu thực, với độ chi tiết vượt thời gian.",
-    button: "Khám phá",
-  },
-  {
-    img: "https://picsum.photos/id/1027/1920/1080",
-    title: "Galaxy Watch6",
-    description: "Giấc ngủ trọn vẹn, sức khỏe toàn diện trong tầm tay bạn.",
-    button: "Đặt mua ngay",
-  },
-];
-onMounted(() => {
-  nextTick(() => {
-    initSlideshow();
-  });
-});
-</script>
 <template>
   <div class="slider swiper">
     <div class="swiper-wrapper">
@@ -50,4 +20,10 @@ onMounted(() => {
     <div class="swiper-pagination slider-pagination"></div>
   </div>
 </template>
+
+<script setup>
+import useSlideshow from "@/assets/js/slideshow.js";
+const { slides } = useSlideshow();
+</script>
+
 <style src="./src/assets/css/slideshow.css"></style>
