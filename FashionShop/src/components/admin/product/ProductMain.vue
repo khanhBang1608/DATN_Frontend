@@ -31,8 +31,8 @@
               <td><span class="badge bg-success badge-status">Đang bán</span></td>
               <td>2025-06-22</td>
               <td class="text-center">
-                <button class="btn btn-sm btn-warning">✏️ Sửa</button>
-                <button class="btn btn-sm btn-danger">🗑️ Xóa</button>
+                <button class="btn btn-sm btn-warning  m-1">✏️ Sửa</button>
+                <button class="btn btn-sm btn-danger m-1">🗑️ Xóa</button>
               </td>
             </tr>
             <!-- Dòng khác nếu cần -->

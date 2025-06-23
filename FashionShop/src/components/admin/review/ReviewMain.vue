@@ -47,9 +47,9 @@
               <td>2025-06-22</td>
               <td><span class="badge bg-warning text-dark">Chờ duyệt</span></td>
               <td class="text-center">
-                <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#reviewModal">👁️</button>
-                <button class="btn btn-sm btn-success">✅ Duyệt</button>
-                <button class="btn btn-sm btn-danger">🗑️</button>
+                <button class="btn btn-sm btn-info text-white m-1" data-bs-toggle="modal" data-bs-target="#reviewModal">👁️</button>
+                <button class="btn btn-sm btn-success m-1" >✅ Duyệt</button>
+                <button class="btn btn-sm btn-danger m-1">🗑️</button>
               </td>
             </tr>
             <tr>
@@ -60,9 +60,9 @@
               <td>2025-06-21</td>
               <td><span class="badge bg-success">Đã duyệt</span></td>
               <td class="text-center">
-                <button class="btn btn-sm btn-info text-white" data-bs-toggle="modal" data-bs-target="#reviewModal">👁️</button>
-                <button class="btn btn-sm btn-secondary">❌ Bỏ duyệt</button>
-                <button class="btn btn-sm btn-danger">🗑️</button>
+                <button class="btn btn-sm btn-info text-white  m-1" data-bs-toggle="modal" data-bs-target="#reviewModal">👁️</button>
+                <button class="btn btn-sm btn-secondary  m-1">❌ Bỏ duyệt</button>
+                <button class="btn btn-sm btn-danger  m-1">🗑️</button>
               </td>
             </tr>
           </tbody>

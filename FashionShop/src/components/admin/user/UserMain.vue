@@ -29,8 +29,8 @@
               <td><span class="badge bg-success badge-status">Hoạt động</span></td>
               <td>2025-06-01</td>
               <td class="text-center">
-                <button class="btn btn-sm btn-warning">✏️ Sửa</button>
-                <button class="btn btn-sm btn-danger">🗑️ Xóa</button>
+                <button class="btn btn-sm btn-warning  m-1">✏️ Sửa</button>
+                <button class="btn btn-sm btn-danger  m-1">🗑️ Xóa</button>
               </td>
             </tr>
             <!-- Thêm dòng khác nếu cần -->

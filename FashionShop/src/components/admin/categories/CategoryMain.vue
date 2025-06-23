@@ -25,8 +25,8 @@
               <td>Danh mục cha</td>
               <td><span class="badge bg-success badge-status">Hiển thị</span></td>
               <td class="text-center">
-                <button class="btn btn-sm btn-warning">✏️ Sửa</button>
-                <button class="btn btn-sm btn-danger">🗑️ Xóa</button>
+                <button class="btn btn-sm btn-warning  m-1">✏️ Sửa</button>
+                <button class="btn btn-sm btn-danger  m-1">🗑️ Xóa</button>
               </td>
             </tr>
             <tr>
@@ -35,8 +35,8 @@
               <td>Danh mục con (Giày)</td>
               <td><span class="badge bg-success badge-status">Hiển thị</span></td>
               <td class="text-center">
-                <button class="btn btn-sm btn-warning">✏️ Sửa</button>
-                <button class="btn btn-sm btn-danger">🗑️ Xóa</button>
+                <button class="btn btn-sm btn-warning  m-1">✏️ Sửa</button>
+                <button class="btn btn-sm btn-danger  m-1">🗑️ Xóa</button>
               </td>
             </tr>
           </tbody>
