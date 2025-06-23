@@ -3,7 +3,6 @@
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
         <h2 class="mb-3 mb-md-0">⭐ Quản lý Đánh giá sản phẩm</h2>
         <div class="d-flex flex-wrap gap-2">
-          <input type="text" class="form-control" placeholder="Tên sản phẩm">
           <select class="form-select">
             <option value="">Tất cả sao</option>
             <option value="5">5 sao</option>
@@ -12,8 +11,6 @@
             <option value="2">2 sao</option>
             <option value="1">1 sao</option>
           </select>
-          <input type="date" class="form-control">
-          <input type="date" class="form-control">
           <select class="form-select">
             <option value="">Tất cả trạng thái</option>
             <option value="1">Đã duyệt</option>
