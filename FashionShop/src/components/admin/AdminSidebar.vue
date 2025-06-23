@@ -19,18 +19,18 @@
         <i class="fa fa-home fa-fw" aria-hidden="true"></i
         ><router-link to="/dashboard">Thống kê</router-link>
       </li>
-      <li><i class="fa fa-support fa-fw"></i><a href="#">Quản lí đơn</a></li>
+      <li><i class="fa fa-support fa-fw"></i><router-link to="/order">Quản lí đơn</router-link></li>
       <li>
         <i class="fa fa-users fa-fw"></i><a href="#" class="user-li">Người dùng</a>
         <ul class="side-nav-dropdown">
-          <li><a href="#">Danh sách người dùng</a></li>
+          <li><router-link to="/user">Danh sách người dùng</router-link></li>
           <li><a href="#">Quản lí quyền</a></li>
         </ul>
       </li>
-      <li><i class="fa fa-bolt fa-fw"></i><a href="#">Sản Phẩm</a></li>
-      <li><i class="fa fa-list-ul fa-fw" aria-hidden="true"></i><a href="#">Danh mục</a></li>
+      <li><i class="fa fa-bolt fa-fw"></i><router-link to="/product">Product</router-link></li>
+      <li><i class="fa fa-list-ul fa-fw" aria-hidden="true"></i><router-link to="/category">Danh mục</router-link></li>
 
-      <li><i class="fa fa-star-o fa-fw" aria-hidden="true"></i><a href="#">Đánh giá</a></li>
+      <li><i class="fa fa-star-o fa-fw" aria-hidden="true"></i><router-link to="/review">Đánh giá</router-link></li>
       <li>
         <i class="fa fa-money fa-fw" aria-hidden="true"></i
         ><router-link to="/promotion">Khuyến mãi</router-link>
