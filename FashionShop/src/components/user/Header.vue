@@ -239,6 +239,7 @@ onMounted(() => {
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav mx-auto fw-bold text-dark d-none d-lg-flex">
             <li class="nav-item"><a class="nav-link" href="/">Trang Chủ</a></li>
+            <li class="nav-item"><a class="nav-link" href="/product">Sản Phẩm</a></li>
             <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
@@ -259,7 +260,7 @@ onMounted(() => {
                 <li><a class="dropdown-item" href="#">Sơ Mi</a></li>
               </ul>
             </li>
-                        <li class="nav-item dropdown">
+            <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
                 href="#"
@@ -279,8 +280,6 @@ onMounted(() => {
                 <li><a class="dropdown-item" href="#">Sơ Mi</a></li>
               </ul>
             </li>
-            <li class="nav-item"><a class="nav-link" href="/product">Liên Hệ</a></li>
-            <li class="nav-item"><a class="nav-link" href="/product">Yêu Thích</a></li>
           </ul>
 
           <div class="d-none d-lg-flex align-items-center">
@@ -344,7 +343,7 @@ onMounted(() => {
             </a>
 
             <div class="search-box d-flex align-items-center ms-3">
-             <i class="bi bi-search me-2"></i>
+              <i class="bi bi-search me-2"></i>
               <input type="text" class="form-control" placeholder="Tìm kiếm" />
             </div>
           </div>

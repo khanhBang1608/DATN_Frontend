@@ -1,5 +1,5 @@
 <template>
-  <footer class="footer bg-white text-dark pt-5 border-top">
+  <footer class="footer bg-light text-dark pt-5 border-top">
     <div class="container footer-container">
       <div class="row g-4">
         <!-- Mobile layout -->
@@ -53,7 +53,7 @@
 
           <div class="accordion mt-3" id="footerAccordionMobile">
             <!-- Cột 1 -->
-            <div class="accordion-item">
+            <div class="footer-accordion-item">
               <h2 class="accordion-header" id="heading1">
                 <button
                   class="accordion-button collapsed accordion-button-custom"
@@ -74,20 +74,20 @@
               >
                 <div class="accordion-body">
                   <ul class="list-unstyled small ps-3">
-                    <li><a href="#">Kiểm tra trạng thái đơn hàng</a></li>
-                    <li><a href="#">Câu hỏi thường gặp</a></li>
-                    <li><a href="#">Liên hệ</a></li>
-                    <li><a href="#">CẢNH GIÁC LỪA ĐẢO</a></li>
-                    <li><a href="#">Ưu đãi thành viên</a></li>
-                    <li><a href="#">Chính sách Giao Hàng</a></li>
-                    <li><a href="#">Chính sách Bảo hành & Đổi trả</a></li>
-                    <li><a href="#">Bảng quy đổi kích thước</a></li>
+                    <li><a href="#" class="footer-link">Kiểm tra trạng thái đơn hàng</a></li>
+                    <li><a href="#" class="footer-link">Câu hỏi thường gặp</a></li>
+                    <li><a href="#" class="footer-link">Liên hệ</a></li>
+                    <li><a href="#" class="footer-link">CẢNH GIÁC LỪA ĐẢO</a></li>
+                    <li><a href="#" class="footer-link">Ưu đãi thành viên</a></li>
+                    <li><a href="#" class="footer-link">Chính sách Giao Hàng</a></li>
+                    <li><a href="#" class="footer-link">Chính sách Bảo hành & Đổi trả</a></li>
+                    <li><a href="#" class="footer-link">Bảng quy đổi kích thước</a></li>
                   </ul>
                 </div>
               </div>
             </div>
 
-            <div class="accordion-item">
+            <div class="footer-accordion-item">
               <h2 class="accordion-header" id="heading2">
                 <button
                   class="accordion-button collapsed accordion-button-custom"
@@ -108,15 +108,15 @@
               >
                 <div class="accordion-body">
                   <ul class="list-unstyled small ps-3">
-                    <li><a href="#">Về thương hiệu</a></li>
-                    <li><a href="#">Phát triển bền vững</a></li>
-                    <li><a href="#">Nhượng quyền thương mại</a></li>
+                    <li><a href="#" class="footer-link">Về thương hiệu</a></li>
+                    <li><a href="#" class="footer-link">Phát triển bền vững</a></li>
+                    <li><a href="#" class="footer-link">Nhượng quyền thương mại</a></li>
                   </ul>
                 </div>
               </div>
             </div>
 
-            <div class="accordion-item">
+            <div class="footer-accordion-item">
               <h2 class="accordion-header" id="heading3">
                 <button
                   class="accordion-button collapsed accordion-button-custom"
@@ -137,15 +137,15 @@
               >
                 <div class="accordion-body">
                   <ul class="list-unstyled small ps-3">
-                    <li><a href="#">Định vị cửa hàng</a></li>
-                    <li><a href="#">Hướng dẫn thời trang</a></li>
-                    <li><a href="#">Khuyến mãi</a></li>
+                    <li><a href="#" class="footer-link">Định vị cửa hàng</a></li>
+                    <li><a href="#" class="footer-link">Hướng dẫn thời trang</a></li>
+                    <li><a href="#" class="footer-link">Khuyến mãi</a></li>
                   </ul>
                 </div>
               </div>
             </div>
 
-            <div class="accordion-item">
+            <div class="footer-accordion-item">
               <h2 class="accordion-header" id="heading4">
                 <button
                   class="accordion-button collapsed accordion-button-custom"
@@ -166,9 +166,9 @@
               >
                 <div class="accordion-body">
                   <ul class="list-unstyled small ps-3">
-                    <li><a href="#">Điều khoản sử dụng</a></li>
-                    <li><a href="#">Chính sách bảo mật</a></li>
-                    <li><a href="#">Chính sách Cookies</a></li>
+                    <li><a href="#" class="footer-link">Điều khoản sử dụng</a></li>
+                    <li><a href="#" class="footer-link">Chính sách bảo mật</a></li>
+                    <li><a href="#" class="footer-link">Chính sách Cookies</a></li>
                   </ul>
                 </div>
               </div>

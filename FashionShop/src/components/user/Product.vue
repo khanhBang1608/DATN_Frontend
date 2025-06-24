@@ -1,0 +1,515 @@
+<script setup>
+import { onMounted, nextTick } from "vue";
+import { setupFilterSidebar } from "@/assets/js/product";
+
+onMounted(async () => {
+  await nextTick(); // Chờ DOM render hoàn tất
+  setupFilterSidebar(); // Sau đó mới gọi hàm xử lý DOM
+});
+</script>
+
+<template>
+  <main>
+    <div class="mainProduct">
+      <div class="custom-breadcrumb-wrapper">
+        <nav class="custom-breadcrumb container">
+          <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
+          <span class="custom-breadcrumb-separator">/</span>
+          <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
+            >Giỏ hàng (1)</a
+          >
+        </nav>
+      </div>
+
+      <h4 class="text-center mt-4 fw-bold">TẤT CẢ SẢN PHẨM</h4>
+      <hr class="my-2 mt-2" style="height: 1px; background-color: #000; border: none" />
+    </div>
+
+    <div
+      class="container product-sticky-toolbar d-flex flex-responsive justify-content-between align-items-start mt-2"
+    >
+      <div class="filter-sidebar-wrapper mt-2">
+        <div class="filter-header" id="toggleSidebarBtn">
+          <i class="bi bi-sliders"></i>
+          <span class="filter-title">BỘ LỌC</span>
+        </div>
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileFilterSidebar">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title">BỘ LỌC</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+          </div>
+          <div class="offcanvas-body">
+            <div id="mobileFilterContent">
+              <div class="accordion product-accordion" id="filterAccordion">
+                <!-- Accordion Item: MÀU SẮC -->
+                <div class="product-accordion-item">
+                  <h2 class="accordion-header" id="headingColor">
+                    <button
+                      class="accordion-button accordion-btn collapsed"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseColor"
+                    >
+                      <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                      MÀU SẮC
+                    </button>
+                  </h2>
+                  <div
+                    id="collapseColor"
+                    class="accordion-collapse collapse"
+                    data-bs-parent="#filterAccordion"
+                  >
+                    <div class="accordion-body">
+                      <ul class="list-unstyled mb-2">
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: black"
+                          ></span>
+                          <span>Đen <span class="text-muted">(52)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: white; border: 1px solid #ccc"
+                          ></span>
+                          <span>Trắng <span class="text-muted">(33)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: #8b4513"
+                          ></span>
+                          <span>Nâu <span class="text-muted">(9)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: #f5f5f5"
+                          ></span>
+                          <span>Trắng Xám <span class="text-muted">(9)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: silver"
+                          ></span>
+                          <span>Bạc <span class="text-muted">(5)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: #6a5acd"
+                          ></span>
+                          <span>Xanh Dương <span class="text-muted">(4)</span></span>
+                        </li>
+                      </ul>
+                      <a href="#" class="text-decoration-underline small">Xem Thêm</a>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion Item: KÍCH THƯỚC -->
+                <div class="product-accordion-item">
+                  <h2 class="accordion-header" id="headingSize">
+                    <button
+                      class="accordion-button accordion-btn"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseSize"
+                      aria-expanded="true"
+                      aria-controls="collapseSize"
+                    >
+                      <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                      KÍCH THƯỚC
+                    </button>
+                  </h2>
+                  <div
+                    id="collapseSize"
+                    class="accordion-collapse collapse show"
+                    data-bs-parent="#filterAccordion"
+                  >
+                    <div class="accordion-body">
+                      <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <label class="form-check-label"
+                            >S <span class="text-muted">(58)</span></label
+                          >
+                        </li>
+                        <li class="mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <label class="form-check-label"
+                            >M <span class="text-muted">(51)</span></label
+                          >
+                        </li>
+                        <li class="mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <label class="form-check-label"
+                            >L <span class="text-muted">(16)</span></label
+                          >
+                        </li>
+                        <li class="mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <label class="form-check-label"
+                            >XL <span class="text-muted">(2)</span></label
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Accordion Item: GIÁ -->
+                <div class="product-accordion-item">
+                  <h2 class="accordion-header" id="headingPrice">
+                    <button
+                      class="accordion-button accordion-btn"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapsePrice"
+                      aria-expanded="true"
+                      aria-controls="collapsePrice"
+                    >
+                      <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                      GIÁ
+                    </button>
+                  </h2>
+                  <div
+                    id="collapsePrice"
+                    class="accordion-collapse collapse show"
+                    data-bs-parent="#filterAccordion"
+                  >
+                    <div class="accordion-body">
+                      <div class="range-slider mb-3">
+                        <input
+                          type="range"
+                          class="form-range price-range-slider"
+                          min="0"
+                          max="10000000"
+                          step="100000"
+                          id="priceMin"
+                        />
+                        <input
+                          type="range"
+                          class="form-range price-range-slider"
+                          min="0"
+                          max="10000000"
+                          step="100000"
+                          id="priceMax"
+                        />
+                      </div>
+
+                      <div class="d-flex justify-content-between">
+                        <div class="form-group me-2">
+                          <label class="form-label small">Từ</label>
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="priceFrom"
+                            value="1,690,000"
+                          />
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label small">Đến</label>
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="priceTo"
+                            value="4,190,000"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="product-sidebar" id="desktopFilterContent">
+          <div class="accordion" id="filterAccordion">
+            <!-- Accordion Item: MÀU SẮC -->
+            <div class="product-accordion-item">
+              <h2 class="accordion-header" id="headingColor">
+                <button
+                  class="accordion-button accordion-btn collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseColor"
+                >
+                  <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                  MÀU SẮC
+                </button>
+              </h2>
+              <div
+                id="collapseColor"
+                class="accordion-collapse collapse"
+                data-bs-parent="#filterAccordion"
+              >
+                <div class="accordion-body">
+                  <ul class="list-unstyled mb-2">
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span class="color-dot me-2" style="background-color: black"></span>
+                      <span>Đen <span class="text-muted">(52)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: white; border: 1px solid #ccc"
+                      ></span>
+                      <span>Trắng <span class="text-muted">(33)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: #8b4513"
+                      ></span>
+                      <span>Nâu <span class="text-muted">(9)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: #f5f5f5"
+                      ></span>
+                      <span>Trắng Xám <span class="text-muted">(9)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: silver"
+                      ></span>
+                      <span>Bạc <span class="text-muted">(5)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: #6a5acd"
+                      ></span>
+                      <span>Xanh Dương <span class="text-muted">(4)</span></span>
+                    </li>
+                  </ul>
+                  <a href="#" class="text-decoration-underline small">Xem Thêm</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Accordion Item: KÍCH THƯỚC -->
+            <div class="product-accordion-item">
+              <h2 class="accordion-header" id="headingSize">
+                <button
+                  class="accordion-button accordion-btn"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseSize"
+                  aria-expanded="true"
+                  aria-controls="collapseSize"
+                >
+                  <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                  KÍCH THƯỚC
+                </button>
+              </h2>
+              <div
+                id="collapseSize"
+                class="accordion-collapse collapse show"
+                data-bs-parent="#filterAccordion"
+              >
+                <div class="accordion-body">
+                  <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <label class="form-check-label"
+                        >S <span class="text-muted">(58)</span></label
+                      >
+                    </li>
+                    <li class="mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <label class="form-check-label"
+                        >M <span class="text-muted">(51)</span></label
+                      >
+                    </li>
+                    <li class="mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <label class="form-check-label"
+                        >L <span class="text-muted">(16)</span></label
+                      >
+                    </li>
+                    <li class="mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <label class="form-check-label"
+                        >XL <span class="text-muted">(2)</span></label
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Accordion Item: GIÁ -->
+            <div class="product-accordion-item">
+              <h2 class="accordion-header" id="headingPrice">
+                <button
+                  class="accordion-button accordion-btn"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapsePrice"
+                  aria-expanded="true"
+                  aria-controls="collapsePrice"
+                >
+                  <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                  GIÁ
+                </button>
+              </h2>
+              <div
+                id="collapsePrice"
+                class="accordion-collapse collapse show"
+                data-bs-parent="#filterAccordion"
+              >
+                <div class="accordion-body">
+                  <div class="range-slider mb-3">
+                    <input
+                      type="range"
+                      class="form-range"
+                      min="0"
+                      max="10000000"
+                      step="100000"
+                      id="priceMin"
+                    />
+                    <input
+                      type="range"
+                      class="form-range"
+                      min="0"
+                      max="10000000"
+                      step="100000"
+                      id="priceMax"
+                    />
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <div class="form-group me-2">
+                      <label class="form-label small">Từ</label>
+                      <input
+                        type="text"
+                        class="form-control price-input"
+                        id="priceFrom"
+                        value="1,690,000"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label small">Đến</label>
+                      <input
+                        type="text"
+                        class="form-control price-input"
+                        id="priceTo"
+                        value="4,190,000"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p
+        class="ps-5 product-count-text d-none d-md-block mt-2"
+        style="font-style: italic; color: #999; font-size: 14px"
+      >
+        Hiển thị 1 - 80 trong tổng số 127 sản phẩm
+      </p>
+
+      <div class="dropdown product-sort-dropdown">
+        <button
+          class="btn btn-light dropdown-toggle"
+          type="button"
+          data-bs-toggle="dropdown"
+        >
+          <i class="bi bi-sort-alpha-down ms-2"></i> Mới nhất
+        </button>
+        <ul class="dropdown-menu product-dropdown-menu">
+          <li><a class="dropdown-item" href="#">Giá: Tăng dần</a></li>
+          <li><a class="dropdown-item" href="#">Giá: Giảm dần</a></li>
+          <li><a class="dropdown-item" href="#">Tên: A-Z</a></li>
+          <li><a class="dropdown-item" href="#">Tên: Z-A</a></li>
+          <li><a class="dropdown-item" href="#">Cũ nhất</a></li>
+          <li><a class="dropdown-item" href="#">Mới nhất</a></li>
+          <!-- mục có sẵn background -->
+          <li><a class="dropdown-item" href="#">Bán chạy nhất</a></li>
+          <li><a class="dropdown-item" href="#">Tồn kho: Giảm dần</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container mt-5">
+      <div class="row g-3">
+        <!-- Sản phẩm 1 -->
+        <div class="col-6 col-sm-6 col-md-4 col-lg-3">
+          <a href="#" class="product-link">
+            <div class="product-item">
+              <span class="discount-badge">-25%</span>
+              <img
+                src="@/assets/img/slideshow_1.png"
+                class="img-fluid img-default"
+                alt="Quần Dài Wash Xám"
+              />
+              <img
+                src="@/assets/img/slideshow_1.png"
+                class="img-fluid img-hover"
+                alt="Quần Dài Wash Xám Hover"
+              />
+            </div>
+            <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
+            <div>
+              <span class="discounted-price">630,000₫</span>
+              <span class="original-price">840,000₫</span>
+            </div>
+          </a>
+        </div>
+        <div class="col-6 col-sm-6 col-md-4 col-lg-3">
+          <a href="#" class="product-link">
+            <div class="product-item">
+              <span class="discount-badge">-25%</span>
+              <img
+                src="@/assets/img/slideshow_1.png"
+                class="img-fluid img-default"
+                alt="Quần Dài Wash Xám"
+              />
+              <img
+                src="@/assets/img/slideshow_1.png"
+                class="img-fluid img-hover"
+                alt="Quần Dài Wash Xám Hover"
+              />
+            </div>
+            <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
+            <div>
+              <span class="discounted-price">630,000₫</span>
+              <span class="original-price">840,000₫</span>
+            </div>
+          </a>
+        </div>
+      </div>
+      <ul class="pagination mt-3">
+        <li class="pagination-item pagination-active">1</li>
+        <li class="pagination-item">2</li>
+        <li class="pagination-item">3</li>
+        <li class="pagination-item pagination-disabled">...</li>
+        <li class="pagination-item">15</li>
+        <li class="pagination-item pagination-arrow">&gt;</li>
+      </ul>
+    </div>
+  </main>
+</template>
+<style src="./src/assets/css/product.css"></style>

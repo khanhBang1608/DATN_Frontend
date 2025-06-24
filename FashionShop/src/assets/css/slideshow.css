@@ -1,24 +1,24 @@
 @import url('https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css');
 
 .slider {
-    width: 100%;
-    height: 100vh;
-    overflow: hidden;
+    width: 100% !important;
+    height: 100vh !important;
+    overflow: hidden !important;
     /* tránh tràn nội dung */
 }
 
 
-.slider-slide {
-    position: relative;
+.slider .slider-slide {
+    position: relative !important;
 }
 
 .slider-image {
-    width: 100%;
-    height: 100vh;
+    width: 100% !important;
+    height: 100vh !important;
     /* 100% chiều cao viewport */
-    object-fit: cover;
-    object-position: center;
-    display: block;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: block !important;
 }
 
 
@@ -73,75 +73,75 @@
 
 .slider-nav-next,
 .slider-nav-prev {
-    width: 42px;
-    height: 42px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    color: rgba(255, 255, 255, 0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+    width: 42px !important;
+    height: 42px !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    color: rgba(255, 255, 255, 0.4) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease !important;
 }
 
 .slider-nav-next::after,
 .slider-nav-prev::after {
-    font-size: 24px;
-    color: inherit;
-    transition: color 0.3s ease;
+    font-size: 24px !important;
+    color: inherit !important;
+    transition: color 0.3s ease !important;
 }
 
 .slider-nav-next:hover,
 .slider-nav-prev:hover {
-    background: black;
-    color: rgba(255, 255, 255, 1);
+    background: black !important;
+    color: rgba(255, 255, 255, 1) !important;
 }
 
 .slider-pagination-bullet {
     background: transparent !important;
-    width: auto;
-    height: auto;
-    opacity: 1;
+    width: auto !important;
+    height: auto !important;
+    opacity: 1 !important;
     margin: 0 6px !important;
-    position: relative;
+    position: relative !important;
 }
 
 .slider-pagination-bullet::before {
-    content: '—';
-    font-size: 18px;
-    color: rgba(255, 255, 255, 0.6);
+    content: '—' !important;
+    font-size: 18px !important;
+    color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .swiper-pagination-bullet-active::before {
-    color: #fff;
+    color: #fff !important;
 }
 
 @media (max-width: 768px) {
     .slider {
-        height: auto;
-        min-height: 70vh;
+        height: auto !important;
+        min-height: 70vh !important;
     }
 
     .slider-slide {
-        position: relative;
-         height: auto;
+        position: relative !important;
+        height: auto !important;
     }
 
     .slider-image {
-         height: 70vh;
-        object-fit: cover;
+        height: 70vh !important;
+        object-fit: cover !important;
     }
 
     .slider-nav-next,
     .slider-nav-prev {
-        display: none;
+        display: none !important;
     }
 }
 
 @media (max-width: 480px) {
     .slider-image {
-        height: 70vh;
+        height: 70vh !important;
     }
 
     .slider-title {
