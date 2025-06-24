@@ -29,7 +29,7 @@ onMounted(() => {
 
         <div class="d-none d-md-flex align-items-center">
           <a href="/about" class="text-dark text-decoration-none me-3">Giới thiệu</a>
-          <a href="/contact" class="text-dark text-decoration-none me-3">Liên hệ</a>
+          <a href="/contact-us" class="text-dark text-decoration-none me-3">Liên hệ</a>
           <a href="/contact" class="text-dark text-decoration-none me-3">Chính sách</a>
           <a to="/login" class="text-dark text-decoration-none me-3">Đăng nhập</a>
         </div>
@@ -72,7 +72,7 @@ onMounted(() => {
               >
             </li>
             <li>
-              <a class="dropdown-item" href="/user/order/history"
+              <a class="dropdown-item" href="/user/order-history"
                 ><i class="bi bi-box-seam me-2"></i> Đơn hàng</a
               >
             </li>
