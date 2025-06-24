@@ -12,7 +12,6 @@ export function setupFilterSidebar() {
     mobileSidebar.innerHTML = desktopSidebar.innerHTML;
   }
 
-  // Xử lý toggle
   if (toggleBtn) {
     toggleBtn.addEventListener("click", () => {
       const isMobile = window.innerWidth <= 768;
@@ -22,9 +21,17 @@ export function setupFilterSidebar() {
         offcanvasEl.show();
       } else if (desktopSidebar) {
         desktopSidebar.classList.toggle("show");
+
+        const contentWrapper = document.querySelector(".product-content-wrapper");
+        if (desktopSidebar.classList.contains("show")) {
+          contentWrapper?.classList.add("sidebar-pushed");
+        } else {
+          contentWrapper?.classList.remove("sidebar-pushed");
+        }
       }
     });
   }
+
 
   // Accordion mở/đóng
   document.querySelectorAll(".product-accordion-item").forEach((item) => {

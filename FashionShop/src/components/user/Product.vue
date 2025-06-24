@@ -16,7 +16,7 @@ onMounted(async () => {
           <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
           <span class="custom-breadcrumb-separator">/</span>
           <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
-            >Giỏ hàng (1)</a
+            >Sản phẩm</a
           >
         </nav>
       </div>
@@ -27,6 +27,7 @@ onMounted(async () => {
 
     <div
       class="container product-sticky-toolbar d-flex flex-responsive justify-content-between align-items-start mt-2"
+      :class="{ 'sidebar-open': isSidebarOpen }"
     >
       <div class="filter-sidebar-wrapper mt-2">
         <div class="filter-header" id="toggleSidebarBtn">
@@ -453,62 +454,64 @@ onMounted(async () => {
       </div>
     </div>
 
-    <div class="container mt-5">
-      <div class="row g-3">
-        <!-- Sản phẩm 1 -->
-        <div class="col-6 col-sm-6 col-md-4 col-lg-3">
-          <a href="#" class="product-link">
-            <div class="product-item">
-              <span class="discount-badge">-25%</span>
-              <img
-                src="@/assets/img/slideshow_1.png"
-                class="img-fluid img-default"
-                alt="Quần Dài Wash Xám"
-              />
-              <img
-                src="@/assets/img/slideshow_1.png"
-                class="img-fluid img-hover"
-                alt="Quần Dài Wash Xám Hover"
-              />
-            </div>
-            <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
-            <div>
-              <span class="discounted-price">630,000₫</span>
-              <span class="original-price">840,000₫</span>
-            </div>
-          </a>
+    <div class="product-content-wrapper">
+      <div class="container mt-5">
+        <div class="row g-3">
+          <!-- Sản phẩm 1 -->
+          <div class="col-6 col-sm-6 col-md-4 col-lg-3">
+            <a href="#" class="product-link">
+              <div class="product-item">
+                <span class="discount-badge">-25%</span>
+                <img
+                  src="@/assets/img/slideshow_1.png"
+                  class="img-fluid img-default"
+                  alt="Quần Dài Wash Xám"
+                />
+                <img
+                  src="@/assets/img/slideshow_1.png"
+                  class="img-fluid img-hover"
+                  alt="Quần Dài Wash Xám Hover"
+                />
+              </div>
+              <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
+              <div>
+                <span class="discounted-price">630,000₫</span>
+                <span class="original-price">840,000₫</span>
+              </div>
+            </a>
+          </div>
+          <div class="col-6 col-sm-6 col-md-4 col-lg-3">
+            <a href="#" class="product-link">
+              <div class="product-item">
+                <span class="discount-badge">-25%</span>
+                <img
+                  src="@/assets/img/slideshow_1.png"
+                  class="img-fluid img-default"
+                  alt="Quần Dài Wash Xám"
+                />
+                <img
+                  src="@/assets/img/slideshow_1.png"
+                  class="img-fluid img-hover"
+                  alt="Quần Dài Wash Xám Hover"
+                />
+              </div>
+              <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
+              <div>
+                <span class="discounted-price">630,000₫</span>
+                <span class="original-price">840,000₫</span>
+              </div>
+            </a>
+          </div>
         </div>
-        <div class="col-6 col-sm-6 col-md-4 col-lg-3">
-          <a href="#" class="product-link">
-            <div class="product-item">
-              <span class="discount-badge">-25%</span>
-              <img
-                src="@/assets/img/slideshow_1.png"
-                class="img-fluid img-default"
-                alt="Quần Dài Wash Xám"
-              />
-              <img
-                src="@/assets/img/slideshow_1.png"
-                class="img-fluid img-hover"
-                alt="Quần Dài Wash Xám Hover"
-              />
-            </div>
-            <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
-            <div>
-              <span class="discounted-price">630,000₫</span>
-              <span class="original-price">840,000₫</span>
-            </div>
-          </a>
-        </div>
+        <ul class="pagination mt-3">
+          <li class="pagination-item pagination-active">1</li>
+          <li class="pagination-item">2</li>
+          <li class="pagination-item">3</li>
+          <li class="pagination-item pagination-disabled">...</li>
+          <li class="pagination-item">15</li>
+          <li class="pagination-item pagination-arrow">&gt;</li>
+        </ul>
       </div>
-      <ul class="pagination mt-3">
-        <li class="pagination-item pagination-active">1</li>
-        <li class="pagination-item">2</li>
-        <li class="pagination-item">3</li>
-        <li class="pagination-item pagination-disabled">...</li>
-        <li class="pagination-item">15</li>
-        <li class="pagination-item pagination-arrow">&gt;</li>
-      </ul>
     </div>
   </main>
 </template>

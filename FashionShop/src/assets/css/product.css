@@ -36,10 +36,27 @@
     margin-bottom: 15px;
 }
 
+.product-content-wrapper {
+    transition: margin-left 0.3s ease;
+}
+
+/* Khi sidebar mở */
+.sidebar-pushed {
+    margin-left: 280px;
+    /* đúng bằng .product-sidebar width */
+}
+
+@media (max-width: 768px) {
+    .sidebar-pushed {
+        margin-left: 0 !important;
+    }
+}
+
+
 .product-sticky-toolbar {
     position: sticky;
     top: 0;
-    z-index: 999;
+    /* z-index: 999; */
     background-color: #fff;
     padding-top: 10px;
     padding-bottom: 10px;

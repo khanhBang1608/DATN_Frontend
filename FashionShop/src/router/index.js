@@ -11,6 +11,7 @@ import ContactUsView from '../views/ContactUsView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
+import AddressView from '../views/AddressView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -74,6 +75,11 @@ const router = createRouter({
       path: '/user/product-detail',
       name: 'product-detail',
       component: ProductDetailView,
+    },
+    {
+      path: '/user/address',
+      name: 'address',
+      component: AddressView,
     },
     {
       path: '/about',
