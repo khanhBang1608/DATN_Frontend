@@ -1,0 +1,154 @@
+.checkout-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.checkout-form .form-control,
+.checkout-form .form-select {
+    border-radius: 6px;
+    height: 48px;
+    font-size: 15px;
+}
+
+.checkout-form .form-select:focus,
+.checkout-form .form-control:focus {
+    box-shadow: none;
+    border-color: #999;
+}
+
+.checkout-section-title {
+    font-size: 17px;
+    font-weight: 600;
+    margin-top: 40px;
+    margin-bottom: 15px;
+}
+
+.checkout-shipping-method {
+    border: 1px dashed #ccc;
+    background-color: #f9f9f9;
+    text-align: center;
+    padding: 30px;
+    color: #6c757d;
+    font-size: 15px;
+}
+
+/* Sản phẩm trong tóm tắt đơn hàng */
+.checkout-product {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.checkout-product img {
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 15px;
+}
+
+/* Các dòng tổng tiền */
+.checkout-subtotal,
+.checkout-shipping-fee,
+.checkout-total {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.checkout-total {
+    font-weight: 600;
+    font-size: 1.125rem;
+}
+
+/* Radio chọn thanh toán */
+.checkout-payment-methods .form-check-input:checked {
+    background-color: #2a6ebb;
+    border-color: #2a6ebb;
+}
+
+/* Info thêm cho ngân hàng nếu chọn */
+.bank-info {
+    display: none;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+/* Padding mỗi item */
+.checkout-payment-methods .list-group-item {
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+
+/* Đường viền nhẹ giữa các mục */
+.checkout-payment-methods .list-group-item:not(:last-child) {
+    border-bottom: 1px solid #eaeaea;
+}
+
+/* Khoảng cách giữa các phần tử trong label */
+.checkout-payment-methods .list-group-item>* {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+/* Nếu chọn #bank thì hiển thị .bank-info */
+#bank:checked~div label+.bank-info,
+#bank:checked+div .bank-info {
+    display: block;
+}
+
+/* Nút hoàn tất */
+.btn-complete {
+    background-color: #000 !important;
+    color: white !important;
+    font-size: 15px !important;
+    padding: 12px 20px !important;
+    border-radius: 6px !important;
+    border: 2px solid transparent !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-complete:hover {
+    background-color: #fff !important;
+    color: #000 !important;
+    border-color: #000 !important;
+}
+
+/* Link quay về giỏ hàng */
+.link-cart {
+    color: #2a6ebb;
+    text-decoration: underline;
+    font-size: 15px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.link-cart:hover {
+    background-color: #2a6ebb;
+    color: white;
+    text-decoration: none;
+}
+
+/* Bỏ nền và viền các thành phần thẻ */
+.card,
+.card-body,
+.list-group-item {
+    background-color: transparent !important;
+    border: none;
+}
+
+.checkout-discount .form-control:focus,
+.checkout-discount .btn:focus {
+    box-shadow: none;
+    border-color: #999;
+}
+
+
+/* Luôn hiện collapse ở desktop */
+@media (min-width: 768px) {
+    #orderCollapse {
+        display: block !important;
+        height: auto !important;
+        opacity: 1;
+    }
+}

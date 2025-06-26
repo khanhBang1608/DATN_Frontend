@@ -1,0 +1,31 @@
+.label-required::after {
+  content: "*";
+  color: red;
+  margin-left: 4px;
+}
+
+.btn-register {
+  background-color: #000;
+  color: #fff;
+  padding: 10px 20px;
+  width: 100%;
+  border: 1px solid #000;
+  transition: all 0.3s ease;
+}
+
+.btn-register:hover {
+  background-color: #fff;
+  color: #000;
+  border-color: #000;
+}
+
+.register-input,
+.register-input:focus,
+.form-check-input,
+.form-check-input:focus,
+.form-select,
+.form-select:focus {
+  border-color: #ced4da !important;
+  outline: none !important;
+  box-shadow: none !important;
+}

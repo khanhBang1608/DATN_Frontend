@@ -1,15 +1,13 @@
 <script setup>
 import Header from '../components/user/Header.vue'
-import SlideShow from '../components/user/SlideShow.vue'
-import Main from '../components/user/Main.vue'
+import Profile from '../components/user/Profile.vue'
 import Footer from '../components/user/Footer.vue'
 </script>
 
 <template>
   <main>
     <Header />
-    <SlideShow />
-    <Main />
+    <Profile />
     <Footer />
   </main>
 </template>

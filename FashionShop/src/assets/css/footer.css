@@ -1,0 +1,232 @@
+ /* ========== Tổng thể footer ========== */
+ .footer {
+     background-color: #ffffff;
+     color: #212529;
+     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+ }
+
+ .footer-heading {
+     font-weight: 700;
+     font-size: 1.2rem;
+     margin-bottom: 1rem;
+ }
+
+ .footer-column {
+     margin: 1rem 0;
+ }
+
+ /* ========== Danh sách liên kết trong footer ========== */
+ .footer-list {
+     padding-left: 0;
+ }
+
+ .footer-list li,
+ .footer-list-item {
+     margin-bottom: 0.5rem;
+ }
+
+ .footer-list a,
+ .footer-list-item a {
+     display: inline-block;
+     text-decoration: none;
+     color: #212529;
+     opacity: 0.85;
+     transform: scale(1);
+     transition: opacity 0.3s ease, transform 0.3s ease;
+ }
+
+ .footer-list a:hover,
+ .footer-list-item a:hover {
+     color: #000;
+     opacity: 1;
+     transform: scale(1.03);
+     text-decoration: underline;
+ }
+
+ /* ========== Newsletter (Email đăng ký) ========== */
+ .footer-newsletter {
+     display: flex;
+     align-items: stretch;
+ }
+
+ .footer-input {
+     flex: 1;
+     padding: 0.5rem;
+     border: 1px solid #ced4da;
+     border-radius: 0.5rem;
+     border-top-right-radius: 0;
+     border-bottom-right-radius: 0;
+     margin-right: 0;
+ }
+
+ .footer-input:focus {
+     outline: none;
+     box-shadow: none;
+     border-color: #000;
+ }
+
+ .footer-btn {
+     background-color: #000;
+     color: #fff;
+     border: none;
+     padding: 0.5rem 1rem;
+     border-radius: 0.5rem;
+     border-top-left-radius: 0;
+     border-bottom-left-radius: 0;
+     margin-left: -1px;
+     transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
+     border: 1px solid #000;
+ }
+
+ .footer-btn:hover {
+     background-color: #fff;
+     color: #000;
+     border: 1px solid #000;
+ }
+
+ /* ========== Accordion trong mobile ========== */
+ .footer-accordion-item {
+     border: none !important;
+     border-bottom: 1px solid #dee2e6 !important;
+     border-radius: 0;
+ }
+
+ .footer-accordion-item .accordion-button.accordion-button-custom {
+     border: none;
+     border-radius: 0;
+     box-shadow: none;
+ }
+
+ .footer-accordion-item .accordion-button.accordion-button-custom:not(.collapsed) {
+     background-color: transparent;
+     box-shadow: none;
+ }
+
+ .footer-accordion-item .accordion-button:focus {
+     box-shadow: none;
+     outline: none;
+ }
+
+ .footer-accordion-item .accordion-button-custom {
+     padding-left: 0;
+     padding-right: 0;
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+ }
+
+ .footer-accordion-item .accordion-button.accordion-button-custom:focus {
+     box-shadow: none;
+     outline: none;
+ }
+
+ .footer-accordion-item .accordion-button-custom::after {
+     margin-left: auto;
+     padding-right: 0;
+     transform: scale(0.7);
+     transition: transform 0.3s ease;
+ }
+
+ .footer-accordion-item .accordion-button-custom:not(.collapsed)::after {
+     transform: rotate(-180deg) scale(0.7);
+ }
+
+
+ .footer-accordion-item .accordion-button-custom .accordion-body {
+     padding: 0.5rem 1rem 0.75rem;
+     border-top: none;
+ }
+
+ .footer-accordion-item .accordion-button-custom .footer-accordion-item .accordion-button-custom .accordion-body ul {
+     padding-left: 0;
+     margin-bottom: 0;
+ }
+
+ .footer-accordion-item .accordion-button-custom .accordion-body li {
+     margin-bottom: 0.5rem;
+ }
+
+ .accordion-body .footer-link {
+     display: inline-block;
+     text-decoration: none;
+     color: #212529;
+     opacity: 0.85;
+     transform: none;
+     transition: none;
+ }
+
+ .accordion-body .footer-link:hover {
+     color: #212529;
+     opacity: 0.85;
+     transform: none;
+     text-decoration: underline;
+ }
+
+ .footer-accordion-item .accordion-button.accordion-button-custom {
+     padding-left: 0 !important;
+     padding-right: 0 !important;
+ }
+
+ .footer-accordion-item .accordion-button.accordion-button-custom:not(.collapsed) {
+     background-color: transparent !important;
+     box-shadow: none !important;
+ }
+
+
+ /* ========== Thông tin công ty ========== */
+ .footer-company-info {
+     font-size: 0.9rem;
+ }
+
+ /* ========== Mạng xã hội ========== */
+ .footer-social {
+     display: flex;
+     gap: 0.5rem;
+ }
+
+ .footer-social-icon {
+     color: #212529;
+     transition: color 0.3s;
+ }
+
+ .footer-social-icon .bi-facebook:hover {
+     color: #3b5998;
+ }
+
+ .footer-social-icon .bi-instagram:hover {
+     color: #e4405f;
+ }
+
+ .footer-social-icon .bi-youtube:hover {
+     color: #ff0000;
+ }
+
+ .footer-social-icon .bi-tiktok:hover {
+     color: #000000;
+ }
+
+ /* ========== Bản quyền ========== */
+ .footer-copyright {
+     text-align: center;
+     margin-top: 2rem;
+     font-size: 0.9rem;
+     color: #6c757d;
+ }
+
+ /* ========== Responsive (Mobile) ========== */
+ @media (max-width: 768px) {
+     .footer-heading {
+         font-size: 0.85rem;
+     }
+
+     .footer-newsletter input,
+     .footer-newsletter button {
+         font-size: 0.8rem;
+     }
+
+     .footer-accordion-item .accordion-button-custom {
+         font-size: 0.85rem;
+         padding-top: 0.75rem;
+         padding-bottom: 0.75rem;
+     }
+ }
