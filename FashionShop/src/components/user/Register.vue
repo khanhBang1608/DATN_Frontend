@@ -1,4 +1,85 @@
-<!-- RegisterForm.vue -->
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
+import { useRouter, useRoute } from 'vue-router'
+
+const router = useRouter()
+const route = useRoute()
+
+onMounted(() => {
+  const verifiedEmail = route.query.email
+  if (verifiedEmail) {
+    form.value.email = verifiedEmail // ✅ gán email đã xác thực vào form
+  }
+})
+
+axios.defaults.withCredentials = true
+
+// --- Register Form Logic ---
+const submitted = ref(false)
+
+const form = ref({
+  fullName: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  agree: false,
+})
+
+const errors = ref({
+  fullName: '',
+  password: '',
+  confirmPassword: '',
+  agree: false,
+})
+
+const passwordMismatch = computed(
+  () => form.value.password !== form.value.confirmPassword
+)
+
+async function handleSubmit() {
+
+  if (!form.value.email) {
+  alert('Vui lòng xác thực email trước khi đăng ký.')
+  return
+}
+
+
+  submitted.value = true
+  const formEl = document.querySelector('form')
+
+  if (!formEl.checkValidity() || passwordMismatch.value) {
+    return
+  }
+
+  // Gửi form đăng ký tới API
+  try {
+    const formData = new FormData()
+    formData.append('fullName', form.value.fullName)
+    formData.append('email', form.value.email)
+    formData.append('password', form.value.password)
+    formData.append('confirmPassword', form.value.confirmPassword)
+
+    const res = await axios.post('http://localhost:8080/api/register', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+
+    // Thành công → chuyển đến trang login
+    alert('Tạo tài khoản thành công!')
+    router.push('/login').then(() => window.location.reload())
+  } catch (err) {
+    const resErrors = err.response?.data
+    if (resErrors && typeof resErrors === 'object') {
+      Object.assign(errors.value, resErrors)
+    } else {
+      alert('Đăng ký thất bại. Vui lòng thử lại.')
+    }
+  }
+}
+
+</script>
 <template>
   <div class="container py-5">
     <div class="row justify-content-center">
@@ -20,14 +101,14 @@
             <input
               type="text"
               class="form-control register-input"
-              v-model="form.firstName"
+              v-model="form.fullName"
               required
             />
             <div class="invalid-feedback">Nhập họ và tên của bạn</div>
           </div>
 
           <!-- Email -->
-          <div class="mb-3">
+          <!-- <div class="mb-3">
             <label class="form-label label-required">Email</label>
             <input
               type="email"
@@ -36,7 +117,9 @@
               required
             />
             <div class="invalid-feedback">Nhập địa chỉ email hợp lệ</div>
-          </div>
+          </div> -->
+          <input type="hidden" v-model="form.email" />
+          <p class="text-muted mb-3">Email đã xác thực: <strong>{{ form.email }}</strong></p>
 
           <!-- Mật khẩu -->
           <div class="mb-3">
@@ -87,40 +170,5 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, computed } from "vue";
-
-const submitted = ref(false);
-const form = ref({
-  firstName: "",
-  dob: "",
-  gender: "",
-  phone: "",
-  email: "",
-  password: "",
-  confirmPassword: "",
-  agree: false,
-});
-
-const maxDate = new Date().toISOString().split("T")[0];
-
-const passwordMismatch = computed(
-  () => form.value.password !== form.value.confirmPassword
-);
-
-function handleSubmit() {
-  submitted.value = true;
-
-  const formEl = document.querySelector("form");
-  if (!formEl.checkValidity() || passwordMismatch.value) {
-    return;
-  }
-
-  // Submit thành công
-  alert("Tạo tài khoản thành công");
-  // Thực hiện xử lý dữ liệu tại đây...
-}
-</script>
 
 <style src="@/assets/css/register.css"></style>

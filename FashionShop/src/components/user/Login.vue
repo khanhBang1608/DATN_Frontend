@@ -1,3 +1,59 @@
+<script setup>
+import { ref } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+
+const email = ref('')
+const password = ref('')
+const error = ref(null)
+const router = useRouter()
+
+const login = async () => {
+  error.value = null
+  try {
+    const formData = new FormData()
+    formData.append('email', email.value)
+    formData.append('password', password.value)
+
+    if (!password.value.trim() || !email.value.trim()) {
+      error.value = 'Mật khẩu không được để trống hoặc chỉ chứa khoảng trắng.'
+      return
+    }
+
+    const response = await axios.post('http://localhost:8080/api/login', formData, {
+      headers: {},
+      data: formData,
+      withCredentials: true,
+    })
+    // Kiểm tra xem response.data.user có tồn tại không
+    if (response.data && response.data.user) {
+      const user = response.data.user
+      const role = response.data.user.role // 0 = admin, 1 = user
+
+      localStorage.setItem('token', response.data.token)
+      localStorage.setItem('role', role)
+
+      // Lưu thông tin người dùng vào cookie
+      document.cookie = `userRole=${user.role}; path=/`
+
+      // Phân quyền điều hướng
+      if (role === 0) {
+        router.push('/admin')
+      } else {
+        router.push('/')
+      }
+    } else {
+      // Nếu không có user, hiển thị lỗi
+      throw new Error('Không tìm thấy thông tin người dùng')
+    }
+  } catch (err) {
+    error.value =
+      typeof err.response?.data === 'string'
+        ? err.response.data
+        : err.response?.data?.message || 'Email hoặc mật khẩu không đúng'
+  }
+}
+</script>
 <template>
   <div class="auth-container mt-3">
     <h2 class="auth-title">Đăng Nhập / Tạo Tài Khoản</h2>
@@ -92,7 +148,7 @@
             Lưu thông tin để thanh toán nhanh hơn, lưu các sản phẩm vào danh sách yêu
             thích và xem lịch sử mua hàng và trả hàng của bạn.
           </p>
-          <a href="/register" class="btn auth-btn auth-btn-register">TẠO TÀI KHOẢN</a>
+          <a href="/register/otp" class="btn auth-btn auth-btn-register">TẠO TÀI KHOẢN</a>
         </div>
       </div>
     </div>

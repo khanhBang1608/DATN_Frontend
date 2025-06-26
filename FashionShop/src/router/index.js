@@ -3,6 +3,7 @@ import HomeView from '../views/HomeView.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
+import OtpFormView from '../views/OtpFormView.vue'
 import OrderManagementView from '../views/OrderManagementView.vue'
 import ReviewHistoryView from '../views/ReviewHistoryView.vue'
 import CartView from '../views/CartView.vue'
@@ -35,6 +36,11 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView,
+    },
+    {
+      path: '/register/otp',
+      name: 'registerOtp',
+      component: OtpFormView,
     },
     {
       path: '/order-management',
