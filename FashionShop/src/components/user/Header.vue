@@ -31,7 +31,7 @@ onMounted(() => {
           <a href="/about" class="text-dark text-decoration-none me-3">Giới thiệu</a>
           <a href="/contact-us" class="text-dark text-decoration-none me-3">Liên hệ</a>
           <a href="/contact" class="text-dark text-decoration-none me-3">Chính sách</a>
-          <a to="/login" class="text-dark text-decoration-none me-3">Đăng nhập</a>
+          <a href="/login" class="text-dark text-decoration-none me-3">Đăng nhập</a>
         </div>
       </div>
     </div>
