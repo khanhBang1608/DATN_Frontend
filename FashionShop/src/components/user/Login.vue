@@ -1,59 +1,56 @@
 <script setup>
-import { ref } from 'vue'
-import axios from 'axios'
-import { useRouter } from 'vue-router'
+import { ref } from "vue";
+import axios from "axios";
+import { useRouter } from "vue-router";
 
-const email = ref('')
-const password = ref('')
-const error = ref(null)
-const router = useRouter()
+const email = ref("");
+const password = ref("");
+const error = ref(null);
+const router = useRouter();
 
 const login = async () => {
-  error.value = null
+  error.value = null;
   try {
-    const formData = new FormData()
-    formData.append('email', email.value)
-    formData.append('password', password.value)
-
-    if (!password.value.trim() || !email.value.trim()) {
-      error.value = 'Mật khẩu không được để trống hoặc chỉ chứa khoảng trắng.'
-      return
+    if (!email.value.trim() || !password.value.trim()) {
+      error.value = "Email và mật khẩu không được để trống hoặc chỉ chứa khoảng trắng.";
+      return;
     }
 
-    const response = await axios.post('http://localhost:8080/api/login', formData, {
-      headers: {},
-      data: formData,
+    const formData = new FormData();
+    formData.append("email", email.value);
+    formData.append("password", password.value);
+
+    const response = await axios.post("http://localhost:8080/api/login", formData, {
       withCredentials: true,
-    })
-    // Kiểm tra xem response.data.user có tồn tại không
+    });
+
     if (response.data && response.data.user) {
-      const user = response.data.user
-      const role = response.data.user.role // 0 = admin, 1 = user
+      const user = response.data.user;
+      const role = user.role; // 0 = admin, 1 = user
 
-      localStorage.setItem('token', response.data.token)
-      localStorage.setItem('role', role)
+      // Lưu token và role
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("role", role);
+      document.cookie = `userRole=${role}; path=/`;
 
-      // Lưu thông tin người dùng vào cookie
-      document.cookie = `userRole=${user.role}; path=/`
-
-      // Phân quyền điều hướng
+      // Điều hướng theo quyền
       if (role === 0) {
-        router.push('/admin')
+        router.push("/admin");
       } else {
-        router.push('/')
+        router.push("/");
       }
     } else {
-      // Nếu không có user, hiển thị lỗi
-      throw new Error('Không tìm thấy thông tin người dùng')
+      throw new Error("Không tìm thấy thông tin người dùng");
     }
   } catch (err) {
     error.value =
-      typeof err.response?.data === 'string'
+      typeof err.response?.data === "string"
         ? err.response.data
-        : err.response?.data?.message || 'Email hoặc mật khẩu không đúng'
+        : err.response?.data?.message || "Email hoặc mật khẩu không đúng";
   }
-}
+};
 </script>
+
 <template>
   <div class="auth-container mt-3">
     <h2 class="auth-title">Đăng Nhập / Tạo Tài Khoản</h2>
@@ -65,18 +62,22 @@ const login = async () => {
           <p class="auth-description">
             Đăng nhập để có thể thanh toán nhanh hơn và tận hưởng các đặc quyền thành viên
           </p>
-          <form>
+          <form @submit.prevent="login">
             <input
+              v-model="email"
               type="email"
               class="form-control auth-input"
               placeholder="Địa chỉ email"
+              required
             />
             <input
+              v-model="password"
               type="password"
               class="form-control auth-input"
               placeholder="Mật khẩu"
+              required
             />
-            <a href="#" class="btn auth-btn auth-btn-login">ĐĂNG NHẬP</a>
+            <button type="submit" class="btn auth-btn auth-btn-login">ĐĂNG NHẬP</button>
             <a
               href="#"
               class="auth-link"
@@ -84,6 +85,8 @@ const login = async () => {
               data-bs-target="#forgotPasswordModal"
               >Quên Mật Khẩu?</a
             >
+            <!-- Thông báo lỗi -->
+            <p v-if="error" class="text-danger mt-2">{{ error }}</p>
           </form>
 
           <div class="auth-divider">
