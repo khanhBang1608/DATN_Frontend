@@ -6,7 +6,12 @@
                     <div class="col-md-12">
                         <div class="content">
                             <h2>Chào mừng đến với trang quản trị</h2>
-                            <p>Thay đổi cả thế giới chỉ với 1 cú click chuột.</p>
+                            <div class="select-range form-inline">
+                              <label for="">Từ ngày</label>
+                              <input type="date" class="form-control" />
+                              <label for="">Đến ngày</label>
+                              <input type="date" class="form-control" />
+                            </div>
                         </div>
                     </div>
                 </div>
