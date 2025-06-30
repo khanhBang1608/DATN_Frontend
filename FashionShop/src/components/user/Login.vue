@@ -94,7 +94,7 @@ const login = async () => {
           </div>
 
           <div class="d-grid gap-2 mt-3">
-            <a href="#" class="btn social-btn google-btn">
+            <a href="http://localhost:8080/oauth2/authorization/google" class="btn social-btn google-btn">
               <img
                 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
                 alt="Google"
