@@ -29,7 +29,7 @@ onMounted(() => {
 
         <div class="d-none d-md-flex align-items-center">
           <a href="/about" class="text-dark text-decoration-none me-3">Giới thiệu</a>
-          <a href="/contact" class="text-dark text-decoration-none me-3">Liên hệ</a>
+          <a href="/contact-us" class="text-dark text-decoration-none me-3">Liên hệ</a>
           <a href="/contact" class="text-dark text-decoration-none me-3">Chính sách</a>
           <a to="/login" class="text-dark text-decoration-none me-3">Đăng nhập</a>
         </div>
@@ -72,7 +72,7 @@ onMounted(() => {
               >
             </li>
             <li>
-              <a class="dropdown-item" href="/user/order/history"
+              <a class="dropdown-item" href="/user/order-history"
                 ><i class="bi bi-box-seam me-2"></i> Đơn hàng</a
               >
             </li>
@@ -239,6 +239,7 @@ onMounted(() => {
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav mx-auto fw-bold text-dark d-none d-lg-flex">
             <li class="nav-item"><a class="nav-link" href="/">Trang Chủ</a></li>
+            <li class="nav-item"><a class="nav-link" href="/product">Sản Phẩm</a></li>
             <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
@@ -259,7 +260,7 @@ onMounted(() => {
                 <li><a class="dropdown-item" href="#">Sơ Mi</a></li>
               </ul>
             </li>
-                        <li class="nav-item dropdown">
+            <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
                 href="#"
@@ -279,8 +280,6 @@ onMounted(() => {
                 <li><a class="dropdown-item" href="#">Sơ Mi</a></li>
               </ul>
             </li>
-            <li class="nav-item"><a class="nav-link" href="/product">Liên Hệ</a></li>
-            <li class="nav-item"><a class="nav-link" href="/product">Yêu Thích</a></li>
           </ul>
 
           <div class="d-none d-lg-flex align-items-center">
@@ -344,7 +343,7 @@ onMounted(() => {
             </a>
 
             <div class="search-box d-flex align-items-center ms-3">
-             <i class="bi bi-search me-2"></i>
+              <i class="bi bi-search me-2"></i>
               <input type="text" class="form-control" placeholder="Tìm kiếm" />
             </div>
           </div>

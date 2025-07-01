@@ -1,15 +1,14 @@
 <script setup>
 import Header from '../components/user/Header.vue'
-import SlideShow from '../components/user/SlideShow.vue'
-import Main from '../components/user/Main.vue'
+import OtpForm from '../components/user/OtpForm.vue'
 import Footer from '../components/user/Footer.vue'
 </script>
-
 <template>
   <main>
-    <Header />
-    <SlideShow />
-    <Main />
+      <Header />
+    <OtpForm/>
     <Footer />
+
   </main>
 </template>
+
