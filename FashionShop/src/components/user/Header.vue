@@ -10,7 +10,7 @@ onMounted(() => {
 
 <template>
   <header>
-    <div class="bg-light">
+    <div class="" style="background-color: #CCFFCC;">
       <div
         class="container d-flex flex-column flex-md-row justify-content-between align-items-center py-2"
       >
@@ -292,7 +292,7 @@ onMounted(() => {
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                <i class="bi bi-people fs-4"></i>
+                <i class="bi bi-person fs-4"></i>
               </a>
               <ul
                 class="dropdown-menu custom-dropdown shadow-sm border-0 rounded-3 mt-2"

@@ -30,12 +30,8 @@
               <td>01/06 - 30/06</td>
               <td><span class="badge bg-success">Đang hoạt động</span></td>
               <td class="text-center">
-                <button class="btn btn-outline-primary btn-sm me-1 btn-icon" data-bs-toggle="modal" data-bs-target="#editDiscountModal">
-                  <i class="bi bi-pencil"></i> Sửa
-                </button>
-                <button class="btn btn-outline-danger btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal">
-                  <i class="bi bi-trash3"></i> Xóa
-                </button>
+                       <button class="btn btn-sm btn-warning  m-1">✏️ Sửa</button>
+                <button class="btn btn-sm btn-danger  m-1">🗑️ Xóa</button>
               </td>
             </tr>
           </tbody>

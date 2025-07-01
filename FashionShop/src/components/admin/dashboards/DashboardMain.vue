@@ -6,11 +6,17 @@
                     <div class="col-md-12">
                         <div class="content">
                             <h2>Chào mừng đến với trang quản trị</h2>
-                            <div class="select-range form-inline">
-                              <label for="">Từ ngày</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                                             <label for="">Từ ngày</label>
                               <input type="date" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+
                               <label for="">Đến ngày</label>
                               <input type="date" class="form-control" />
+                                </div>
+
                             </div>
                         </div>
                     </div>

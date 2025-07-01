@@ -1,5 +1,5 @@
 <template>
-  <footer class="footer bg-light text-dark pt-5 border-top">
+  <footer class="footer text-dark pt-5 border-top" style="background-color: #CCFFCC;">
     <div class="container footer-container">
       <div class="row g-4">
         <!-- Mobile layout -->
@@ -219,52 +219,8 @@
             </ul>
           </div>
 
-          <div class="col-md-4 footer-column">
-            <h6 class="footer-heading fw-bold">
-              ĐĂNG KÝ ĐỂ NHẬN CÁC THÔNG TIN THỜI TRANG MỚI NHẤT
-            </h6>
-            <form class="footer-newsletter d-flex">
-              <input
-                type="email"
-                class="footer-input"
-                placeholder="Đăng ký nhận bản tin của chúng tôi"
-              />
-              <button class="footer-btn">Đăng Ký</button>
-            </form>
-          </div>
-        </div>
-      </div>
 
-      <div class="row mt-3">
-        <div class="col-md-8 footer-company-info small">
-          <p class="mb-1">
-            <strong>CÔNG TY CỔ PHẦN MAISON RETAIL MANAGEMENT INTERNATIONAL</strong>
-          </p>
-          <p class="mb-1">
-            Địa chỉ:
-            <a
-              href="https://maps.app.goo.gl/a6NAqAEtyZ1hUZKc8"
-              target="_blank"
-              class="text-decoration-none text-dark"
-            >
-              Toà nhà FPT Polytechnic, Đ. Số 22, Thường Thạnh, Cái Răng, Cần Thơ
-            </a>
-          </p>
-          <p class="mb-1">
-            Hotline:
-            <a href="tel:0378447716" class="text-decoration-none text-dark">
-              0378 447 716
-            </a>
-          </p>
-          <p class="mb-0">
-            Email:
-            <a href="mailto:customers@lhex.vn" class="text-decoration-none text-dark">
-              customers@lhex.vn
-            </a>
-          </p>
-        </div>
-
-        <div class="col-md-4 text-md-start d-none d-md-block">
+        <div class="col-md-4 footer-column">
           <p class="footer-heading fw-bold mb-2">THEO DÕI CHÚNG TÔI</p>
           <div class="footer-social d-flex justify-content-md-start gap-3">
             <a
@@ -297,12 +253,10 @@
             </a>
           </div>
         </div>
+        </div>
       </div>
-    </div>
 
-    <hr class="my-2" style="height: 2px; background-color: #000; border: none" />
-    <div class="text-center mt-2 text-muted small footer-copyright">
-      © L'HEX, bản quyền được bảo hộ
+
     </div>
   </footer>
 </template>
