@@ -35,7 +35,7 @@ const login = async () => {
 
       // Điều hướng theo quyền
       if (role === 0) {
-        router.push("/admin");
+        router.push("/admin/dashboard");
       } else {
         router.push("/");
       }
