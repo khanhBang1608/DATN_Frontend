@@ -17,27 +17,27 @@
     <ul class="categories">
       <li>
         <i class="fas fa-home fa-fw" aria-hidden="true"></i
-        ><router-link to="/dashboard">Thống kê</router-link>
+        ><router-link to="/admin/dashboard">Thống kê</router-link>
       </li>
-      <li><i class="fas fa-headset fa-fw"></i><router-link to="/order">Quản lí đơn</router-link></li>
+      <li><i class="fas fa-headset fa-fw"></i><router-link to="/admin/order">Quản lí đơn</router-link></li>
       <li>
         <i class="fas fa-users fa-fw"></i><a href="#" class="user-li">Người dùng</a>
         <ul class="side-nav-dropdown">
-          <li><router-link to="/user">Danh sách người dùng</router-link></li>
+          <li><router-link to="/admin/user">Danh sách người dùng</router-link></li>
           <li><a href="#">Quản lí quyền</a></li>
         </ul>
       </li>
-      <li><i class="fas fa-bolt fa-fw"></i><router-link to="/product">Product</router-link></li>
-      <li><i class="fas fa-list-ul fa-fw" aria-hidden="true"></i><router-link to="/category">Danh mục</router-link></li>
+      <li><i class="fas fa-bolt fa-fw"></i><router-link to="/admin/product">Product</router-link></li>
+      <li><i class="fas fa-list-ul fa-fw" aria-hidden="true"></i><router-link to="/admin/category">Danh mục</router-link></li>
 
-      <li><i class="far fa-star  fa-fw" aria-hidden="true"></i><router-link to="/review">Đánh giá</router-link></li>
+      <li><i class="far fa-star  fa-fw" aria-hidden="true"></i><router-link to="/admin/review">Đánh giá</router-link></li>
       <li>
         <i class="fas fa-money-bill fa-fw" aria-hidden="true"></i
-        ><router-link to="/promotion">Khuyến mãi</router-link>
+        ><router-link to="/admin/promotion">Khuyến mãi</router-link>
       </li>
       <li>
         <i class="fas fa-cc-amex" aria-hidden="true"></i
-        ><router-link to="/discount">Voucher</router-link>
+        ><router-link to="/admin/discount">Voucher</router-link>
       </li>
 
       <p>Nâng Cao:</p>
