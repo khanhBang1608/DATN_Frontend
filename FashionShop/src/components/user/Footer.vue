@@ -1,5 +1,6 @@
 <template>
-  <footer class="footer text-dark pt-5 border-top" style="background-color: #CCFFCC;">
+ <footer class="footer text-white pt-5 border-top" style="background-color: #000;">
+
     <div class="container footer-container">
       <div class="row g-4">
         <!-- Mobile layout -->
@@ -184,11 +185,6 @@
               <li><a href="#">Kiểm tra trạng thái đơn hàng</a></li>
               <li><a href="#">Câu hỏi thường gặp</a></li>
               <li><a href="#">Liên hệ</a></li>
-              <li><a href="#">CẢNH GIÁC LỪA ĐẢO</a></li>
-              <li><a href="#">Ưu đãi thành viên</a></li>
-              <li><a href="#">Chính sách Giao Hàng</a></li>
-              <li><a href="#">Chính sách Bảo hành & Đổi trả</a></li>
-              <li><a href="#">Bảng quy đổi kích thước</a></li>
             </ul>
           </div>
 

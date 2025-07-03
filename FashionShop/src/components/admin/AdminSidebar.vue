@@ -1,19 +1,16 @@
 <template>
   <aside class="side-nav" id="show-side-navigation1">
-    <i
-      class="fas fa-bars close-aside hidden-sm hidden-md hidden-lg"
-      data-close="show-side-navigation1"
-    ></i>
-    <div class="heading">
-      <img src="./Img/Assets/Avatar.jpg" alt="" />
-      <div class="info">
-        <h3><a href="../">ADMIN</a></h3>
-        <p>Thương hiệu Việt vươn tầm quốc tế.</p>
-      </div>
-    </div>
-    <div class="search">
-      <input type="text" placeholder="Tìm kiếm" /><i class="fas fa-search"></i>
-    </div>
+
+<div class="heading d-flex justify-content-between align-items-center">
+  <div class="info">
+    <h3 class="mb-0"><a href="../">ADMIN</a></h3>
+  </div>
+
+
+</div>
+
+
+
     <ul class="categories">
       <li>
         <i class="fas fa-home fa-fw" aria-hidden="true"></i
@@ -39,12 +36,13 @@
         <i class="fas fa-cc-amex" aria-hidden="true"></i
         ><router-link to="/admin/discount">Voucher</router-link>
       </li>
-
-      <p>Nâng Cao:</p>
       <li>
-        <i class="fas fa-envelope-open-o fa-fw"></i
-        ><a href="#"> Tin Nhắn <span class="num dang">56</span></a>
+            <button class="btn btn-danger btn-sm" style="white-space: nowrap;">
+  <i class="fa fa-sign-out" aria-hidden="true"></i> Đăng xuất
+</button>
       </li>
+
+
     </ul>
   </aside>
 </template>
