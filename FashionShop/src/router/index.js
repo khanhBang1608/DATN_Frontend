@@ -27,6 +27,11 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: "/oauth2/success",
+      name: "Oauth2Success",
+      component: () => import("../views/Oauth2SuccessView.vue"),
+    },
+    {
       path: '/',
       name: 'index',
       component: HomeView,
