@@ -1,5 +1,6 @@
 <template>
-  <footer class="footer bg-light text-dark pt-5 border-top">
+ <footer class="footer text-white pt-5 border-top" style="background-color: #000;">
+
     <div class="container footer-container">
       <div class="row g-4">
         <!-- Mobile layout -->
@@ -184,11 +185,6 @@
               <li><a href="#">Kiểm tra trạng thái đơn hàng</a></li>
               <li><a href="#">Câu hỏi thường gặp</a></li>
               <li><a href="#">Liên hệ</a></li>
-              <li><a href="#">CẢNH GIÁC LỪA ĐẢO</a></li>
-              <li><a href="#">Ưu đãi thành viên</a></li>
-              <li><a href="#">Chính sách Giao Hàng</a></li>
-              <li><a href="#">Chính sách Bảo hành & Đổi trả</a></li>
-              <li><a href="#">Bảng quy đổi kích thước</a></li>
             </ul>
           </div>
 
@@ -219,52 +215,8 @@
             </ul>
           </div>
 
-          <div class="col-md-4 footer-column">
-            <h6 class="footer-heading fw-bold">
-              ĐĂNG KÝ ĐỂ NHẬN CÁC THÔNG TIN THỜI TRANG MỚI NHẤT
-            </h6>
-            <form class="footer-newsletter d-flex">
-              <input
-                type="email"
-                class="footer-input"
-                placeholder="Đăng ký nhận bản tin của chúng tôi"
-              />
-              <button class="footer-btn">Đăng Ký</button>
-            </form>
-          </div>
-        </div>
-      </div>
 
-      <div class="row mt-3">
-        <div class="col-md-8 footer-company-info small">
-          <p class="mb-1">
-            <strong>CÔNG TY CỔ PHẦN MAISON RETAIL MANAGEMENT INTERNATIONAL</strong>
-          </p>
-          <p class="mb-1">
-            Địa chỉ:
-            <a
-              href="https://maps.app.goo.gl/a6NAqAEtyZ1hUZKc8"
-              target="_blank"
-              class="text-decoration-none text-dark"
-            >
-              Toà nhà FPT Polytechnic, Đ. Số 22, Thường Thạnh, Cái Răng, Cần Thơ
-            </a>
-          </p>
-          <p class="mb-1">
-            Hotline:
-            <a href="tel:0378447716" class="text-decoration-none text-dark">
-              0378 447 716
-            </a>
-          </p>
-          <p class="mb-0">
-            Email:
-            <a href="mailto:customers@lhex.vn" class="text-decoration-none text-dark">
-              customers@lhex.vn
-            </a>
-          </p>
-        </div>
-
-        <div class="col-md-4 text-md-start d-none d-md-block">
+        <div class="col-md-4 footer-column">
           <p class="footer-heading fw-bold mb-2">THEO DÕI CHÚNG TÔI</p>
           <div class="footer-social d-flex justify-content-md-start gap-3">
             <a
@@ -297,12 +249,10 @@
             </a>
           </div>
         </div>
+        </div>
       </div>
-    </div>
 
-    <hr class="my-2" style="height: 2px; background-color: #000; border: none" />
-    <div class="text-center mt-2 text-muted small footer-copyright">
-      © L'HEX, bản quyền được bảo hộ
+
     </div>
   </footer>
 </template>
