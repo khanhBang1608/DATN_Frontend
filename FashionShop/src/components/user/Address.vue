@@ -179,14 +179,66 @@ async function loadWards() {
   wards.value = data.data || [];
 }
 
-function submitForm() {
-  console.log("Địa chỉ đã lưu:", form.value);
-  alert("Địa chỉ đã được lưu!");
+//add địa chỉ
+async function submitForm() {
+  const payload = {
+    userId: 1, // Hoặc lấy từ localStorage
+    customerName: form.value.recipientName,
+    phone: form.value.phoneNumber,
+    address: form.value.specificAddress,
+    provinceId: Number(form.value.provinceId),
+    provinceName: provinces.value.find(p => p.ProvinceID == form.value.provinceId)?.ProvinceName || "",
+    districtId: Number(form.value.districtId),
+    districtName: districts.value.find(d => d.DistrictID == form.value.districtId)?.DistrictName || "",
+    wardId: Number(form.value.wardCode),
+    wardName: wards.value.find(w => w.WardCode == form.value.wardCode)?.WardName || ""
+  };
+
+  try {
+    const res = await fetch("http://localhost:8080/api/address/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) throw new Error("Lỗi khi gửi dữ liệu");
+
+    const data = await res.json();
+    console.log("✅ Đã lưu địa chỉ:", data);
+    alert("✅ Địa chỉ đã được lưu!");
+
+    // ✅ Reset form sau khi lưu thành công
+    form.value = {
+      recipientName: "",
+      phoneNumber: "",
+      provinceId: "",
+      districtId: "",
+      wardCode: "",
+      specificAddress: "",
+      note: "",
+      defaultAddress: true,
+    };
+    districts.value = [];
+    wards.value = [];
+
+  } catch (error) {
+    console.error("❌ Gửi form thất bại:", error);
+    alert("❌ Có lỗi khi lưu địa chỉ!");
+  }
 }
+
+
 
 onMounted(() => {
   loadProvinces();
 });
+
+
+
+
+
 </script>
 
 <style scoped>
