@@ -8,23 +8,23 @@
       >
     </nav>
   </div>
+
   <div class="container">
     <div class="profile-container">
       <h3 class="text-center profile-title">Thông Tin Của Tôi</h3>
-
+      <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
       <div class="profile-avatar-wrapper">
         <img :src="avatarPreview" alt="Avatar" class="profile-avatar" />
       </div>
 
-      <form @submit.prevent="handleSubmit">
+      <form @submit.prevent="updateProfile">
         <div class="mb-3">
           <label for="fullname" class="form-label profile-label">Họ và Tên *</label>
           <input
             type="text"
             class="form-control"
             id="fullname"
-            name="fullName"
-            v-model="fullName"
+            v-model.trim="fullName"
             placeholder="Nhập họ và tên"
             required
           />
@@ -32,15 +32,7 @@
 
         <div class="mb-3">
           <label for="email" class="form-label profile-label">Email *</label>
-          <input
-            type="email"
-            class="form-control"
-            id="email"
-            name="email"
-            v-model="email"
-            placeholder="Nhập email"
-            required
-          />
+          <input type="email" class="form-control" id="email" :value="email" disabled />
         </div>
 
         <div class="mb-3">
@@ -51,7 +43,6 @@
             type="file"
             class="form-control"
             id="avatarInput"
-            name="avatar"
             accept="image/*"
             @change="previewAvatar"
           />
@@ -67,35 +58,76 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "ProfileInfo",
-  data() {
-    return {
-      fullName: "",
-      email: "",
-      avatarPreview: "https://via.placeholder.com/120",
-    };
-  },
-  methods: {
-    previewAvatar(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          this.avatarPreview = e.target.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    },
-    handleSubmit() {
-      // Submit data logic here (e.g. emit, axios, etc.)
-      console.log("Full name:", this.fullName);
-      console.log("Email:", this.email);
-      alert("Thông tin đã được lưu!");
-    },
-  },
+<script setup>
+import { ref, onMounted } from "vue";
+import axios from "axios";
+
+// --- Token ---
+const token = localStorage.getItem("token");
+
+// --- Data ---
+const fullName = ref("");
+const email = ref("");
+const avatarPreview = ref("https://via.placeholder.com/120");
+const avatarFile = ref(null);
+const errorMessage = ref("");
+
+// --- Fetch profile ---
+const fetchProfile = async () => {
+  try {
+    const res = await axios.get("http://localhost:8080/api/user/profile", {
+      headers: { Authorization: `Bearer ${token}` },
+      withCredentials: true,
+    });
+    const data = res.data;
+    fullName.value = data.name;
+    email.value = data.email;
+    avatarPreview.value = data.avatar || avatarPreview.value;
+  } catch (err) {
+    errorMessage.value = "Lỗi khi tải thông tin: " + (err.response?.data || err.message);
+  }
 };
+
+// --- Preview avatar ---
+const previewAvatar = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    avatarFile.value = file;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      avatarPreview.value = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+// --- Update profile ---
+const updateProfile = async () => {
+  try {
+    const formData = new FormData();
+    formData.append("fullName", fullName.value);
+    if (avatarFile.value) formData.append("avatar", avatarFile.value);
+
+    const res = await axios.put(
+      "http://localhost:8080/api/user/profile/update",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      }
+    );
+
+    avatarPreview.value = res.data.avatar || avatarPreview.value;
+    alert("Cập nhật thành công");
+  } catch (err) {
+    errorMessage.value = "Cập nhật thất bại: " + (err.response?.data || err.message);
+  }
+};
+
+onMounted(fetchProfile);
 </script>
 
 <style src="@/assets/css/profile.css"></style>
