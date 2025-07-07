@@ -181,8 +181,8 @@ async function loadWards() {
 
 //add địa chỉ
 async function submitForm() {
+  const Token = localStorage.getItem("token");
   const payload = {
-    userId: 1, // Hoặc lấy từ localStorage
     customerName: form.value.recipientName,
     phone: form.value.phoneNumber,
     address: form.value.specificAddress,
@@ -195,21 +195,21 @@ async function submitForm() {
   };
 
   try {
-    const res = await fetch("http://localhost:8080/api/address/add", {
+    const res = await fetch("http://localhost:8080/api/user/address/add", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${Token}`
       },
       body: JSON.stringify(payload),
     });
-
+    
     if (!res.ok) throw new Error("Lỗi khi gửi dữ liệu");
 
     const data = await res.json();
     console.log("✅ Đã lưu địa chỉ:", data);
     alert("✅ Địa chỉ đã được lưu!");
 
-    // ✅ Reset form sau khi lưu thành công
     form.value = {
       recipientName: "",
       phoneNumber: "",
