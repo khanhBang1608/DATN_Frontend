@@ -3,17 +3,13 @@
     <nav class="custom-breadcrumb container">
       <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Địa chỉ đặt hàng</a
-      >
+      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Địa chỉ đặt hàng</a>
     </nav>
   </div>
   <div class="address-form-container">
     <div class="mb-4">
       <h3 class="text-center fw-bold mb-3">Địa Chỉ Đặt Hàng</h3>
-      <div
-        class="d-flex justify-content-between flex-column flex-sm-row align-items-start align-items-sm-center mt-3"
-      >
+      <div class="d-flex justify-content-between flex-column flex-sm-row align-items-start align-items-sm-center mt-3">
         <div>
           <h6 class="fw-bold mb-1">Thêm Địa Chỉ Mới</h6>
           <small class="text-muted">* Trường thông tin bắt buộc</small>
@@ -24,37 +20,19 @@
     <form @submit.prevent="submitForm" class="mt-4">
       <div class="row g-2 mb-3">
         <div class="col-sm-12 col-md-6">
-          <label for="recipientName" class="form-label address-form-label"
-            >Họ tên người nhận *</label
-          >
-          <input
-            type="text"
-            v-model="form.recipientName"
-            class="form-control address-form-input"
-            id="recipientName"
-          />
+          <label for="recipientName" class="form-label address-form-label">Họ tên người nhận *</label>
+          <input type="text" v-model="form.recipientName" class="form-control address-form-input" id="recipientName" />
         </div>
         <div class="col-sm-12 col-md-6">
-          <label for="phoneNumber" class="form-label address-form-label"
-            >Số điện thoại *</label
-          >
-          <input
-            type="text"
-            v-model="form.phoneNumber"
-            class="form-control address-form-input"
-            id="phoneNumber"
-          />
+          <label for="phoneNumber" class="form-label address-form-label">Số điện thoại *</label>
+          <input type="text" v-model="form.phoneNumber" class="form-control address-form-input" id="phoneNumber" />
         </div>
       </div>
 
       <div class="row g-2 mb-3">
         <div class="col-sm-12 col-md-4">
           <label class="form-label address-form-label">Tỉnh/Thành phố *</label>
-          <select
-            class="form-select address-form-select"
-            v-model="form.provinceId"
-            @change="loadDistricts"
-          >
+          <select class="form-select address-form-select" v-model="form.provinceId" @change="loadDistricts">
             <option value="">Tỉnh/Thành</option>
             <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
               {{ p.ProvinceName }}
@@ -63,11 +41,7 @@
         </div>
         <div class="col-sm-12 col-md-4">
           <label class="form-label address-form-label">Quận/Huyện *</label>
-          <select
-            class="form-select address-form-select"
-            v-model="form.districtId"
-            @change="loadWards"
-          >
+          <select class="form-select address-form-select" v-model="form.districtId" @change="loadWards">
             <option value="">Quận/Huyện</option>
             <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">
               {{ d.DistrictName }}
@@ -87,29 +61,17 @@
 
       <div class="mb-3">
         <label class="form-label address-form-label">Địa chỉ cụ thể *</label>
-        <input
-          type="text"
-          v-model="form.specificAddress"
-          class="form-control address-form-input"
-        />
+        <input type="text" v-model="form.specificAddress" class="form-control address-form-input" />
       </div>
 
       <div class="mb-3">
         <label class="form-label address-form-label">Ghi chú (tuỳ chọn)</label>
-        <textarea
-          v-model="form.note"
-          class="form-control address-form-textarea"
-          rows="2"
-        ></textarea>
+        <textarea v-model="form.note" class="form-control address-form-textarea" rows="2"></textarea>
       </div>
 
       <div class="form-check mb-3">
-        <input
-          class="form-check-input address-form-checkbox"
-          type="checkbox"
-          v-model="form.defaultAddress"
-          id="defaultAddress"
-        />
+        <input class="form-check-input address-form-checkbox" type="checkbox" v-model="form.defaultAddress"
+          id="defaultAddress" />
         <label class="form-check-label address-form-checkbox-label" for="defaultAddress">
           Đặt làm địa chỉ mặc định
         </label>
@@ -128,7 +90,6 @@ const ghnToken = "b1128a4b-3c99-11f0-b2d1-fa768adb59a3";
 const provinces = ref([]);
 const districts = ref([]);
 const wards = ref([]);
-
 const form = ref({
   recipientName: "",
   phoneNumber: "",
@@ -179,9 +140,13 @@ async function loadWards() {
   wards.value = data.data || [];
 }
 
-//add địa chỉ
 async function submitForm() {
   const Token = localStorage.getItem("token");
+  if (!Token) {
+    alert("⚠️ Bạn chưa đăng nhập! Token rỗng.");
+    return;
+  }
+
   const payload = {
     customerName: form.value.recipientName,
     phone: form.value.phoneNumber,
@@ -203,13 +168,14 @@ async function submitForm() {
       },
       body: JSON.stringify(payload),
     });
-    
+
     if (!res.ok) throw new Error("Lỗi khi gửi dữ liệu");
 
     const data = await res.json();
-    console.log("✅ Đã lưu địa chỉ:", data);
     alert("✅ Địa chỉ đã được lưu!");
+    console.log(data);
 
+    // RESET FORM
     form.value = {
       recipientName: "",
       phoneNumber: "",
@@ -224,20 +190,14 @@ async function submitForm() {
     wards.value = [];
 
   } catch (error) {
-    console.error("❌ Gửi form thất bại:", error);
-    alert("❌ Có lỗi khi lưu địa chỉ!");
+    console.error("❌ Lỗi gửi form:", error);
+    alert("❌ Lỗi lưu địa chỉ.");
   }
 }
-
-
 
 onMounted(() => {
   loadProvinces();
 });
-
-
-
-
 
 </script>
 
@@ -270,6 +230,7 @@ onMounted(() => {
   border: 1px solid #000;
   transition: 0.3s ease;
 }
+
 .address-form-btn:hover {
   background-color: #fff;
   color: #000;
@@ -293,10 +254,12 @@ onMounted(() => {
   cursor: pointer;
   position: relative;
 }
+
 .address-form-checkbox:checked {
   background-color: #999;
   border-color: #999;
 }
+
 .address-form-checkbox:checked::after {
   content: "";
   position: absolute;
@@ -311,6 +274,7 @@ onMounted(() => {
 
 /* Responsive */
 @media (max-width: 576px) {
+
   .address-form-label,
   .address-form-input,
   .address-form-select,
