@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from "vue";
 import initHeader from "@/assets/js/header.js";
+import { RouterLink } from "vue-router";
 
 onMounted(() => {
   initHeader();
@@ -9,7 +10,7 @@ onMounted(() => {
 
 <template>
   <header>
-    <div class="bg-light">
+    <div class="" style="background-color: #ccffcc">
       <div
         class="container d-flex flex-column flex-md-row justify-content-between align-items-center py-2"
       >
@@ -31,7 +32,9 @@ onMounted(() => {
           <a href="/about" class="text-dark text-decoration-none me-3">Giới thiệu</a>
           <a href="/contact-us" class="text-dark text-decoration-none me-3">Liên hệ</a>
           <a href="/contact" class="text-dark text-decoration-none me-3">Chính sách</a>
-          <a href="/login" class="text-dark text-decoration-none me-3">Đăng nhập</a>
+          <router-link to="/login" class="text-dark text-decoration-none me-3"
+            >Đăng nhập</router-link
+          >
         </div>
       </div>
     </div>
@@ -291,7 +294,7 @@ onMounted(() => {
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
               >
-                <i class="bi bi-people fs-4"></i>
+                <i class="bi bi-person fs-4"></i>
               </a>
               <ul
                 class="dropdown-menu custom-dropdown shadow-sm border-0 rounded-3 mt-2"

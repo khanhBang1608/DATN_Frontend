@@ -98,9 +98,6 @@ export default {
       <!-- Form điền thông tin -->
       <div class="col-md-7 border-end bg-white px-4 py-3">
         <div class="checkout-form-container">
-          <div class="checkout-logo mt-5 mb-4">
-            <img src="@/assets/img/logo-brand.png" alt="AASTU Logo" style="height: 48px" />
-          </div>
           <nav class="checkout-breadcrumb mb-3">
             <a href="#" class="text-muted text-decoration-none">Giỏ hàng</a> &gt;
             <span class="text-muted">Thông tin giao hàng</span>

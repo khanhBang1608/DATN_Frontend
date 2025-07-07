@@ -29,7 +29,7 @@
  .footer-list-item a {
      display: inline-block;
      text-decoration: none;
-     color: #212529;
+     color: #fff;
      opacity: 0.85;
      transform: scale(1);
      transition: opacity 0.3s ease, transform 0.3s ease;
@@ -37,7 +37,7 @@
 
  .footer-list a:hover,
  .footer-list-item a:hover {
-     color: #000;
+     color: #ccc;
      opacity: 1;
      transform: scale(1.03);
      text-decoration: underline;
@@ -149,14 +149,14 @@
  .accordion-body .footer-link {
      display: inline-block;
      text-decoration: none;
-     color: #212529;
+   color: #fff !important;
      opacity: 0.85;
      transform: none;
      transition: none;
  }
 
  .accordion-body .footer-link:hover {
-     color: #212529;
+    color: #ccc !important;
      opacity: 0.85;
      transform: none;
      text-decoration: underline;
@@ -185,7 +185,7 @@
  }
 
  .footer-social-icon {
-     color: #212529;
+     color: #fff;
      transition: color 0.3s;
  }
 

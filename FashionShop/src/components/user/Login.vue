@@ -31,11 +31,11 @@ const login = async () => {
       // Lưu token và role
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("role", role);
-      document.cookie = `userRole=${role}; path=/`;
+      // document.cookie = `userRole=${role}; path=/`;
 
       // Điều hướng theo quyền
       if (role === 0) {
-        router.push("/admin");
+        router.push("/admin/dashboard");
       } else {
         router.push("/");
       }

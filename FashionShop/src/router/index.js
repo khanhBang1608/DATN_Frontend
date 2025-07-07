@@ -1,5 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import Dashboard from '@/views/DashboardView.vue'
+import Promotion from '@/views/PromotionView.vue'
+import Discount from '@/views/DiscountView.vue'
+import AdminLayout from '@/layouts/AdminLayout.vue'
+import Review from '@/views/ReviewView.vue'
+import Order from '@/views/OrderView.vue'
+import Category from '@/views/CategoryView.vue'
+import User from '@/views/UserView.vue'
+import Product from '@/views/admin/ProductView.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -18,12 +27,17 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: "/oauth2/success",
+      name: "Oauth2Success",
+      component: () => import("../views/Oauth2SuccessView.vue"),
+    },
+    {
       path: '/',
       name: 'index',
       component: HomeView,
     },
     {
-      path: '/user/product',
+      path: '/product',
       name: 'product',
       component: ProductView,
     },
@@ -43,7 +57,7 @@ const router = createRouter({
       component: OtpFormView,
     },
     {
-      path: '/order-management',
+      path: '/useruser/order-management',
       name: 'order-management',
       component: OrderManagementView,
     },
@@ -78,7 +92,7 @@ const router = createRouter({
       component: ChangePasswordView,
     },
     {
-      path: '/user/product-detail',
+      path: '/product-detail',
       name: 'product-detail',
       component: ProductDetailView,
     },
@@ -94,6 +108,52 @@ const router = createRouter({
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
+    },
+    {
+      path: '/admin',
+      component: AdminLayout,
+      children: [
+        {
+          path: 'dashboard',
+          name: 'Dashboard',
+          component: Dashboard,
+        },
+        {
+          path: 'discount',
+          name: 'Discount',
+          component: Discount,
+        },
+        {
+          path: 'promotion',
+          name: 'Promotion',
+          component: Promotion,
+        },
+            {
+          path: 'review',
+          name: 'Review',
+          component: Review,
+        },
+         {
+          path: 'product',
+          name: 'Product',
+          component: Product,
+        },
+        {
+          path: 'category',
+          name: 'Category',
+          component: Category,
+        },
+        {
+          path: 'order',
+          name: 'Order',
+          component: Order,
+        },
+           {
+          path: 'user',
+          name: 'User',
+          component: User,
+        }
+      ],
     },
   ],
 })
