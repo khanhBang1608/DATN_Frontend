@@ -1,6 +1,6 @@
 <script setup>
   import CategoryMain from '@/components/admin/categories/CategoryMain.vue';
-  import CategoryModal from '@/components/admin/categories/CategoryModal.vue';
+  // import CategoryModal from '@/components/admin/categories/CategoryModal.vue';
 </script>
 
 <template>
