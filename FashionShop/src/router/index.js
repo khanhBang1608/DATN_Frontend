@@ -37,7 +37,7 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/user/product',
+      path: '/product',
       name: 'product',
       component: ProductView,
     },
@@ -57,7 +57,7 @@ const router = createRouter({
       component: OtpFormView,
     },
     {
-      path: '/order-management',
+      path: '/useruser/order-management',
       name: 'order-management',
       component: OrderManagementView,
     },
@@ -92,7 +92,7 @@ const router = createRouter({
       component: ChangePasswordView,
     },
     {
-      path: '/user/product-detail',
+      path: '/product-detail',
       name: 'product-detail',
       component: ProductDetailView,
     },
