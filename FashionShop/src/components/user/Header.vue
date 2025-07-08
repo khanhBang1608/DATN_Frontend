@@ -10,7 +10,7 @@ onMounted(() => {
 
 <template>
   <header>
-    <div class="" style="background-color: #CCFFCC;">
+    <div class="" style="background-color: #ccffcc">
       <div
         class="container d-flex flex-column flex-md-row justify-content-between align-items-center py-2"
       >
@@ -32,7 +32,9 @@ onMounted(() => {
           <a href="/about" class="text-dark text-decoration-none me-3">Giới thiệu</a>
           <a href="/contact-us" class="text-dark text-decoration-none me-3">Liên hệ</a>
           <a href="/contact" class="text-dark text-decoration-none me-3">Chính sách</a>
-          <router-link to="/login" class="text-dark text-decoration-none me-3">Đăng nhập</router-link>
+          <router-link to="/login" class="text-dark text-decoration-none me-3"
+            >Đăng nhập</router-link
+          >
         </div>
       </div>
     </div>
