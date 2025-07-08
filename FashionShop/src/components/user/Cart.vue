@@ -2,54 +2,94 @@
   <div class="cart-container">
     <div class="custom-breadcrumb-wrapper">
       <nav class="custom-breadcrumb container">
-        <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
+        <router-link to="/" class="custom-breadcrumb-link">Trang chủ</router-link>
         <span class="custom-breadcrumb-separator">/</span>
-        <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
-          >Giỏ hàng (1)</a
-        >
+        <span class="custom-breadcrumb-link custom-breadcrumb-current">
+          Giỏ hàng ({{ cart.details.length }})
+        </span>
       </nav>
     </div>
     <div class="container mt-3 cart-page">
       <!-- Tiêu đề -->
       <div class="text-center">
         <div class="cart-title">Giỏ Hàng Của Bạn</div>
-        <div class="cart-subtitle">Có 1 sản phẩm trong giỏ hàng</div>
+        <div class="cart-subtitle">
+          Có {{ cart.details.length }} sản phẩm trong giỏ hàng
+        </div>
         <div class="cart-divider"></div>
       </div>
+
+
+
 
       <div class="row g-4">
         <!-- Cột trái: Danh sách sản phẩm -->
         <div class="col-md-8 cart-items">
-          <div class="d-flex p-3 cart-item">
+          <div v-if="cart.details.length === 0" class="text-center">
+            <p>Giỏ hàng trống</p>
+          </div>
+          <div
+            v-for="item in cart.details"
+            :key="item.cartDetailId"
+            class="d-flex p-3 cart-item"
+          >
             <!-- Ảnh -->
             <img
-              src="https://via.placeholder.com/100x140"
-              alt="Sản phẩm"
+              :src="item.imageUrl"
+              :alt="item.productName"
               class="me-3 cart-item-img"
             />
 
             <!-- Thông tin -->
             <div class="flex-grow-1">
-              <h5 class="mb-1">AA FLAG LOGO SWEATPANTS // BLACK</h5>
-              <p class="mb-1">760,000₫</p>
-              <p class="mb-2">Size: S</p>
+              <h5 class="mb-1">{{ item.productName }}</h5>
+              <p class="mb-1">{{ formatPrice(item.price) }}</p>
+              <p class="mb-1">Size: {{ item.size }}</p>
+              <p class="mb-2">Màu: {{ item.color }}</p>
 
               <!-- Số lượng -->
               <div class="input-group w-auto cart-quantity">
-                <button class="btn btn-outline-secondary">-</button>
+                <button
+                  class="btn btn-outline-secondary"
+                  @click="updateQuantity(item.cartDetailId, item.quantity - 1)"
+                  :disabled="item.quantity <= 1"
+                >
+                  -
+                </button>
                 <input
                   type="text"
                   class="form-control text-center"
-                  value="1"
+                  v-model.number="item.quantity"
                   style="max-width: 60px"
+                  readonly
                 />
-                <button class="btn btn-outline-secondary">+</button>
+                <button
+                  class="btn btn-outline-secondary"
+                  @click="updateQuantity(item.cartDetailId, item.quantity + 1)"
+                  :disabled="item.quantity >= item.stock"
+                >
+                  +
+                </button>
               </div>
             </div>
 
             <!-- Nút xóa -->
-            <span class="cart-remove-btn">&times;</span>
+            <span
+              class="cart-remove-btn"
+              @click="removeItem(item.cartDetailId)"
+            >
+              ×
+            </span>
           </div>
+
+          <!-- Nút xóa toàn bộ giỏ hàng -->
+          <button
+            v-if="cart.details.length > 0"
+            class="btn btn-danger mt-3"
+            @click="clearCart"
+          >
+            Xóa toàn bộ giỏ hàng
+          </button>
 
           <!-- Ghi chú -->
           <div class="mt-4 cart-note">
@@ -59,6 +99,7 @@
               id="note"
               rows="4"
               placeholder="Ghi chú"
+              v-model="orderNote"
             ></textarea>
           </div>
 
@@ -80,21 +121,25 @@
             <h5 class="fw-bold mb-3">Thông tin đơn hàng</h5>
             <div class="d-flex justify-content-between mb-3">
               <span>Tổng tiền:</span>
-              <span class="cart-total-price">760,000₫</span>
+              <span class="cart-total-price">{{ formatPrice(totalPrice) }}</span>
             </div>
             <p class="text-muted mb-4" style="font-size: 14px">
               Phí vận chuyển sẽ được tính ở trang thanh toán.<br />
               Bạn cũng có thể nhập mã giảm giá ở trang thanh toán.
             </p>
-            <button class="btn cart-checkout-btn w-100 py-2">
+            <button
+              class="btn cart-checkout-btn w-100 py-2"
+              @click="proceedToCheckout"
+              :disabled="cart.details.length === 0"
+            >
               <span>THANH TOÁN</span>
             </button>
 
             <div class="text-center mt-3">
-              <a href="#" class="cart-continue-link">
+              <router-link to="/" class="cart-continue-link">
                 <i class="bi bi-arrow-return-left custom-bold-icon"></i>
                 <span>Tiếp tục mua hàng</span>
-              </a>
+              </router-link>
             </div>
           </div>
         </div>
@@ -102,55 +147,232 @@
     </div>
   </div>
   <div class="container mt-3 mb-3">
-    <h4 class="text-center mt-4 fw-bold">SẢN PHẦM LIÊN QUAN</h4>
-    <div class="row g-3 mt-3">
-      <!-- Sản phẩm 1 -->
-      <div class="col-6 col-sm-6 col-md-4 col-lg-3">
-        <a href="#" class="product-link">
+    <h4 class="text-center mt-4 fw-bold">SẢN PHẨM LIÊN QUAN</h4>
+    <div v-if="loadingRelated" class="text-center">
+      <p>Đang tải sản phẩm liên quan...</p>
+    </div>
+    <div v-else-if="relatedProducts.length === 0" class="text-center">
+      <p>Không có sản phẩm liên quan</p>
+    </div>
+    <div v-else class="row g-3 mt-3">
+      <div
+        v-for="product in relatedProducts"
+        :key="product.id"
+        class="col-6 col-sm-6 col-md-4 col-lg-3"
+      >
+        <div class="product-link">
           <div class="product-item">
-            <span class="discount-badge">-25%</span>
+            <span class="discount-badge" v-if="product.discount">{{ product.discount }}%</span>
             <img
-              src="@/assets/img/slideshow_1.png"
+              :src="product.imageUrl"
               class="img-fluid img-default"
-              alt="Quần Dài Wash Xám"
+              :alt="product.name"
             />
             <img
-              src="@/assets/img/slideshow_1.png"
+              :src="product.imageHoverUrl"
               class="img-fluid img-hover"
-              alt="Quần Dài Wash Xám Hover"
+              :alt="`${product.name} Hover`"
             />
           </div>
-          <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
+          <div class="product-name">{{ product.name }}</div>
           <div>
-            <span class="discounted-price">630,000₫</span>
-            <span class="original-price">840,000₫</span>
+            <span class="discounted-price">{{ formatPrice(product.discountedPrice) }}</span>
+            <span class="original-price" v-if="product.originalPrice">
+              {{ formatPrice(product.originalPrice) }}
+            </span>
           </div>
-        </a>
-      </div>
-      <div class="col-6 col-sm-6 col-md-4 col-lg-3">
-        <a href="#" class="product-link">
-          <div class="product-item">
-            <span class="discount-badge">-25%</span>
-            <img
-              src="@/assets/img/slideshow_1.png"
-              class="img-fluid img-default"
-              alt="Quần Dài Wash Xám"
-            />
-            <img
-              src="@/assets/img/slideshow_1.png"
-              class="img-fluid img-hover"
-              alt="Quần Dài Wash Xám Hover"
-            />
-          </div>
-          <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
-          <div>
-            <span class="discounted-price">630,000₫</span>
-            <span class="original-price">840,000₫</span>
-          </div>
-        </a>
+          <button
+            class="btn btn-primary btn-sm mt-2"
+            @click="addToCart(product.id, 1)"
+          >
+            Thêm vào giỏ
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
+
+<script>
+import { getCart, addToCart, updateCartItem, removeCartItem, clearCart, getRelatedProducts } from '@/api/user/cartAPI';
+import { useToast } from 'vue-toastification';
+const toast = useToast();
+
+
+
+export default {
+
+  name: 'CartPage',
+  data() {
+    return {
+      cart: {
+        cartId: null,
+        userId: null,
+        details: [],
+      },
+      orderNote: '',
+      relatedProducts: [],
+      loading: false,
+      loadingRelated: false,
+      error: null,
+    };
+  },
+  computed: {
+    totalPrice() {
+      return this.cart.details.reduce((total, item) => total + item.price * item.quantity, 0);
+    },
+  },
+  methods: {
+    formatPrice(price) {
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+      }).format(price);
+    },
+   async fetchCart() {
+  this.error = null;
+  const toastId = toast.info('Đang tải giỏ hàng...', { timeout: false });
+  try {
+    const cartData = await getCart();
+    this.cart = {
+      ...cartData,
+      details: cartData.details.map(item => ({
+        ...item,
+        productName: item.productName || 'Sản phẩm',
+        imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
+        size: item.size || 'S',
+        color: item.color || 'Không xác định',
+        stock: item.stock || 0,
+      })),
+    };
+    toast.success('Tải giỏ hàng thành công!');
+  } catch (error) {
+    console.error('Error fetching cart:', error.message);
+    toast.error('Không thể tải giỏ hàng. Vui lòng đăng nhập lại.');
+    this.$router.push('/login');
+  } finally {
+    toast.dismiss(toastId);
+  }
+},
+
+    async fetchRelatedProducts() {
+      this.loadingRelated = true;
+      try {
+        this.relatedProducts = await getRelatedProducts();
+      } catch (error) {
+        console.error('Error fetching related products:', error.message);
+        this.relatedProducts = [];
+      } finally {
+        this.loadingRelated = false;
+      }
+    },
+    async addToCart(productVariantId, quantity) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const cartData = await addToCart(productVariantId, quantity);
+        this.cart = {
+          ...cartData,
+          details: cartData.details.map(item => ({
+            ...item,
+            productName: item.productName || 'Sản phẩm',
+            imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
+            size: item.size || 'S',
+            color: item.color || 'Không xác định',
+            stock: item.stock || 0,
+          })),
+        };
+      } catch (error) {
+        console.error('Error adding to cart:', error.message);
+        this.error = 'Thêm sản phẩm vào giỏ hàng thất bại.';
+      } finally {
+        this.loading = false;
+      }
+    },
+    async updateQuantity(cartDetailId, quantity) {
+      if (quantity < 1) return;
+      this.loading = true;
+      this.error = null;
+      try {
+        const cartData = await updateCartItem(cartDetailId, quantity);
+        this.cart = {
+          ...cartData,
+          details: cartData.details.map(item => ({
+            ...item,
+            productName: item.productName || 'Sản phẩm',
+            imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
+            size: item.size || 'S',
+            color: item.color || 'Không xác định',
+            stock: item.stock || 0,
+          })),
+        };
+      } catch (error) {
+        console.error('Error updating quantity:', error.message);
+        this.error = 'Cập nhật số lượng thất bại.';
+      } finally {
+        this.loading = false;
+      }
+    },
+    async removeItem(cartDetailId) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const cartData = await removeCartItem(cartDetailId);
+        this.cart = {
+          ...cartData,
+          details: cartData.details.map(item => ({
+            ...item,
+            productName: item.productName || 'Sản phẩm',
+            imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
+            size: item.size || 'S',
+            color: item.color || 'Không xác định',
+            stock: item.stock || 0,
+          })),
+        };
+      } catch (error) {
+        console.error('Error removing item:', error.message);
+        this.error = 'Xóa sản phẩm thất bại.';
+      } finally {
+        this.loading = false;
+      }
+    },
+    async clearCart() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const cartData = await clearCart();
+        this.cart = {
+          ...cartData,
+          details: cartData.details.map(item => ({
+            ...item,
+            productName: item.productName || 'Sản phẩm',
+            imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
+            size: item.size || 'S',
+            color: item.color || 'Không xác định',
+            stock: item.stock || 0,
+          })),
+        };
+      } catch (error) {
+        console.error('Error clearing cart:', error.message);
+        this.error = 'Xóa giỏ hàng thất bại.';
+      } finally {
+        this.loading = false;
+      }
+    },
+    proceedToCheckout() {
+      localStorage.setItem('orderNote', this.orderNote);
+      this.$router.push('/checkout');
+    },
+  },
+  mounted() {
+    if (!localStorage.getItem('token')) {
+      this.$router.push('/login');
+    } else {
+      this.fetchCart();
+      this.fetchRelatedProducts();
+    }
+  },
+};
+</script>
 
 <style src="@/assets/css/cart.css"></style>
