@@ -18,7 +18,7 @@
       </li>
       <li><i class="fas fa-headset fa-fw"></i><router-link to="/admin/order">Quản lí đơn</router-link></li>
       <li>
-        <i class="fas fa-users fa-fw"></i><a href="#" class="user-li">Người dùng</a>
+        <i class="fas fa-users fa-fw"></i><a href="/admin/user" class="user-li">Người dùng</a>
         <ul class="side-nav-dropdown">
           <li><router-link to="/admin/user">Danh sách người dùng</router-link></li>
           <li><a href="#">Quản lí quyền</a></li>
