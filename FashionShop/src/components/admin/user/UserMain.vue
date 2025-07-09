@@ -1,38 +1,4 @@
 <template>
-      <div class="card p-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">👤 Quản lý Tài khoản</h2>
-      </div>
-
-      <div class="table-responsive">
-        <table class="table table-hover align-middle text-light custom-table">
-          <thead class="table-dark">
-            <tr>
-              <th>Ảnh</th>
-              <th>Họ tên</th>
-              <th>Email</th>
-              <th>Vai trò</th>
-              <th>Trạng thái</th>
-              <th>Ngày tạo</th>
-              <th class="text-center">Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><img src="https://via.placeholder.com/50" alt="User"></td>
-              <td>Nguyễn Văn A</td>
-              <td>nva@example.com</td>
-              <td>Admin</td>
-              <td><span class="badge bg-success badge-status">Hoạt động</span></td>
-              <td>2025-06-01</td>
-              <td class="text-center">
-                <button class="btn btn-sm btn-warning  m-1">✏️ Sửa</button>
-              </td>
-            </tr>
-            <!-- Thêm dòng khác nếu cần -->
-          </tbody>
-        </table>
-      </div>
   <div class="card p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="mb-0">👤 Quản lý Tài khoản</h2>
@@ -52,6 +18,7 @@
       >
         <thead class="table-dark">
           <tr>
+            <th>STT</th>
             <th>Ảnh</th>
             <th>Họ tên</th>
             <th>Email</th>
@@ -61,7 +28,8 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in users" :key="user.id">
+          <tr v-for="(user, index) in users" :key="user.id">
+            <td>{{ index + 1 }}</td>
             <td>
               <img
                 :src="user.avatar || 'https://via.placeholder.com/50'"
@@ -118,8 +86,8 @@ const fetchUsers = async () => {
     users.value = res.data;
 
     // Chờ DOM render xong mới gắn DataTable
-    await nextTick();
-    $("#userTable").DataTable();
+    // await nextTick();
+    // $("#userTable").DataTable();
   } catch (err) {
     errorMessage.value =
       "Không thể tải danh sách người dùng: " + (err.response?.data || err.message);
