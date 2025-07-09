@@ -53,7 +53,7 @@ const login = async () => {
 
 <template>
   <div class="auth-container mt-3">
-    <h2 class="auth-title">Đăng Nhập / Tạo Tài Khoản</h2>
+    <h3 class="auth-title">Đăng Nhập / Tạo Tài Khoản</h3>
     <div class="row g-4 mt-2 mb-3">
       <!-- Đăng nhập -->
       <div class="col-md-6">
