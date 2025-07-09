@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/cart';
+const API_URL = 'http://localhost:8080/api/user/cart';
 const PRODUCT_API_URL = 'http://localhost:8080/api/products';
 
 const getAuthHeaders = () => {
