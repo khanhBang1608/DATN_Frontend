@@ -92,7 +92,7 @@ const router = createRouter({
       component: ChangePasswordView,
     },
     {
-      path: '/product-detail',
+      path: '/product-detail/:id',
       name: 'product-detail',
       component: ProductDetailView,
     },
