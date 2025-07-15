@@ -10,7 +10,6 @@
         + Thêm tài khoản
       </button> -->
     </div>
-
     <div class="table-responsive">
       <table
         id="userTable"
@@ -70,6 +69,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
 const token = localStorage.getItem("token");
 const users = ref([]);
@@ -84,13 +85,15 @@ const fetchUsers = async () => {
       withCredentials: true,
     });
     users.value = res.data;
-
-    // Chờ DOM render xong mới gắn DataTable
-    // await nextTick();
-    // $("#userTable").DataTable();
   } catch (err) {
-    errorMessage.value =
-      "Không thể tải danh sách người dùng: " + (err.response?.data || err.message);
+    const message = "Không thể tải danh sách người dùng: " + (err.response?.data || err.message);
+    errorMessage.value = message;
+
+    iziToast.error({
+      title: "Lỗi",
+      message,
+      position: "topRight",
+    });
   }
 };
 
@@ -98,17 +101,30 @@ const updateUserStatus = async (user) => {
   try {
     await axios.put(
       `http://localhost:8080/api/admin/users/update-status/${user.id}`,
-      { status: user.status }, // <-- gửi trong body
+      { status: user.status },
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json", // đảm bảo định dạng JSON
+          "Content-Type": "application/json",
         },
         withCredentials: true,
       }
     );
+
+    iziToast.success({
+      title: "Thành công",
+      message: "Cập nhật trạng thái người dùng thành công!",
+      position: "topRight",
+    });
+
+    await fetchUsers();
+
   } catch (err) {
-    alert("Cập nhật trạng thái thất bại: " + (err.response?.data || err.message));
+    iziToast.error({
+      title: "Lỗi",
+      message: "Cập nhật trạng thái thất bại: " + (err.response?.data || err.message),
+      position: "topRight",
+    });
   }
 };
 
@@ -126,3 +142,4 @@ const formatDate = (dateStr) => {
 
 onMounted(fetchUsers);
 </script>
+
