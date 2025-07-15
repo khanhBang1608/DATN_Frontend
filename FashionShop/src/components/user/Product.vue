@@ -1,7 +1,7 @@
 <script setup>
-import { onMounted, ref, nextTick } from 'vue';
-import { setupFilterSidebar } from '@/assets/js/product';
-import { getAllProducts } from '@/api/ProductClient';
+import { onMounted, ref, nextTick } from "vue";
+import { setupFilterSidebar } from "@/assets/js/product";
+import { getAllProducts } from "@/api/ProductClient";
 
 const products = ref([]);
 
@@ -16,7 +16,7 @@ const fetchProducts = async () => {
     const res = await getAllProducts();
     products.value = res.data; // ✅ chỉ lấy phần data
   } catch (err) {
-    console.error('Lỗi khi tải sản phẩm:', err);
+    console.error("Lỗi khi tải sản phẩm:", err);
   }
 };
 </script>
@@ -467,73 +467,77 @@ const fetchProducts = async () => {
       </div>
     </div>
 
-  <div class="product-content-wrapper">
-    <div class="container mt-5">
-      <div class="row g-3">
-        <div
-          v-for="product in products"
-          :key="product.productId"
-          class="col-6 col-sm-6 col-md-4 col-lg-3"
-        >
-          <a :href="`/product/${product.productId}`" class="product-link">
-            <div class="product-item">
-              <!-- Nếu có biến thể và có discount -->
-              <span
-                class="discount-badge"
-                v-if="product.discount"
-              >-{{ product.discount }}%</span>
+    <div class="product-content-wrapper">
+      <div class="container mt-5">
+        <div class="row g-3">
+          <div
+            v-for="product in products"
+            :key="product.productId"
+            class="col-6 col-sm-6 col-md-4 col-lg-3"
+          >
+            <a :href="`product-detail/${product.productId}`" class="product-link">
+              <div class="product-item">
+                <!-- Nếu có biến thể và có discount -->
+                <span class="discount-badge" v-if="product.discount"
+                  >-{{ product.discount }}%</span
+                >
 
-              <!-- Ảnh mặc định -->
-              <img
-                :src="product.variants[0]?.imageName || '/default.jpg'"
-                class="img-fluid img-default"
-                :alt="product.name"
-              />
-              <img
-                :src="product.variants[0]?.imageName || '/default.jpg'"
-                class="img-fluid img-hover"
-                :alt="`${product.name} Hover`"
-              />
-            </div>
+                <!-- Ảnh mặc định -->
+                <img
+                  :src="product.variants[0]?.imageName || '/default.jpg'"
+                  class="img-fluid img-default"
+                  :alt="product.name"
+                />
+                <img
+                  :src="
+                    product.variants[0]?.imageName
+                      ? `http://localhost:8080/images/${product.variants[0].imageName}`
+                      : '/default.jpg'
+                  "
+                  class="img-fluid img-hover"
+                  :alt="`${product.name} Hover`"
+                />
+              </div>
 
-            <!-- Tên sản phẩm -->
-            <div class="product-name">{{ product.name }}</div>
+              <!-- Tên sản phẩm -->
+              <div class="product-name">{{ product.name }}</div>
 
-            <!-- Giá -->
-            <div>
-              <span class="discounted-price">
-                {{
-                  product.variants[0]?.price
-                    ? product.variants[0].price.toLocaleString()
-                    : '0'
-                }}₫
-              </span>
+              <!-- Giá -->
+              <div>
+                <span class="discounted-price">
+                  {{
+                    product.variants[0]?.price
+                      ? product.variants[0].price.toLocaleString()
+                      : "0"
+                  }}₫
+                </span>
 
-              <!-- Giá gạch nếu có originalPrice (tùy bạn tính thêm discount ở backend) -->
-              <span
-                class="original-price"
-                v-if="product.originalPrice && product.originalPrice > product.variants[0]?.price"
-              >
-                {{ product.originalPrice.toLocaleString() }}₫
-              </span>
-            </div>
-          </a>
+                <!-- Giá gạch nếu có originalPrice (tùy bạn tính thêm discount ở backend) -->
+                <span
+                  class="original-price"
+                  v-if="
+                    product.originalPrice &&
+                    product.originalPrice > product.variants[0]?.price
+                  "
+                >
+                  {{ product.originalPrice.toLocaleString() }}₫
+                </span>
+              </div>
+            </a>
+          </div>
         </div>
+
+        <!-- phân trang giả lập -->
+        <ul class="pagination mt-3">
+          <li class="pagination-item pagination-active">1</li>
+          <li class="pagination-item">2</li>
+          <li class="pagination-item">3</li>
+          <li class="pagination-item pagination-disabled">...</li>
+          <li class="pagination-item">15</li>
+          <li class="pagination-item pagination-arrow">&gt;</li>
+        </ul>
       </div>
-
-
-      <!-- phân trang giả lập -->
-      <ul class="pagination mt-3">
-        <li class="pagination-item pagination-active">1</li>
-        <li class="pagination-item">2</li>
-        <li class="pagination-item">3</li>
-        <li class="pagination-item pagination-disabled">...</li>
-        <li class="pagination-item">15</li>
-        <li class="pagination-item pagination-arrow">&gt;</li>
-      </ul>
     </div>
-  </div>
-
   </main>
 </template>
 <style src="./src/assets/css/product.css"></style>
