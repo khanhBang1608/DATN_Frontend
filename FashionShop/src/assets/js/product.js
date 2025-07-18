@@ -85,4 +85,11 @@ export function setupFilterSidebar() {
 
     lastScrollTop = Math.max(scrollTop, 0);
   });
+
+  // Tự đồng bộ lại nội dung khi resize từ desktop <-> mobile
+  window.addEventListener("resize", () => {
+    if (desktopSidebar && mobileSidebar) {
+      mobileSidebar.innerHTML = desktopSidebar.innerHTML;
+    }
+  });
 }
