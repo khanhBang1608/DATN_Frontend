@@ -23,10 +23,9 @@
               <td>Cần Thơ</td>
               <td>0909090909</td>
               <td>1,000,000 VND</td>
-              <td class="text-center">
-                <button class="btn btn-sm btn-warning  m-1">✏️</button>
-                <button class="btn btn-sm btn-danger  m-1" >🗑️</button>
-              </td>
+              <td>Đang giao</td>
+
+
             </tr>
           </tbody>
         </table>

@@ -1,11 +1,54 @@
 <script setup>
-import { onMounted, nextTick } from "vue";
+import { onMounted, ref, nextTick } from "vue";
 import { setupFilterSidebar } from "@/assets/js/product";
+import { getAllProducts } from "@/api/ProductClient";
+import promotionApi from "@/api/PromotionClien";
+
+const products = ref([]);
 
 onMounted(async () => {
-  await nextTick(); // Chờ DOM render hoàn tất
-  setupFilterSidebar(); // Sau đó mới gọi hàm xử lý DOM
+  await fetchProducts();
+  await nextTick();
+  setupFilterSidebar();
 });
+
+const fetchProducts = async () => {
+  try {
+    const res = await getAllProducts();
+    const activePromotions = await promotionApi.getActivePromotions();
+
+    const promotionMap = new Map();
+
+    // Gộp toàn bộ productPromotions (bạn có thể tối ưu về sau)
+    activePromotions.forEach(promo => {
+      promo.productPromotions.forEach(pp => {
+        promotionMap.set(pp.productVariantId, promo);
+      });
+    });
+
+    // Áp dụng khuyến mãi vào sản phẩm
+    res.data.forEach(product => {
+      const variant = product.variants?.[0]; // Chỉ xét biến thể đầu tiên
+      if (variant) {
+        const promo = promotionMap.get(variant.productVariantId);
+        if (promo) {
+          const discountAmount = promo.discountAmount || 0;
+          const originalPrice = variant.price;
+          const discountedPrice = originalPrice - discountAmount;
+
+          product.originalPrice = originalPrice;
+          product.variants[0].price = discountedPrice;
+          product.discount = Math.round((discountAmount / originalPrice) * 100); // %
+        }
+      }
+    });
+
+    products.value = res.data;
+
+  } catch (err) {
+    console.error("Lỗi khi tải sản phẩm:", err);
+  }
+};
 </script>
 
 <template>
@@ -457,52 +500,64 @@ onMounted(async () => {
     <div class="product-content-wrapper">
       <div class="container mt-5">
         <div class="row g-3">
-          <!-- Sản phẩm 1 -->
-          <div class="col-6 col-sm-6 col-md-4 col-lg-3">
-            <a href="#" class="product-link">
+          <div
+            v-for="product in products"
+            :key="product.productId"
+            class="col-6 col-sm-6 col-md-4 col-lg-3"
+          >
+            <a :href="`product-detail/${product.productId}`" class="product-link">
               <div class="product-item">
-                <span class="discount-badge">-25%</span>
+                <!-- Nếu có biến thể và có discount -->
+                <span class="discount-badge" v-if="product.discount"
+                  >-{{ product.discount }}%</span
+                >
+
+                <!-- Ảnh mặc định -->
                 <img
-                  src="@/assets/img/slideshow_1.png"
+                  :src="product.variants[0]?.imageName || '/default.jpg'"
                   class="img-fluid img-default"
-                  alt="Quần Dài Wash Xám"
+                  :alt="product.name"
                 />
                 <img
-                  src="@/assets/img/slideshow_1.png"
+                  :src="
+                    product.variants[0]?.imageName
+                      ? `http://localhost:8080/images/${product.variants[0].imageName}`
+                      : '/default.jpg'
+                  "
                   class="img-fluid img-hover"
-                  alt="Quần Dài Wash Xám Hover"
+                  :alt="`${product.name} Hover`"
                 />
               </div>
-              <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
+
+              <!-- Tên sản phẩm -->
+              <div class="product-name">{{ product.name }}</div>
+
+              <!-- Giá -->
               <div>
-                <span class="discounted-price">630,000₫</span>
-                <span class="original-price">840,000₫</span>
-              </div>
-            </a>
-          </div>
-          <div class="col-6 col-sm-6 col-md-4 col-lg-3">
-            <a href="#" class="product-link">
-              <div class="product-item">
-                <span class="discount-badge">-25%</span>
-                <img
-                  src="@/assets/img/slideshow_1.png"
-                  class="img-fluid img-default"
-                  alt="Quần Dài Wash Xám"
-                />
-                <img
-                  src="@/assets/img/slideshow_1.png"
-                  class="img-fluid img-hover"
-                  alt="Quần Dài Wash Xám Hover"
-                />
-              </div>
-              <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
-              <div>
-                <span class="discounted-price">630,000₫</span>
-                <span class="original-price">840,000₫</span>
+                <span class="discounted-price">
+                  {{
+                    product.variants[0]?.price
+                      ? product.variants[0].price.toLocaleString()
+                      : "0"
+                  }}₫
+                </span>
+
+                <!-- Giá gạch nếu có originalPrice (tùy bạn tính thêm discount ở backend) -->
+                <span
+                  class="original-price"
+                  v-if="
+                    product.originalPrice &&
+                    product.originalPrice > product.variants[0]?.price
+                  "
+                >
+                  {{ product.originalPrice.toLocaleString() }}₫
+                </span>
               </div>
             </a>
           </div>
         </div>
+
+        <!-- phân trang giả lập -->
         <ul class="pagination mt-3">
           <li class="pagination-item pagination-active">1</li>
           <li class="pagination-item">2</li>

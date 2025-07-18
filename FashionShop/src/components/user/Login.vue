@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
+import { forgotPasswordAPI } from "@/api/user/forgotPasswordAPI";
 
 const email = ref("");
 const password = ref("");
@@ -31,7 +32,7 @@ const login = async () => {
       // Lưu token và role
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("role", role);
-      document.cookie = `userRole=${role}; path=/`;
+      // document.cookie = `userRole=${role}; path=/`;
 
       // Điều hướng theo quyền
       if (role === 0) {
@@ -49,11 +50,34 @@ const login = async () => {
         : err.response?.data?.message || "Email hoặc mật khẩu không đúng";
   }
 };
+
+// Quên mật khẩu
+const {
+  email: forgotEmail,
+  otp,
+  newPassword,
+  confirmPassword,
+  step,
+  fieldErrors,
+  sendOtp,
+  verifyOtp,
+  resetPassword,
+  resetState,
+  isSendingOtp,
+  isVerifyingOtp,
+  isResettingPassword,
+} = forgotPasswordAPI();
+
+const forgotTitle = computed(() => {
+  if (step.value === 1) return "Quên mật khẩu?";
+  if (step.value === 2) return "Nhập mã OTP";
+  return "Đặt lại mật khẩu";
+});
 </script>
 
 <template>
   <div class="auth-container mt-3">
-    <h2 class="auth-title">Đăng Nhập / Tạo Tài Khoản</h2>
+    <h3 class="auth-title">Đăng Nhập / Tạo Tài Khoản</h3>
     <div class="row g-4 mt-2 mb-3">
       <!-- Đăng nhập -->
       <div class="col-md-6">
@@ -83,8 +107,10 @@ const login = async () => {
               class="auth-link"
               data-bs-toggle="modal"
               data-bs-target="#forgotPasswordModal"
-              >Quên Mật Khẩu?</a
             >
+              Quên Mật Khẩu?
+            </a>
+
             <!-- Thông báo lỗi -->
             <p v-if="error" class="text-danger mt-2">{{ error }}</p>
           </form>
@@ -94,7 +120,10 @@ const login = async () => {
           </div>
 
           <div class="d-grid gap-2 mt-3">
-            <a href="http://localhost:8080/oauth2/authorization/google" class="btn social-btn google-btn">
+            <a
+              href="http://localhost:8080/oauth2/authorization/google"
+              class="btn social-btn google-btn"
+            >
               <img
                 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
                 alt="Google"
@@ -105,7 +134,6 @@ const login = async () => {
           </div>
         </div>
       </div>
-
       <!-- Modal Quên Mật Khẩu -->
       <div
         class="modal fade"
@@ -118,26 +146,110 @@ const login = async () => {
           <div class="modal-content forgot-modal-content p-4">
             <div class="modal-header border-0 pb-0">
               <h5 class="modal-title forgot-title fw-bold" id="forgotPasswordModalLabel">
-                Quên mật khẩu?
+                {{ forgotTitle }}
               </h5>
               <button
                 type="button"
                 class="btn-close"
                 data-bs-dismiss="modal"
                 aria-label="Đóng"
+                @click="resetState"
               ></button>
             </div>
+
             <div class="modal-body forgot-body">
-              <p class="forgot-description mb-3">
-                Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn một liên kết để đặt
-                lại mật khẩu của bạn.
+              <!-- Bước 1: Nhập email -->
+              <p class="forgot-description mb-3" v-if="step === 1">
+                Nhập địa chỉ email của bạn và chúng tôi sẽ gửi cho bạn mã OTP để đặt lại
+                mật khẩu.
               </p>
-              <input
-                type="email"
-                class="form-control forgot-input mb-3"
-                placeholder="Địa chỉ email"
-              />
-              <a href="#" class="btn forgot-submit-btn w-100">Đặt Lại Mật Khẩu</a>
+              <div v-if="step === 1">
+                <input
+                  v-model="forgotEmail"
+                  type="email"
+                  class="form-control forgot-input mb-3"
+                  placeholder="Địa chỉ email"
+                />
+                <div v-if="fieldErrors.email" class="text-danger mb-2">
+                  {{ fieldErrors.email }}
+                </div>
+                <button
+                  class="btn forgot-submit-btn w-100"
+                  @click="sendOtp"
+                  :disabled="isSendingOtp"
+                >
+                  <span
+                    v-if="isSendingOtp"
+                    class="spinner-border spinner-border-sm me-2"
+                  ></span>
+                  {{ isSendingOtp ? "Đang gửi..." : "Gửi OTP" }}
+                </button>
+              </div>
+
+              <!-- Bước 2: Nhập OTP -->
+              <p class="forgot-description mb-3" v-if="step === 2">
+                Vui lòng nhập mã OTP đã được gửi đến địa chỉ email của bạn.
+              </p>
+              <div v-if="step === 2">
+                <input
+                  v-model="otp"
+                  type="text"
+                  class="form-control forgot-input mb-3"
+                  placeholder="Nhập mã OTP"
+                />
+                <div v-if="fieldErrors.otp" class="text-danger mb-2">
+                  {{ fieldErrors.otp }}
+                </div>
+                <button
+                  class="btn forgot-submit-btn w-100"
+                  @click="verifyOtp"
+                  :disabled="isVerifyingOtp"
+                >
+                  <span
+                    v-if="isVerifyingOtp"
+                    class="spinner-border spinner-border-sm me-2"
+                  ></span>
+                  {{ isVerifyingOtp ? "Đang xác minh..." : "Xác minh OTP" }}
+                </button>
+              </div>
+
+              <!-- Bước 3: Đặt lại mật khẩu -->
+              <p class="forgot-description mb-3" v-if="step === 3">
+                Nhập mật khẩu mới và xác nhận lại để hoàn tất việc đặt lại mật khẩu.
+              </p>
+              <div v-if="step === 3">
+                <input
+                  v-model="newPassword"
+                  type="password"
+                  class="form-control forgot-input mb-3"
+                  placeholder="Mật khẩu mới"
+                />
+                <div v-if="fieldErrors.newPassword" class="text-danger mb-2">
+                  {{ fieldErrors.newPassword }}
+                </div>
+
+                <input
+                  v-model="confirmPassword"
+                  type="password"
+                  class="form-control forgot-input mb-2"
+                  placeholder="Xác nhận mật khẩu"
+                />
+                <div v-if="fieldErrors.confirmPassword" class="text-danger mb-2">
+                  {{ fieldErrors.confirmPassword }}
+                </div>
+
+                <button
+                  class="btn forgot-submit-btn w-100"
+                  @click="resetPassword"
+                  :disabled="isResettingPassword"
+                >
+                  <span
+                    v-if="isResettingPassword"
+                    class="spinner-border spinner-border-sm me-2"
+                  ></span>
+                  {{ isResettingPassword ? "Đang đặt lại..." : "Đặt lại mật khẩu" }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
