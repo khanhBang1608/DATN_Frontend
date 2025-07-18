@@ -1,3 +1,6 @@
+@import './base.css';
+
+/* ======== Index-Main ======== */
 .scroll-wrapper {
   overflow: hidden;
   position: relative;
