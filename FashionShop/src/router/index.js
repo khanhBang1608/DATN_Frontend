@@ -57,7 +57,7 @@ const router = createRouter({
       component: OtpFormView,
     },
     {
-      path: '/useruser/order-management',
+      path: '/user/order-management',
       name: 'order-management',
       component: OrderManagementView,
     },
@@ -110,6 +110,20 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue'),
     },
     {
+      path: '/logout',
+      name: 'logout',
+      beforeEnter: (to, from, next) => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        // Nếu bạn lưu thêm thông tin user, có thể xoá thêm:
+        localStorage.removeItem("user");
+
+        // Chuyển hướng đến trang login
+        next('/login');
+      },
+    },
+
+    {
       path: '/admin',
       component: AdminLayout,
       children: [
@@ -157,5 +171,41 @@ const router = createRouter({
     },
   ],
 })
+//  Hàm lấy thông tin user từ localStorage
+function getUserRole() {
+  try {
+    const role = (localStorage.getItem("role"));
+    return role ?? null;
+  } catch { 
+    return null;
+  }
+}
 
+// Navigation Guard kiểm tra phân quyền truy cập
+router.beforeEach((to, from, next) => {
+  const role = getUserRole(); // 0 = Admin, 1 = User
+  const isLoggedIn = role !== null;
+
+  // Nếu chưa đăng nhập
+  if (!isLoggedIn) {
+    if (to.path.startsWith("/admin") || to.path.startsWith("/user")) {
+      return next("/login");
+    } else {
+      return next(); // Cho vào các trang public
+    }
+  }
+
+  // Nếu đã đăng nhập
+  if (role === 0 && to.path.startsWith("/user")) {
+    // Admin không được vào trang user
+    return next("/login");
+  }
+
+  if (role === 1 && to.path.startsWith("/admin")) {
+    // User không được vào trang admin
+    return next("/login");
+  }
+
+  return next(); // Các trường hợp còn lại được phép
+});
 export default router

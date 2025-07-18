@@ -2,6 +2,7 @@
 import { onMounted, ref, nextTick } from "vue";
 import { setupFilterSidebar } from "@/assets/js/product";
 import { getAllProducts } from "@/api/ProductClient";
+import promotionApi from "@/api/PromotionClien";
 
 const products = ref([]);
 
@@ -14,7 +15,36 @@ onMounted(async () => {
 const fetchProducts = async () => {
   try {
     const res = await getAllProducts();
-    products.value = res.data; // ✅ chỉ lấy phần data
+    const activePromotions = await promotionApi.getActivePromotions();
+
+    const promotionMap = new Map();
+
+    // Gộp toàn bộ productPromotions (bạn có thể tối ưu về sau)
+    activePromotions.forEach(promo => {
+      promo.productPromotions.forEach(pp => {
+        promotionMap.set(pp.productVariantId, promo);
+      });
+    });
+
+    // Áp dụng khuyến mãi vào sản phẩm
+    res.data.forEach(product => {
+      const variant = product.variants?.[0]; // Chỉ xét biến thể đầu tiên
+      if (variant) {
+        const promo = promotionMap.get(variant.productVariantId);
+        if (promo) {
+          const discountAmount = promo.discountAmount || 0;
+          const originalPrice = variant.price;
+          const discountedPrice = originalPrice - discountAmount;
+
+          product.originalPrice = originalPrice;
+          product.variants[0].price = discountedPrice;
+          product.discount = Math.round((discountAmount / originalPrice) * 100); // %
+        }
+      }
+    });
+
+    products.value = res.data;
+
   } catch (err) {
     console.error("Lỗi khi tải sản phẩm:", err);
   }
