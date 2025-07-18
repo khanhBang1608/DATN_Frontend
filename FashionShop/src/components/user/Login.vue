@@ -27,6 +27,7 @@ const login = async () => {
 
     if (response.data && response.data.user) {
       const user = response.data.user;
+      console.log(user)
       const role = user.role; // 0 = admin, 1 = user
 
       // Lưu token và role
