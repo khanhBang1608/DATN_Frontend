@@ -81,6 +81,4 @@ onMounted(() => {
     </div>
   </header>
 </template>
-
-
-
+<style src="./src/assets/css/header.css"></style>
