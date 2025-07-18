@@ -1,185 +1,82 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
-import Swiper from "swiper/bundle";
-import "swiper/css";
-import "swiper/css/navigation";
-import "swiper/css/pagination";
-import "swiper/css/effect-fade";
-
-const imageSources = [
-  new URL("@/assets/img/slideshow_1.png", import.meta.url).href,
-  new URL("@/assets/img/slideshow_1.png", import.meta.url).href,
-  new URL("@/assets/img/slideshow_1.png", import.meta.url).href,
-  new URL("@/assets/img/slideshow_1.png", import.meta.url).href,
-];
-
-const currentIndex = ref(0);
-const isManualScroll = ref(false);
-const mobileSwiperInitialized = ref(false);
-
-const thumbnailList = ref(null);
-const largeImagesContainer = ref(null);
-const scrollArea = ref(null);
-const galleryModal = ref(null);
-const swiperWrapper = ref(null);
-const mobileSwiperWrapper = ref(null);
+import { ref, computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { getProductDetail } from "@/api/ProductClient";
+import ReviewComponent from "@/components/user/Review.vue";
 
 
-let mySwiper = null;
-let mobileSwiper = null;
-let scrollTimeout;
+const route = useRoute();
+const product = ref({ variants: [] });
+const selectedColorId = ref(null);
+const selectedSizeId = ref(null);
 
-function scrollToImage(index) {
-  const largeImages = largeImagesContainer.value.querySelectorAll("img");
-  const thumbnails = thumbnailList.value.querySelectorAll("img");
-  largeImages[index].scrollIntoView({ behavior: "smooth", block: "start" });
-  thumbnails.forEach((thumb, i) => {
-    thumb.classList.toggle("active", i === index);
-  });
-  currentIndex.value = index;
-  setTimeout(() => (isManualScroll.value = false), 500);
-}
+const displayedPrice = computed(() => {
+  if (!product.value.variants || product.value.variants.length === 0) return 0;
 
-function openCurrentGallery() {
-  openGallery(currentIndex.value);
-}
-
-function openGallery(startIndex) {
-  if (!swiperWrapper.value || !galleryModal.value) return;
-
-  swiperWrapper.value.innerHTML = "";
-  imageSources.forEach((src) => {
-    const slide = document.createElement("div");
-    slide.className = "swiper-slide";
-    slide.innerHTML = `<img src="${src}" />`;
-    swiperWrapper.value.appendChild(slide);
-  });
-
-  galleryModal.value.style.display = "flex";
-
-  nextTick(() => {
-    if (mySwiper) mySwiper.destroy(true, true);
-    mySwiper = new Swiper(".pd-modal-swiper", {
-      initialSlide: startIndex,
-      loop: true,
-      navigation: {
-        nextEl: ".pd-modal-swiper-next",
-        prevEl: ".pd-modal-swiper-prev",
-      },
-      pagination: {
-        el: ".pd-modal-swiper-pagination",
-        clickable: true,
-      },
-    });
-  });
-}
-
-function closeGallery(e) {
-  if (
-    e.target === galleryModal.value ||
-    e.target.classList.contains("pd-modal-close-btn")
-  ) {
-    galleryModal.value.style.display = "none";
+  // Nếu đã chọn cả màu và kích thước
+  if (selectedColorId.value && selectedSizeId.value) {
+    const match = product.value.variants.find(
+      (v) => v.colorId === selectedColorId.value && v.sizeId === selectedSizeId.value
+    );
+    return match ? match.price : "Không có giá";
   }
-}
 
-function initMobileSwiper() {
-const wrapper = mobileSwiperWrapper.value;
-  if (!wrapper) return;
-  wrapper.innerHTML = "";
+  // Nếu chưa chọn → lấy giá nhỏ nhất
+  const prices = product.value.variants.map((v) => v.price);
+  return Math.min(...prices);
+});
 
-  imageSources.forEach((src) => {
-    const slide = document.createElement("div");
-    slide.className = "swiper-slide";
-    slide.innerHTML = `<img src="${src}" class="img-fluid" />`;
-    wrapper.appendChild(slide);
-  });
+onMounted(async () => {
+  try {
+    const id = route.params.id;
+    const res = await getProductDetail(id);
+    product.value = res.data;
+  } catch (error) {
+    console.error("Lỗi khi tải sản phẩm:", error);
+  }
+});
 
-  mobileSwiper = new Swiper(".pd-mobile-swiper-core", {
-    loop: true,
-    pagination: {
-      el: ".pd-mobile-swiper-pagination",
-      clickable: true,
-    },
-  });
-}
-
-function swiperSlidePrev() {
-  if (mobileSwiper) mobileSwiper.slidePrev();
-}
-
-function swiperSlideNext() {
-  if (mobileSwiper) mobileSwiper.slideNext();
-}
-
-onMounted(() => {
-  imageSources.forEach((src, index) => {
-    const thumb = document.createElement("img");
-    thumb.src = src;
-    thumb.loading = "lazy";
-    if (index === 0) thumb.classList.add("active");
-    thumb.onclick = () => {
-      isManualScroll.value = true;
-      scrollToImage(index);
-    };
-    thumbnailList.value.appendChild(thumb);
-
-    const zoomContainer = document.createElement("div");
-    zoomContainer.className = "product-detail-zoom-container";
-    const largeImg = document.createElement("img");
-    largeImg.src = src;
-    largeImg.loading = "lazy";
-    largeImg.id = "img" + index;
-    zoomContainer.appendChild(largeImg);
-    largeImagesContainer.value.appendChild(zoomContainer);
-  });
-
-  scrollArea.value.addEventListener("scroll", () => {
-    if (isManualScroll.value) return;
-    clearTimeout(scrollTimeout);
-    scrollTimeout = setTimeout(() => {
-      const areaTop = scrollArea.value.getBoundingClientRect().top;
-      let minDiff = Infinity;
-      let activeIndex = 0;
-
-      const largeImages = largeImagesContainer.value.querySelectorAll("img");
-      largeImages.forEach((img, i) => {
-        const diff = Math.abs(img.getBoundingClientRect().top - areaTop);
-        if (diff < minDiff) {
-          minDiff = diff;
-          activeIndex = i;
-        }
-      });
-
-      const thumbnails = thumbnailList.value.querySelectorAll("img");
-      thumbnails.forEach((thumb, i) => {
-        thumb.classList.toggle("active", i === activeIndex);
-      });
-      currentIndex.value = activeIndex;
-    }, 100);
-  });
-
-  setTimeout(() => {
-    scrollToImage(0);
-    if (window.innerWidth <= 768) {
-      initMobileSwiper();
-      mobileSwiperInitialized.value = true;
+// Tạo danh sách màu sắc duy nhất
+const uniqueColors = computed(() => {
+  const seen = new Set();
+  return product.value.variants.filter((v) => {
+    if (!seen.has(v.colorId)) {
+      seen.add(v.colorId);
+      return true;
     }
-  }, 100);
-
-  window.addEventListener("resize", () => {
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile && !mobileSwiperInitialized.value) {
-      initMobileSwiper();
-      mobileSwiperInitialized.value = true;
-    }
+    return false;
   });
 });
 
-onBeforeUnmount(() => {
-  if (mySwiper) mySwiper.destroy();
-  if (mobileSwiper) mobileSwiper.destroy();
+// Tạo danh sách kích thước duy nhất
+const uniqueSizes = computed(() => {
+  const seen = new Set();
+  return product.value.variants.filter((v) => {
+    if (!seen.has(v.sizeId)) {
+      seen.add(v.sizeId);
+      return true;
+    }
+    return false;
+  });
 });
+
+// Hàm chuyển tên màu thành mã màu (tùy chỉnh theo màu của bạn)
+function getColorHex(colorName) {
+  const map = {
+    Đen: "#000000",
+    Trắng: "#ffffff",
+    Đỏ: "#ff0000",
+    Vàng: "#ffff00",
+    Xanh: "#008000",
+    // Thêm nếu cần
+  };
+  return map[colorName] || "#cccccc";
+}
+
+// Lấy đường dẫn ảnh
+function getImageUrl(imageName) {
+  return imageName ? `http://localhost:8080/images/${imageName}` : "/default.jpg";
+}
 </script>
 <template>
   <div class="custom-breadcrumb-wrapper">
@@ -231,28 +128,30 @@ onBeforeUnmount(() => {
 
       <div class="col-md-6">
         <h4 class="fw-bold fs-4">
-          Túi hobo hình thang Atwood Crinkle-Effect Chain-Embellished -
-          <span class="text-muted">Noir</span>
+          <span class="text-muted"> {{ product.name }}</span>
         </h4>
-        <div class="price fs-4 fw-bold mb-4">2,150,000 ₫</div>
+        <div class="price fs-4 fw-bold mb-4">
+          {{
+            typeof displayedPrice === "number"
+              ? displayedPrice.toLocaleString() + "₫"
+              : displayedPrice
+          }}
+        </div>
+
         <hr class="product-detail-divider" />
 
         <!-- Màu sắc -->
         <div class="mb-4">
-          <div class="fw-semibold mb-1">
-            Màu sắc: <span class="text-muted">Noir</span>
-          </div>
-          <div class="d-flex gap-2 py-2">
-            <div class="product-detail-color" style="background-color: #f3f1df"></div>
-            <div class="product-detail-color" style="background-color: #e2e2e2"></div>
-            <div class="product-detail-color" style="background-color: #ddd"></div>
-            <div class="product-detail-color" style="background-color: #9b6a5d"></div>
-            <div class="product-detail-color" style="background-color: #000"></div>
-            <div
-              class="product-detail-color border border-dark"
-              style="background-color: #1e1e1e"
-            ></div>
-          </div>
+          <div class="fw-semibold mb-1">Màu sắc: <span class="text-muted"></span></div>
+          <div
+            v-for="(color, index) in uniqueColors"
+            :key="index"
+            class="product-detail-color"
+            :title="color.colorName"
+            :style="{ backgroundColor: getColorHex(color.colorName) }"
+            @click="selectedColorId = color.colorId"
+          ></div>
+
           <hr class="product-detail-divider" />
         </div>
 
@@ -262,10 +161,14 @@ onBeforeUnmount(() => {
             <span class="fw-semibold">Kích thước: <strong>S</strong></span>
           </div>
           <div class="d-flex gap-2 py-2">
-            <div class="product-detail-size">S</div>
-            <div class="product-detail-size">M</div>
-            <div class="product-detail-size">L</div>
-            <div class="product-detail-size">XL</div>
+            <div
+              v-for="(size, index) in uniqueSizes"
+              :key="index"
+              class="product-detail-size"
+              @click="selectedSizeId = size.sizeId"
+            >
+              {{ size.sizeName }}
+            </div>
           </div>
           <hr class="product-detail-divider" />
         </div>
@@ -319,30 +222,15 @@ onBeforeUnmount(() => {
             <div class="tab-pane fade show active" id="desc" role="tabpanel">
               <h5 class="fw-bold mb-2">Mô tả</h5>
               <p>
-                Dòng sản phẩm Nỉ chân cua (French Terry) mang đến sự thoải mái và thoáng
-                khí:
+                {{ product.description }}
               </p>
-              <ul>
-                <li><strong>Chất liệu:</strong> Nỉ chân cua - French Terry</li>
-                <li>
-                  <strong>Thành phần:</strong> 100% Cotton, đảm bảo độ mềm mại và thấm hút
-                  tốt.
-                </li>
-                <li>
-                  <strong>Đặc điểm nổi bật:</strong> Bề mặt ngoài là cotton mịn như hoodie
-                  nỉ bông, nhưng mặt trong là sợi vải dạng vòng lặp (loop), không có phần
-                  bông xù, giúp thoáng khí hơn và phù hợp cho nhiều điều kiện thời tiết.
-                </li>
-                <li><strong>Xuất xứ:</strong> Sản xuất tại Việt Nam.</li>
-              </ul>
             </div>
             <div class="tab-pane fade" id="size" role="tabpanel">
               <div class="text-center">
                 <img
-                  src="https://file.hstatic.net/200000321981/file/sc_flag_sweat_short_grande.jpg"
-                  alt="Bảng kích thước nỉ chân cua"
-                  class="img-fluid rounded border"
-                  style="max-width: 80%"
+                  :src="getImageUrl(product.variants[0]?.imageName)"
+                  class="img-fluid img-hover"
+                  :alt="product.name + ' Hover'"
                 />
               </div>
             </div>
@@ -352,80 +240,8 @@ onBeforeUnmount(() => {
     </div>
 
     <!-- ĐÁNH GIÁ KHÁCH HÀNG -->
-    <div class="review-section container my-5">
-      <h5 class="review-title text-center mb-3">Khách hàng đánh giá (0)</h5>
+<ReviewComponent :productId="product.productId" />
 
-      <!-- Tổng sao -->
-      <div class="review-rating-summary text-center mb-3">
-        <div class="review-stars fs-3 text-warning">
-          <i class="bi bi-star"></i>
-          <i class="bi bi-star"></i>
-          <i class="bi bi-star"></i>
-          <i class="bi bi-star"></i>
-          <i class="bi bi-star"></i>
-        </div>
-        <div class="review-average fw-semibold mt-2">Chưa có đánh giá</div>
-      </div>
-
-      <!-- Tabs sao -->
-      <!-- Tabs sao: Trên desktop dùng tab, mobile dùng dropdown -->
-      <div class="review-tabs mb-3">
-        <!-- Dropdown cho mobile -->
-        <div class="d-md-none mb-2">
-          <select class="form-select" id="reviewFilterSelect">
-            <option value="all">Tất cả (0)</option>
-            <option value="5">5 sao (0)</option>
-            <option value="4">4 sao (0)</option>
-            <option value="3">3 sao (0)</option>
-            <option value="2">2 sao (0)</option>
-            <option value="1">1 sao (0)</option>
-          </select>
-        </div>
-
-        <!-- Tabs cho desktop -->
-        <ul class="nav nav-tabs justify-content-center d-none d-md-flex" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active review-tab" data-value="all">
-              Tất cả (0)
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="5">5 sao (0)</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="4">4 sao (0)</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="3">3 sao (0)</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="2">2 sao (0)</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="1">1 sao (0)</button>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Bộ lọc -->
-      <div
-        class="review-filters d-flex justify-content-between align-items-center mb-3 px-2"
-      >
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="filterImage" />
-          <label class="form-check-label" for="filterImage">Có hình ảnh</label>
-        </div>
-        <div class="review-login text-end">
-          <a href="#" class="text-decoration-underline text-dark">Đăng nhập</a>
-          để viết đánh giá của bạn
-        </div>
-      </div>
-      <hr class="review-divider" />
-      <!-- Danh sách đánh giá -->
-      <div class="review-empty text-center text-muted py-5">
-        <p class="mb-0">Chưa có đánh giá của khách hàng</p>
-      </div>
-    </div>
   </div>
 
   <div class="container mb-3">

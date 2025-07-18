@@ -1,9 +1,9 @@
 <template>
   <div class="custom-breadcrumb-wrapper">
     <nav class="custom-breadcrumb container">
-      <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
+      <a href="/" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
+      <a href="/user/profile" class="custom-breadcrumb-link custom-breadcrumb-current"
         >Thông tin của tôi</a
       >
     </nav>
@@ -26,8 +26,8 @@
             id="fullname"
             v-model.trim="fullName"
             placeholder="Nhập họ và tên"
-            required
           />
+          <div v-if="validationError" class="text-danger mt-1">{{ validationError }}</div>
         </div>
 
         <div class="mb-3">
@@ -47,10 +47,17 @@
             @change="previewAvatar"
           />
         </div>
-
         <div class="text-center mt-4">
-          <button type="submit" class="btn profile-btn-save">
-            Lưu Thông Tin Chi Tiết
+          <button type="submit" class="btn profile-btn-save" :disabled="isLoading">
+            <span v-if="isLoading">
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Đang lưu...
+            </span>
+            <span v-else> Lưu Thông Tin Chi Tiết </span>
           </button>
         </div>
       </form>
@@ -61,18 +68,19 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
-// --- Token ---
 const token = localStorage.getItem("token");
 
-// --- Data ---
 const fullName = ref("");
 const email = ref("");
 const avatarPreview = ref("https://via.placeholder.com/120");
 const avatarFile = ref(null);
-const errorMessage = ref("");
+const isLoading = ref(false);
+const validationError = ref("");
+const generalError = ref("");  
 
-// --- Fetch profile ---
 const fetchProfile = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/user/profile", {
@@ -84,11 +92,14 @@ const fetchProfile = async () => {
     email.value = data.email;
     avatarPreview.value = data.avatar || avatarPreview.value;
   } catch (err) {
-    errorMessage.value = "Lỗi khi tải thông tin: " + (err.response?.data || err.message);
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không thể tải thông tin người dùng",
+      position: "topRight",
+    });
   }
 };
 
-// --- Preview avatar ---
 const previewAvatar = (e) => {
   const file = e.target.files[0];
   if (file) {
@@ -101,12 +112,17 @@ const previewAvatar = (e) => {
   }
 };
 
-// --- Update profile ---
 const updateProfile = async () => {
+  isLoading.value = true;
+  validationError.value = "";
+  generalError.value = "";
+
   try {
     const formData = new FormData();
     formData.append("fullName", fullName.value);
-    if (avatarFile.value) formData.append("avatar", avatarFile.value);
+    if (avatarFile.value) {
+      formData.append("avatar", avatarFile.value);
+    }
 
     const res = await axios.put(
       "http://localhost:8080/api/user/profile/update",
@@ -121,9 +137,35 @@ const updateProfile = async () => {
     );
 
     avatarPreview.value = res.data.avatar || avatarPreview.value;
-    alert("Cập nhật thành công");
+
+    iziToast.success({
+      title: "Thành công",
+      message: "Thông tin đã được cập nhật",
+      position: "topRight",
+    });
   } catch (err) {
-    errorMessage.value = "Cập nhật thất bại: " + (err.response?.data || err.message);
+    if (err.response && typeof err.response.data === "string") {
+      const message = err.response.data;
+
+      if (message.includes("Họ tên") || message.includes("Họ và tên")) {
+        validationError.value = message;
+      } else {
+        generalError.value = message;
+        iziToast.error({
+          title: "Lỗi",
+          message: message,
+          position: "topRight",
+        });
+      }
+    } else {
+      iziToast.error({
+        title: "Lỗi",
+        message: "Cập nhật thất bại",
+        position: "topRight",
+      });
+    }
+  } finally {
+    isLoading.value = false;
   }
 };
 
