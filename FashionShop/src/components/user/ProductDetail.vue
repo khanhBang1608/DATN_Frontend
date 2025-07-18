@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { getProductDetail } from "@/api/ProductClient";
+import ReviewComponent from "@/components/user/Review.vue";
+
 
 const route = useRoute();
 const product = ref({ variants: [] });
@@ -238,80 +240,8 @@ function getImageUrl(imageName) {
     </div>
 
     <!-- ĐÁNH GIÁ KHÁCH HÀNG -->
-    <div class="review-section container my-5">
-      <h5 class="review-title text-center mb-3">Khách hàng đánh giá (0)</h5>
+<ReviewComponent :productId="product.productId" />
 
-      <!-- Tổng sao -->
-      <div class="review-rating-summary text-center mb-3">
-        <div class="review-stars fs-3 text-warning">
-          <i class="bi bi-star"></i>
-          <i class="bi bi-star"></i>
-          <i class="bi bi-star"></i>
-          <i class="bi bi-star"></i>
-          <i class="bi bi-star"></i>
-        </div>
-        <div class="review-average fw-semibold mt-2">Chưa có đánh giá</div>
-      </div>
-
-      <!-- Tabs sao -->
-      <!-- Tabs sao: Trên desktop dùng tab, mobile dùng dropdown -->
-      <div class="review-tabs mb-3">
-        <!-- Dropdown cho mobile -->
-        <div class="d-md-none mb-2">
-          <select class="form-select" id="reviewFilterSelect">
-            <option value="all">Tất cả (0)</option>
-            <option value="5">5 sao (0)</option>
-            <option value="4">4 sao (0)</option>
-            <option value="3">3 sao (0)</option>
-            <option value="2">2 sao (0)</option>
-            <option value="1">1 sao (0)</option>
-          </select>
-        </div>
-
-        <!-- Tabs cho desktop -->
-        <ul class="nav nav-tabs justify-content-center d-none d-md-flex" role="tablist">
-          <li class="nav-item" role="presentation">
-            <button class="nav-link active review-tab" data-value="all">
-              Tất cả (0)
-            </button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="5">5 sao (0)</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="4">4 sao (0)</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="3">3 sao (0)</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="2">2 sao (0)</button>
-          </li>
-          <li class="nav-item" role="presentation">
-            <button class="nav-link review-tab" data-value="1">1 sao (0)</button>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Bộ lọc -->
-      <div
-        class="review-filters d-flex justify-content-between align-items-center mb-3 px-2"
-      >
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="filterImage" />
-          <label class="form-check-label" for="filterImage">Có hình ảnh</label>
-        </div>
-        <div class="review-login text-end">
-          <a href="#" class="text-decoration-underline text-dark">Đăng nhập</a>
-          để viết đánh giá của bạn
-        </div>
-      </div>
-      <hr class="review-divider" />
-      <!-- Danh sách đánh giá -->
-      <div class="review-empty text-center text-muted py-5">
-        <p class="mb-0">Chưa có đánh giá của khách hàng</p>
-      </div>
-    </div>
   </div>
 
   <div class="container mb-3">
