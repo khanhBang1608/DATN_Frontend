@@ -22,6 +22,7 @@ import ProfileView from '../views/ProfileView.vue'
 import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
+import DiscountForm from '../components/admin/discounts/DiscountModal.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -101,6 +102,17 @@ const router = createRouter({
       name: 'address',
       component: AddressView,
     },
+    {
+      path: '/admin/discount/form',
+      name: 'discountForm',
+      component: DiscountForm, 
+    },
+    {
+      path: '/admin/discount/form/:id',
+      name: 'discountFormUpdate',
+      component: DiscountForm,
+    },
+
     {
       path: '/about',
       name: 'about',
