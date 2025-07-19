@@ -9,6 +9,7 @@ import Order from '@/views/OrderView.vue'
 import Category from '@/views/CategoryView.vue'
 import User from '@/views/UserView.vue'
 import Product from '@/views/admin/ProductView.vue'
+import ProductFrom from '@/views/admin/ProductFormViews.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -153,6 +154,11 @@ const router = createRouter({
           component: Product,
         },
         {
+          path: 'product/form',
+          name: 'ProductFrom',
+          component: ProductFrom,
+        },
+        {
           path: 'category',
           name: 'Category',
           component: Category,
@@ -176,7 +182,7 @@ function getUserRole() {
   try {
     const role = (localStorage.getItem("role"));
     return role ?? null;
-  } catch { 
+  } catch {
     return null;
   }
 }
