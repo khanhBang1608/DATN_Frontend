@@ -1,11 +1,45 @@
 <script setup>
-import { onMounted } from "vue";
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import initHeader from "@/assets/js/header.js";
-import { RouterLink } from "vue-router";
+
+const isLoggedIn = ref(false);
+const router = useRouter();
+
+function checkLoginStatus() {
+  isLoggedIn.value = !!localStorage.getItem("token");
+}
+
+function goToLogin() {
+  router.push("/login");
+}
+
+// Reset toàn bộ scroll của trang
+function resetScrollLock() {
+  document.body.classList.remove('modal-open');
+  document.body.style.overflow = 'auto';
+  document.body.style.paddingRight = '0';
+}
+
+function goToLogout() {
+  localStorage.removeItem("token");
+  isLoggedIn.value = false;
+
+  resetScrollLock();
+  router.push("/login");
+}
+
 
 onMounted(() => {
   initHeader();
+  checkLoginStatus();
+
+  // Theo dõi thay đổi localStorage từ tab khác
+  window.addEventListener("storage", () => {
+    checkLoginStatus();
+  });
 });
+
 </script>
 
 <template>
@@ -32,9 +66,9 @@ onMounted(() => {
           <a href="/about" class="text-dark text-decoration-none me-3">Giới thiệu</a>
           <a href="/contact-us" class="text-dark text-decoration-none me-3">Liên hệ</a>
           <a href="/contact" class="text-dark text-decoration-none me-3">Chính sách</a>
-          <router-link to="/login" class="text-dark text-decoration-none me-3"
+          <!-- <router-link to="/login" class="text-dark text-decoration-none me-3"
             >Đăng nhập</router-link
-          >
+          > -->
         </div>
       </div>
     </div>
@@ -200,9 +234,18 @@ onMounted(() => {
               <div class="custom-bottom-section">
                 <ul class="navbar-nav">
                   <li class="nav-item">
-                    <a class="custom-nav-link" href="#"
-                      ><i class="bi bi-person fs-5"></i> ĐĂNG NHẬP</a
+                    <a
+                      class="custom-nav-link"
+                      href="#"
+                      v-if="!isLoggedIn"
+                      @click.prevent="goToLogin"
                     >
+                      <i class="bi bi-person fs-5"></i> ĐĂNG NHẬP
+                    </a>
+
+                    <a class="custom-nav-link" href="#" v-else @click.prevent="goToLogout">
+                      <i class="bi bi-box-arrow-right fs-5"></i> ĐĂNG XUẤT
+                    </a>
                   </li>
                   <li class="nav-item">
                     <div class="custom-sidebar-footer py-2 mt-3">
@@ -286,7 +329,8 @@ onMounted(() => {
           </ul>
 
           <div class="d-none d-lg-flex align-items-center">
-            <div class="dropdown">
+            <!-- Nếu ĐÃ đăng nhập: Hiện dropdown -->
+            <div v-if="isLoggedIn" class="dropdown">
               <a
                 href="#"
                 class="text-dark text-decoration-none mx-2"
@@ -317,12 +361,12 @@ onMounted(() => {
                   >
                 </li>
                 <li>
-                  <a class="dropdown-item" href="/user/order/history"
+                  <a class="dropdown-item" href="/user/order-management"
                     ><i class="bi bi-box-seam me-2"></i> Đơn hàng</a
                   >
                 </li>
                 <li>
-                  <a class="dropdown-item" href="/user/Review/history"
+                  <a class="dropdown-item" href="/user/review-history"
                     ><i class="bi bi-star-fill me-2"></i> Lịch sử đánh giá</a
                   >
                 </li>
@@ -335,6 +379,17 @@ onMounted(() => {
                   >
                 </li>
               </ul>
+            </div>
+
+            <!-- Nếu CHƯA đăng nhập: Chuyển đến login -->
+            <div v-else>
+              <a
+                href="#"
+                class="text-dark text-decoration-none mx-2"
+                @click.prevent="goToLogin"
+              >
+                <i class="bi bi-person fs-4"></i>
+              </a>
             </div>
 
             <a href="/user/cart" class="text-dark text-decoration-none mx-2">
@@ -355,6 +410,5 @@ onMounted(() => {
     </nav>
   </header>
 </template>
-
 
 <style src="./src/assets/css/header.css"></style>
