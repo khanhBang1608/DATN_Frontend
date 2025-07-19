@@ -1,40 +1,56 @@
 // src/api/ProductClient.js
-import axios from 'axios'
+import axios from 'axios';
 
-const API_BASE = 'http://localhost:8080/api/admin'
+const API_BASE = 'http://localhost:8080/api/admin';
 
-const axiosInstance = axios.create({
-  baseURL: API_BASE,
-  headers: {
-    'Content-Type': 'application/json'
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error("⚠️ Chưa đăng nhập. Không tìm thấy token.");
   }
-})
+  return {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
+};
 
-// Lấy token mỗi lần gọi (đề phòng token thay đổi)
-axiosInstance.interceptors.request.use(config => {
-  const token = localStorage.getItem("token")
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-
+// ✅ Lấy tất cả sản phẩm
 export const getAllProducts = async () => {
-  const res = await axiosInstance.get('/products')
-  return res.data
-}
+  const res = await axios.get(`${API_BASE}/products`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};
 
+export const getProductById = async (id) => {
+  const res = await axios.get(`${API_BASE}/products/${id}`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};
+
+
+// ✅ Lấy biến thể theo sản phẩm
 export const getProductVariants = async (productId) => {
-  const res = await axiosInstance.get(`/products/${productId}/variants`)
-  return res.data
-}
+  const res = await axios.get(`${API_BASE}/products/${productId}/variants`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};
 
+// ✅ Thêm sản phẩm
 export const addProduct = async (product) => {
-  const res = await axiosInstance.post('/products', product)
-  return res.data
-}
+  const res = await axios.post(`${API_BASE}/products`, product, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};
 
+// ✅ Cập nhật sản phẩm
 export const updateProduct = async (id, product) => {
-  const res = await axiosInstance.put(`/products/${id}`, product)
-  return res.data
-}
+  const res = await axios.put(`${API_BASE}/products/${id}`, product, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};

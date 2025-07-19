@@ -1,74 +1,75 @@
 <script setup>
 import { ref, onMounted } from "vue"
 import { useRoute } from "vue-router"
-import axios from "axios"
+import { getAllCategories } from "@/api/adminCategoryAPI"
+import { addProduct, updateProduct, getProductById } from "@/api/adminProductAPI"
 
 const route = useRoute()
-const isEditing = ref(false) // true nếu đang sửa
-const productId = ref(route.query.id) // lấy id từ URL
+const isEditing = ref(false)
+const productId = ref(route.query.id)
 
 const product = ref({
   name: '',
   description: '',
-  status: 1,
+  status: true,
   categoryId: ''
 })
 
 const categories = ref([])
 const errorMessage = ref('')
-const token = localStorage.getItem('token') // Lấy token từ localStorage
 
 const fetchCategories = async () => {
   try {
-    const response = await axios.get('http://localhost:8080/api/admin/category', {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    categories.value = response.data
-    console.log('Danh sách danh mục:', categories.value)
+    categories.value = await getAllCategories()
   } catch (error) {
-    console.error('Lỗi khi tải danh mục:', error)
-    errorMessage.value = 'Lỗi khi tải danh mục'
+    errorMessage.value = '❌ Không tải được danh mục'
+    console.error(error)
   }
 }
 
+const fetchProductDetail = async () => {
+  try {
+    product.value = await getProductById(productId.value)
+  } catch (error) {
+    console.error("❌ Lỗi khi tải sản phẩm:", error)
+  }
+}
 
-// Nếu có ID => đang sửa => load dữ liệu từ API
 onMounted(async () => {
-  await fetchCategories() // luôn fetch danh mục khi mounted
+  await fetchCategories()
 
   if (productId.value) {
     isEditing.value = true
-    try {
-      const response = await axios.get(`http://localhost:8080/api/admin/products/${productId.value}`)
-      product.value = response.data
-    } catch (error) {
-      console.error("Lỗi khi tải sản phẩm:", error)
-    }
+    await fetchProductDetail()
   }
 })
-
-// Hàm xử lý khi submit form
 const handleSubmit = async () => {
   try {
+    console.log("➡️ Dữ liệu gửi đi:", product.value)
+
+    if (!product.value.name?.trim() || !product.value.categoryId) {
+      alert("❗ Vui lòng nhập đầy đủ thông tin")
+      return
+    }
+
     if (isEditing.value) {
-      // gọi API cập nhật sản phẩm
-      await axios.put(`http://localhost:8080/api/admin/products/${productId.value}`, product.value)
+      await updateProduct(productId.value, product.value)
       alert('✅ Cập nhật sản phẩm thành công')
     } else {
-      // gọi API thêm sản phẩm
-      await axios.post(`http://localhost:8080/api/admin/products`, product.value)
+      await addProduct(product.value)
       alert('✅ Thêm sản phẩm thành công')
     }
   } catch (error) {
-    console.error("Lỗi khi gửi dữ liệu:", error)
-    alert("❌ Đã xảy ra lỗi")
+    // 👉 Kiểm tra và hiển thị lỗi trả về từ backend
+    if (error.response && error.response.data) {
+      alert(`❌ ${error.response.data}`)
+    } else {
+      alert("❌ Lỗi không xác định khi lưu sản phẩm.")
+    }
+    console.error(error)
   }
 }
 </script>
-
-
 <template>
   <div class="container mt-4">
     <div class="card">
@@ -82,13 +83,13 @@ const handleSubmit = async () => {
           <!-- Tên sản phẩm -->
           <div class="col-md-6">
             <label class="form-label">Tên sản phẩm</label>
-            <input type="text" class="form-control" v-model="product.name" required />
+            <input type="text" class="form-control" v-model="product.name"/>
           </div>
 
           <!-- Danh mục -->
           <div class="col-md-6">
             <label class="form-label">Danh mục</label>
-            <select class="form-select" v-model="product.categoryId" required>
+            <select class="form-select" v-model="product.categoryId" >
               <option value="">-- Chọn danh mục --</option>
               <optgroup
                 v-for="cat in categories"
@@ -115,8 +116,8 @@ const handleSubmit = async () => {
           <div class="col-md-6">
             <label class="form-label">Trạng thái</label>
             <select class="form-select" v-model="product.status">
-              <option value="1">Đang bán</option>
-              <option value="0">Ngừng bán</option>
+              <option :value="true">Đang bán</option>
+              <option :value="false">Ngừng bán</option>
             </select>
           </div>
         </div>
