@@ -288,6 +288,8 @@ const fetchProducts = async () => {
                   type="button"
                   data-bs-toggle="collapse"
                   data-bs-target="#collapseColor"
+                  aria-expanded="false"
+                  aria-controls="collapseColor"
                 >
                   <i class="bi bi-chevron-down me-2 rotate-icon"></i>
                   MÀU SẮC
