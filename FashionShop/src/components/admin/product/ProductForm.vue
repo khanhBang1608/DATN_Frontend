@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted } from "vue"
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router" // ✅ Thêm dòng này
 import { getAllCategories } from "@/api/adminCategoryAPI"
 import { addProduct, updateProduct, getProductById } from "@/api/adminProductAPI"
 
 const route = useRoute()
+const router = useRouter() // ✅ Khởi tạo router
+
 const isEditing = ref(false)
 const productId = ref(route.query.id)
 
@@ -43,6 +45,8 @@ onMounted(async () => {
     await fetchProductDetail()
   }
 })
+
+// ✅ Hàm xử lý submit
 const handleSubmit = async () => {
   try {
     console.log("➡️ Dữ liệu gửi đi:", product.value)
@@ -59,8 +63,10 @@ const handleSubmit = async () => {
       await addProduct(product.value)
       alert('✅ Thêm sản phẩm thành công')
     }
+
+    // ✅ Quay lại trang danh sách sản phẩm
+    router.push('/admin/product')
   } catch (error) {
-    // 👉 Kiểm tra và hiển thị lỗi trả về từ backend
     if (error.response && error.response.data) {
       alert(`❌ ${error.response.data}`)
     } else {
@@ -69,7 +75,13 @@ const handleSubmit = async () => {
     console.error(error)
   }
 }
+
+// ✅ Hàm xử lý nút Hủy
+const handleCancel = () => {
+  router.push('/admin/product')
+}
 </script>
+
 <template>
   <div class="container mt-4">
     <div class="card">
@@ -122,11 +134,15 @@ const handleSubmit = async () => {
           </div>
         </div>
 
-        <div class="card-footer d-flex justify-content-end">
+        <div class="card-footer d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-secondary" @click="handleCancel">
+            Hủy
+          </button>
           <button type="submit" class="btn btn-success">
             {{ isEditing ? 'Cập nhật' : 'Lưu' }}
           </button>
         </div>
+
       </form>
     </div>
   </div>

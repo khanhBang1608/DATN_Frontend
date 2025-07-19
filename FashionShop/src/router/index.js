@@ -24,6 +24,9 @@ import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
 import DiscountForm from '../components/admin/discounts/DiscountModal.vue'
+import ProductVariantList from '@/components/admin/product/ProductVariantList.vue'
+import AddProductVariant from '@/components/admin/product/AddProductVariant.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -112,6 +115,22 @@ const router = createRouter({
       path: '/admin/discount/form/:id',
       name: 'discountFormUpdate',
       component: DiscountForm,
+    },
+
+    {
+      path: '/admin/product/:id/variants',
+      name:'ProductVariantList',
+      component: ProductVariantList
+    },
+    {
+      path: '/admin/product/:id/variants/add',
+      name:'AddProductVariant',
+      component: AddProductVariant
+    },
+    {
+      path: '/admin/product/:id/variants/add/:variantId',
+      name:'AddProductVariantUpdate',
+      component: AddProductVariant
     },
 
     {
