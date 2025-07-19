@@ -4,6 +4,9 @@
   box-sizing: border-box;
 }
 
+body {
+    font-family: 'Roboto', sans-serif;
+}
 :root {
   --color-primary: #007bff;
   --color-primary-dark: #0056b3;
