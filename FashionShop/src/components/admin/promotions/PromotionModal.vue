@@ -1,109 +1,179 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import { useRoute, useRouter } from 'vue-router'
+
+const router = useRouter()
+const route = useRoute()
+
+const token = localStorage.getItem("token")
+
+const form = ref({
+  code: '',
+  description: '',
+  discountAmount: 0,
+  startDate: '',
+  endDate: '',
+  status: 1
+})
+
+const isEdit = ref(false)
+const id = route.params.id
+
+const fetchPromotionById = async () => {
+  try {
+    const res = await axios.get(`http://localhost:8080/api/admin/promotions/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    const promo = res.data
+    // Format lại ngày về dạng yyyy-MM-dd để hiển thị đúng trong input type="date"
+    form.value = {
+      ...promo,
+      startDate: promo.startDate?.split('T')[0],
+      endDate: promo.endDate?.split('T')[0]
+    }
+    isEdit.value = true
+  } catch (err) {
+    alert('Không tìm thấy khuyến mãi cần sửa.')
+    router.push('/admin/promotion')
+  }
+}
+
+const createPromotion = async () => {
+  if (form.value.startDate > form.value.endDate) {
+    alert('Ngày bắt đầu phải trước ngày kết thúc!')
+    return
+  }
+
+  try {
+    const res = await axios.post('http://localhost:8080/api/admin/promotions', form.value, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    alert('Thêm khuyến mãi thành công')
+    router.push('/admin/promotion')
+  } catch (err) {
+    alert('Lỗi khi thêm khuyến mãi')
+  }
+}
+
+const updatePromotion = async () => {
+  if (form.value.startDate > form.value.endDate) {
+    alert('Ngày bắt đầu phải trước ngày kết thúc!')
+    return
+  }
+
+  try {
+    const res = await axios.put(`http://localhost:8080/api/admin/promotions/${id}`, form.value, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+    alert('Cập nhật khuyến mãi thành công')
+    router.push('/admin/promotion')
+  } catch (err) {
+    alert('Lỗi khi cập nhật khuyến mãi')
+  }
+}
+
+const cancelEdit = () => {
+  router.push('/admin/promotion')
+}
+
+onMounted(() => {
+  if (id) {
+    fetchPromotionById()
+  }
+})
+</script>
+
+
 <template>
-  <!-- Modal Thêm Khuyến mãi -->
-  <div class="modal fade" id="promotionModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <form class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">➕ Thêm Khuyến mãi</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Tên chương trình</label>
-            <input type="text" class="form-control" name="name"/>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Phần trăm giảm</label>
-            <input type="number" class="form-control" name="discount_percent"/>
-          </div>
-          <div class="col-md-12">
-            <label class="form-label">Mô tả</label>
-            <textarea class="form-control" rows="3" name="description"></textarea>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Ngày bắt đầu</label>
-            <input type="date" class="form-control" name="start_date"/>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Ngày kết thúc</label>
-            <input type="date" class="form-control" name="end_date"/>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-success btn-icon">
-            <i class="bi bi-check-circle"></i> Lưu
-          </button>
-          <button type="button" class="btn btn-secondary btn-icon" data-bs-dismiss="modal">
-            <i class="bi bi-x-circle"></i> Hủy
-          </button>
-        </div>
-      </form>
+  <div class="card p-4 mb-4 shadow rounded bg-white">
+    <!-- Tiêu đề -->
+    <div class="card-header bg-dark text-white rounded mb-3">
+      <h5 class="mb-0">
+        {{ isEdit ? '✏️ Sửa Khuyến mãi' : '➕ Thêm Khuyến mãi' }}
+      </h5>
     </div>
-  </div>
 
-  <!-- Modal Sửa -->
-  <div class="modal fade" id="editPromotionModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <form class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">✏️ Sửa Khuyến mãi</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- Form -->
+    <form @submit.prevent="isEdit ? updatePromotion() : createPromotion()">
+      <div class="row g-3">
+        <!-- Tên chương trình -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-dark">Tên chương trình</label>
+          <input
+            type="text"
+            class="form-control"
+            v-model="form.code"
+            required
+          />
         </div>
-        <div class="modal-body row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Tên chương trình</label>
-            <input type="text" class="form-control" name="edit_name" value="Khuyến mãi Hè 2025"/>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Phần trăm giảm</label>
-            <input type="number" class="form-control" name="edit_discount_percent" value="15"/>
-          </div>
-          <div class="col-md-12">
-            <label class="form-label">Mô tả</label>
-            <textarea class="form-control" rows="3" name="edit_description">Giảm giá mùa hè toàn bộ sản phẩm.</textarea>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Ngày bắt đầu</label>
-            <input type="date" class="form-control" name="edit_start_date" value="2025-06-01"/>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label">Ngày kết thúc</label>
-            <input type="date" class="form-control" name="edit_end_date" value="2025-06-30"/>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="submit" class="btn btn-primary btn-icon">
-            <i class="bi bi-pencil-square"></i> Cập nhật
-          </button>
-          <button type="button" class="btn btn-secondary btn-icon" data-bs-dismiss="modal">
-            <i class="bi bi-x-circle"></i> Hủy
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
 
-  <!-- Modal Xóa -->
-  <div class="modal fade" id="confirmDeletePromotionModal" tabindex="-1">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Xác nhận xóa</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <!-- Giảm giá -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-dark">Giảm giá (VNĐ)</label>
+          <input
+            type="number"
+            class="form-control"
+            v-model="form.discountAmount"
+            required
+            min="1000"
+          />
         </div>
-        <div class="modal-body">
-          Bạn có chắc chắn muốn xóa chương trình <strong>Khuyến mãi Hè 2025</strong> không?
+
+        <!-- Mô tả -->
+        <div class="col-md-12">
+          <label class="form-label fw-semibold text-dark">Mô tả</label>
+          <textarea
+            class="form-control"
+            rows="3"
+            v-model="form.description"
+          ></textarea>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-danger">
-            <i class="bi bi-trash"></i> Xóa
+
+        <!-- Ngày bắt đầu -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-dark">Ngày bắt đầu</label>
+          <input
+            type="date"
+            class="form-control"
+            v-model="form.startDate"
+            required
+          />
+        </div>
+
+        <!-- Ngày kết thúc -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-dark">Ngày kết thúc</label>
+          <input
+            type="date"
+            class="form-control"
+            v-model="form.endDate"
+            required
+          />
+        </div>
+
+        <!-- Nút hành động -->
+        <div class="col-12 d-flex justify-content-end gap-2">
+          <button type="submit" class="btn btn-success">
+            <i class="bi" :class="isEdit ? 'bi-pencil-square' : 'bi-check-circle'"></i>
+            {{ isEdit ? 'Cập nhật' : 'Lưu' }}
           </button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <button type="button" class="btn btn-outline-secondary" @click="cancelEdit">
             <i class="bi bi-x-circle"></i> Hủy
           </button>
         </div>
       </div>
-    </div>
+    </form>
   </div>
-
 </template>
+
+
+

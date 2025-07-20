@@ -27,6 +27,7 @@ import AddressView from '../views/AddressView.vue'
 import DiscountForm from '../components/admin/discounts/DiscountModal.vue'
 import ProductVariantList from '@/components/admin/product/ProductVariantList.vue'
 import AddProductVariant from '@/components/admin/product/AddProductVariant.vue'
+import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
 
 
 const router = createRouter({
@@ -137,6 +138,16 @@ const router = createRouter({
       path: '/admin/product/:id/variants/add/:variantId',
       name:'AddProductVariantUpdate',
       component: AddProductVariant
+    },
+    {
+      path: '/admin/promotion/form',
+      name:'PromotionForm',
+      component: PromotionModal
+    },
+    {
+      path: '/admin/promotion/form/:id',
+      name: 'EditPromotion',
+      component: PromotionModal
     },
 
     {
