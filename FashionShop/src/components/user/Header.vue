@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import initHeader from "@/assets/js/header.js";
 
@@ -14,33 +14,46 @@ function goToLogin() {
   router.push("/login");
 }
 
-// Reset toàn bộ scroll của trang
 function resetScrollLock() {
-  document.body.classList.remove('modal-open');
-  document.body.style.overflow = 'auto';
-  document.body.style.paddingRight = '0';
+  document.body.classList.remove("modal-open");
+  document.body.style.overflow = "auto";
+  document.body.style.paddingRight = "0";
 }
 
 function goToLogout() {
   localStorage.removeItem("token");
   isLoggedIn.value = false;
-
   resetScrollLock();
   router.push("/login");
 }
 
+function handleUserIconClick() {
+  if (isLoggedIn.value) {
+    router.push("/user/account");
+  } else {
+    router.push("/login");
+  }
+}
 
 onMounted(() => {
-  initHeader();
   checkLoginStatus();
 
-  // Theo dõi thay đổi localStorage từ tab khác
+  // Không gọi initHeader ở đây vì chưa chắc DOM render đủ (khi isLoggedIn)
   window.addEventListener("storage", () => {
     checkLoginStatus();
   });
 });
 
+// Gọi lại initHeader sau khi DOM render do v-if isLoggedIn
+watch(isLoggedIn, (newVal) => {
+  if (newVal) {
+    nextTick(() => {
+      initHeader();
+    });
+  }
+});
 </script>
+
 
 <template>
   <header>
@@ -79,54 +92,14 @@ onMounted(() => {
           <img src="@/assets/img/logo-brand.png" alt="Nike Logo" height="45" />
         </a>
         <div class="d-flex align-items-center d-lg-none">
+          <!-- Khi ĐÃ đăng nhập -->
           <a
             href="#"
+            @click.prevent="handleUserIconClick"
             class="text-dark text-decoration-none mx-2"
-            id="mobileUserDropdownToggle"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
           >
             <i class="bi bi-people fs-4"></i>
           </a>
-          <ul
-            class="dropdown-menu dropdown-menu-end"
-            aria-labelledby="mobileUserDropdownToggle"
-            style="min-width: 200px"
-          >
-            <li>
-              <a class="dropdown-item" href="/user/profile"
-                ><i class="bi bi-pencil-square me-2"></i> Cập nhật thông tin</a
-              >
-            </li>
-            <li>
-              <a class="dropdown-item" href="/user/change-password"
-                ><i class="bi bi-key me-2"></i> Đổi mật khẩu</a
-              >
-            </li>
-            <li>
-              <a class="dropdown-item" href="/user/address"
-                ><i class="bi bi-geo-alt-fill me-2"></i> Địa chỉ của tôi</a
-              >
-            </li>
-            <li>
-              <a class="dropdown-item" href="/user/order-history"
-                ><i class="bi bi-box-seam me-2"></i> Đơn hàng</a
-              >
-            </li>
-            <li>
-              <a class="dropdown-item" href="/user/Review/history"
-                ><i class="bi bi-star-fill me-2"></i> Lịch sử đánh giá</a
-              >
-            </li>
-            <li>
-              <hr class="dropdown-divider" />
-            </li>
-            <li>
-              <a class="dropdown-item text-danger" href="/logout"
-                ><i class="bi bi-box-arrow-right me-2"></i> Đăng xuất</a
-              >
-            </li>
-          </ul>
 
           <a href="/user/cart" class="text-dark text-decoration-none mx-2">
             <i class="bi bi-heart fs-4"></i>
@@ -229,6 +202,23 @@ onMounted(() => {
                 <li class="nav-item">
                   <a class="custom-nav-link" href="#">CÂU CHUYỆN</a>
                 </li>
+
+                <li v-if="isLoggedIn" class="nav-item custom-has-dropdown">
+                  <a class="custom-nav-link custom-submenu-toggle" href="#">
+                    TỔNG QUAN TÀI KHOẢN <span class="float-end">></span>
+                  </a>
+                  <ul class="custom-submenu">
+                    <li>
+                      <a href="#" class="custom-back-btn">&lt; TỔNG QUAN TÀI KHOẢN</a>
+                    </li>
+                    <li><a href="/user/profile">THÔNG TIN CỦA TÔI</a></li>
+                    <li><a href="/user/change-password">ĐỔI MẬT KHẨU</a></li>
+                    <li><a href="/user/address">ĐỊA CHỈ ĐẶT HÀNG</a></li>
+                    <li><a href="#">ĐÁNH GIÁ CỦA TÔI</a></li>
+                    <li><a href="#">MUA HÀNG & TRẢ HÀNG</a></li>
+                    <li><a href="#">DANH SÁCH YÊU THÍCH</a></li>
+                  </ul>
+                </li>
               </ul>
 
               <div class="custom-bottom-section">
@@ -243,7 +233,12 @@ onMounted(() => {
                       <i class="bi bi-person fs-5"></i> ĐĂNG NHẬP
                     </a>
 
-                    <a class="custom-nav-link" href="#" v-else @click.prevent="goToLogout">
+                    <a
+                      class="custom-nav-link"
+                      href="#"
+                      v-else
+                      @click.prevent="goToLogout"
+                    >
                       <i class="bi bi-box-arrow-right fs-5"></i> ĐĂNG XUẤT
                     </a>
                   </li>
@@ -330,7 +325,7 @@ onMounted(() => {
 
           <div class="d-none d-lg-flex align-items-center">
             <!-- Nếu ĐÃ đăng nhập: Hiện dropdown -->
-            <div v-if="isLoggedIn" class="dropdown">
+            <!-- <div v-if="isLoggedIn" class="dropdown">
               <a
                 href="#"
                 class="text-dark text-decoration-none mx-2"
@@ -377,6 +372,35 @@ onMounted(() => {
                   <a class="dropdown-item text-danger" href="/logout"
                     ><i class="bi bi-box-arrow-right me-2"></i> Đăng xuất</a
                   >
+                </li>
+              </ul>
+            </div> -->
+
+            <div v-if="isLoggedIn" class="dropdown position-relative">
+              <a
+                href="#"
+                class="text-dark text-decoration-none mx-2"
+                id="desktopUserDropdownToggle"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <i class="bi bi-person fs-4"></i>
+              </a>
+
+              <ul
+                class="dropdown-menu header_login_menu_dropdown custom-dropdown shadow-sm border-0 rounded-3 header_login_menu_registered"
+                aria-labelledby="desktopUserDropdownToggle"
+              >
+                <li>
+                  <a class="dropdown-item" href="/user/account">Tổng quan tài khoản</a>
+                </li>
+                <li>
+                  <a class="dropdown-item" href="/user/order-management"
+                    >Mua hàng & Trả hàng</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item text-danger" href="/logout">Đăng xuất</a>
                 </li>
               </ul>
             </div>
