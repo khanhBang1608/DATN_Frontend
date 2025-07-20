@@ -22,6 +22,11 @@ onMounted(async () => {
   }
 })
 
+//chuyen trang khi bam vao nut bien the
+const goToVariantList = (productId) => {
+  router.push(`/admin/product/${productId}/variants`)
+}
+
 const goToAddForm = () => {
   router.push('/admin/product/form') // Trang thêm mới
 }
@@ -95,7 +100,8 @@ const formatDate = (dateStr) => {
             <td>{{ formatDate(product.dateCreated) }}</td>
             <td class="text-center">
                <button class="btn btn-sm btn-warning m-1" @click="goToEditForm(product.productId)">✏️ Sửa</button>
-              <button class="btn btn-sm btn-info m-1">📦 Biến thể</button>
+              <button class="btn btn-sm btn-info m-1" @click="goToVariantList(product.productId)">📦 Biến thể</button>
+
             </td>
           </tr>
         </tbody>
