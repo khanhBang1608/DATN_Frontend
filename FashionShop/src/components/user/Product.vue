@@ -19,32 +19,45 @@ const fetchProducts = async () => {
 
     const promotionMap = new Map();
 
-    // Gộp toàn bộ productPromotions (bạn có thể tối ưu về sau)
+    // Map các khuyến mãi theo productVariantId
     activePromotions.forEach(promo => {
       promo.productPromotions.forEach(pp => {
         promotionMap.set(pp.productVariantId, promo);
       });
     });
 
-    // Áp dụng khuyến mãi vào sản phẩm
+    // Duyệt từng sản phẩm
     res.data.forEach(product => {
-      const variant = product.variants?.[0]; // Chỉ xét biến thể đầu tiên
-      if (variant) {
-        const promo = promotionMap.get(variant.productVariantId);
-        if (promo) {
-          const discountAmount = promo.discountAmount || 0;
-          const originalPrice = variant.price;
-          const discountedPrice = originalPrice - discountAmount;
+      if (!product.variants || product.variants.length === 0) return;
 
-          product.originalPrice = originalPrice;
-          product.variants[0].price = discountedPrice;
-          product.discount = Math.round((discountAmount / originalPrice) * 100); // %
+      // Tìm biến thể có giá thấp nhất
+      let minVariant = product.variants[0];
+      product.variants.forEach(v => {
+        if (v.price < minVariant.price) {
+          minVariant = v;
         }
+      });
+
+      // Xử lý khuyến mãi nếu có
+      const promo = promotionMap.get(minVariant.productVariantId);
+      if (promo) {
+        const discountAmount = promo.discountAmount || 0;
+        const originalPrice = minVariant.price;
+        const discountedPrice = originalPrice - discountAmount;
+
+        product.originalPrice = originalPrice;
+        minVariant = {
+          ...minVariant,
+          price: discountedPrice
+        };
+        product.discount = Math.round((discountAmount / originalPrice) * 100);
       }
+
+      // Đặt biến thể có giá thấp nhất làm biến thể chính để hiển thị
+      product.variants = [minVariant, ...product.variants.filter(v => v !== minVariant)];
     });
 
     products.value = res.data;
-
   } catch (err) {
     console.error("Lỗi khi tải sản phẩm:", err);
   }
@@ -502,65 +515,69 @@ const fetchProducts = async () => {
     <div class="product-content-wrapper">
       <div class="container mt-5">
        <div class="row g-3">
-  <template
-    v-for="product in products"
-    :key="product.productId"
-  >
-    <div
-      v-if="product.variants && product.variants.length > 0"
-      class="col-6 col-sm-6 col-md-4 col-lg-3"
-    >
-      <a :href="`product-detail/${product.productId}`" class="product-link">
-        <div class="product-item">
-          <!-- Nếu có biến thể và có discount -->
-          <span class="discount-badge" v-if="product.discount">
-            -{{ product.discount }}%
-          </span>
+      <template
+        v-for="product in products"
+        :key="product.productId"
+      >
+        <div
+          v-if="product.variants && product.variants.length > 0"
+          class="col-6 col-sm-6 col-md-4 col-lg-3"
+        >
+          <a :href="`product-detail/${product.productId}`" class="product-link">
+            <div class="product-item">
+              <!-- Nếu có biến thể và có discount -->
+              <span class="discount-badge" v-if="product.discount">
+                -{{ product.discount }}%
+              </span>
 
-          <!-- Ảnh mặc định -->
-          <img
-            :src="product.variants[0]?.imageName || '/default.jpg'"
-            class="img-fluid img-default"
-            :alt="product.name"
-          />
-          <img
-            :src="
-              product.variants[0]?.imageName
-                ? `http://localhost:8080/images/${product.variants[0].imageName}`
-                : '/default.jpg'
-            "
-            class="img-fluid img-hover"
-            :alt="`${product.name} Hover`"
-          />
+              <!-- Ảnh mặc định -->
+              <img
+                :src="
+                  product.variants[0]?.imageName
+                    ? `http://localhost:8080/images/${product.variants[0].imageName}`
+                    : '/default.jpg'
+                "
+                class="img-fluid img-default"
+                :alt="`${product.name} Hover`"
+              />
+              <img
+                :src="
+                  product.variants[1]?.imageName
+                    ? `http://localhost:8080/images/${product.variants[1].imageName}`
+                    : '/default.jpg'
+                "
+                class="img-fluid img-hover"
+                :alt="`${product.name} Hover`"
+              />
+            </div>
+
+            <!-- Tên sản phẩm -->
+            <div class="product-name">{{ product.name }}</div>
+
+            <!-- Giá -->
+            <div>
+              <span class="discounted-price">
+                {{
+                  product.variants[0]?.price
+                    ? product.variants[0].price.toLocaleString()
+                    : "0"
+                }}₫
+              </span>
+
+              <!-- Giá gạch nếu có originalPrice -->
+              <span
+                class="original-price"
+                v-if="
+                  product.originalPrice &&
+                  product.originalPrice > product.variants[0]?.price
+                "
+              >
+                {{ product.originalPrice.toLocaleString() }}₫
+              </span>
+            </div>
+          </a>
         </div>
-
-        <!-- Tên sản phẩm -->
-        <div class="product-name">{{ product.name }}</div>
-
-        <!-- Giá -->
-        <div>
-          <span class="discounted-price">
-            {{
-              product.variants[0]?.price
-                ? product.variants[0].price.toLocaleString()
-                : "0"
-            }}₫
-          </span>
-
-          <!-- Giá gạch nếu có originalPrice -->
-          <span
-            class="original-price"
-            v-if="
-              product.originalPrice &&
-              product.originalPrice > product.variants[0]?.price
-            "
-          >
-            {{ product.originalPrice.toLocaleString() }}₫
-          </span>
-        </div>
-      </a>
-    </div>
-  </template>
+      </template>
 </div>
 
         <!-- phân trang giả lập -->
