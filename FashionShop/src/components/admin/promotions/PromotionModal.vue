@@ -14,7 +14,7 @@ const form = ref({
   discountAmount: 0,
   startDate: '',
   endDate: '',
-  status: 1
+  status: true
 })
 
 const isEdit = ref(false)

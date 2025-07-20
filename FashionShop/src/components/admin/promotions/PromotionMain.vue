@@ -85,7 +85,7 @@ onMounted(() => {
           <td>{{ formatDate(promo.endDate) }}</td>
           <td>
             <span :class="['badge', promo.status === 1 ? 'bg-success' : 'bg-secondary']">
-              {{ promo.status === 1 ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
+              {{ promo.status ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
             </span>
           </td>
           <td class="text-center">
