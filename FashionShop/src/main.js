@@ -19,7 +19,6 @@ import 'swiper/css/effect-fade';
 
 const app = createApp(App);
 app.use(router);
-app.mount('#app');
 app.use(Toast, {
   position: POSITION.TOP_CENTER,
   timeout: 2000,
@@ -28,3 +27,5 @@ app.use(Toast, {
   draggable: true,
   hideProgressBar: false,
 });
+
+app.mount('#app');

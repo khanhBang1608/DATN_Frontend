@@ -3,64 +3,81 @@
     <nav class="custom-breadcrumb container">
       <a href="/" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="/user/profile" class="custom-breadcrumb-link custom-breadcrumb-current"
+      <a href="/user/account" class="custom-breadcrumb-link custom-breadcrumb-current"
+        >Tổng quan tài khoản</a
+      >
+      <span class="custom-breadcrumb-separator">/</span>
+      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
         >Thông tin của tôi</a
       >
     </nav>
   </div>
 
-  <div class="container">
-    <div class="profile-container">
-      <h3 class="text-center profile-title">Thông Tin Của Tôi</h3>
-      <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
-      <div class="profile-avatar-wrapper">
-        <img :src="avatarPreview" alt="Avatar" class="profile-avatar" />
+  <div class="container account-summary-container my-5">
+    <div class="row">
+      <div class="col-md-2 account-sidebar d-none d-md-block">
+        <a href="/user/account">Tổng quan tài khoản</a><br />
+        <a href="#" class="active">Thông tin của tôi</a><br />
+        <a href="/user/change-password">Đổi mật khẩu</a><br />
+        <a href="/user/address">Sổ địa chỉ</a><br />
+        <a href="/user/review-history">Đánh giá của tôi</a><br />
+        <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
+        <a href="#">Danh sách yêu thích</a>
       </div>
-
-      <form @submit.prevent="updateProfile">
-        <div class="mb-3">
-          <label for="fullname" class="form-label profile-label">Họ và Tên *</label>
-          <input
-            type="text"
-            class="form-control"
-            id="fullname"
-            v-model.trim="fullName"
-            placeholder="Nhập họ và tên"
-          />
-          <div v-if="validationError" class="text-danger mt-1">{{ validationError }}</div>
+      <div class="profile-container col-md-10">
+        <h3 class="text-center profile-title">Thông Tin Của Tôi</h3>
+        <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+        <div class="profile-avatar-wrapper">
+          <img :src="avatarPreview" alt="Avatar" class="profile-avatar" />
         </div>
 
-        <div class="mb-3">
-          <label for="email" class="form-label profile-label">Email *</label>
-          <input type="email" class="form-control" id="email" :value="email" disabled />
-        </div>
+        <form @submit.prevent="updateProfile">
+          <div class="mb-3">
+            <label for="fullname" class="form-label profile-label">Họ và Tên *</label>
+            <input
+              type="text"
+              class="form-control"
+              id="fullname"
+              v-model.trim="fullName"
+              placeholder="Nhập họ và tên"
+            />
+            <div v-if="validationError" class="text-danger mt-1">
+              {{ validationError }}
+            </div>
+          </div>
 
-        <div class="mb-3">
-          <label for="avatarInput" class="form-label profile-label"
-            >Chọn ảnh đại diện</label
-          >
-          <input
-            type="file"
-            class="form-control"
-            id="avatarInput"
-            accept="image/*"
-            @change="previewAvatar"
-          />
-        </div>
-        <div class="text-center mt-4">
-          <button type="submit" class="btn profile-btn-save" :disabled="isLoading">
-            <span v-if="isLoading">
-              <span
-                class="spinner-border spinner-border-sm"
-                role="status"
-                aria-hidden="true"
-              ></span>
-              Đang lưu...
-            </span>
-            <span v-else> Lưu Thông Tin Chi Tiết </span>
-          </button>
-        </div>
-      </form>
+          <div class="mb-3">
+            <label for="email" class="form-label profile-label">Email *</label>
+            <input type="email" class="form-control" id="email" :value="email" disabled />
+          </div>
+
+          <div class="mb-3">
+            <label for="avatarInput" class="form-label profile-label"
+              >Chọn ảnh đại diện</label
+            >
+            <input
+              type="file"
+              class="form-control"
+              id="avatarInput"
+              accept="image/*"
+              @change="previewAvatar"
+            />
+          </div>
+          <div class="text-center mt-4">
+            <button type="submit" class="btn profile-btn-save" :disabled="isLoading">
+              <span v-if="isLoading">
+                <span
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Đang lưu...
+              </span>
+              <span v-else> Lưu Thông Tin Chi Tiết </span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -79,7 +96,7 @@ const avatarPreview = ref("https://via.placeholder.com/120");
 const avatarFile = ref(null);
 const isLoading = ref(false);
 const validationError = ref("");
-const generalError = ref("");  
+const generalError = ref("");
 
 const fetchProfile = async () => {
   try {

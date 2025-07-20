@@ -20,6 +20,7 @@ import CartView from '../views/CartView.vue'
 import CheckOutView from '../views/CheckOutView.vue'
 import ContactUsView from '../views/ContactUsView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import AccountView from '../views/AccountView.vue'
 import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
@@ -87,6 +88,11 @@ const router = createRouter({
       path: '/user/profile',
       name: 'profile',
       component: ProfileView,
+    },
+    {
+      path: '/user/account',
+      name: 'account',
+      component: AccountView,
     },
     {
       path: '/user/change-password',
