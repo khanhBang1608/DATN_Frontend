@@ -4,11 +4,12 @@ import Dashboard from '@/views/DashboardView.vue'
 import Promotion from '@/views/PromotionView.vue'
 import Discount from '@/views/DiscountView.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
-import Review from '@/views/ReviewView.vue'
-import Order from '@/views/OrderView.vue'
+import Review from '@/views/admin/ReviewView.vue'
+import Order from '@/views/admin/OrderView.vue'
 import Category from '@/views/CategoryView.vue'
 import User from '@/views/UserView.vue'
 import Product from '@/views/admin/ProductView.vue'
+import ProductFrom from '@/views/admin/ProductFormViews.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -22,6 +23,10 @@ import ProfileView from '../views/ProfileView.vue'
 import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
+import DiscountForm from '../components/admin/discounts/DiscountModal.vue'
+import ProductVariantList from '@/components/admin/product/ProductVariantList.vue'
+import AddProductVariant from '@/components/admin/product/AddProductVariant.vue'
+
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -57,7 +62,7 @@ const router = createRouter({
       component: OtpFormView,
     },
     {
-      path: '/useruser/order-management',
+      path: '/user/order-management',
       name: 'order-management',
       component: OrderManagementView,
     },
@@ -102,6 +107,33 @@ const router = createRouter({
       component: AddressView,
     },
     {
+      path: '/admin/discount/form',
+      name: 'discountForm',
+      component: DiscountForm, 
+    },
+    {
+      path: '/admin/discount/form/:id',
+      name: 'discountFormUpdate',
+      component: DiscountForm,
+    },
+
+    {
+      path: '/admin/product/:id/variants',
+      name:'ProductVariantList',
+      component: ProductVariantList
+    },
+    {
+      path: '/admin/product/:id/variants/add',
+      name:'AddProductVariant',
+      component: AddProductVariant
+    },
+    {
+      path: '/admin/product/:id/variants/add/:variantId',
+      name:'AddProductVariantUpdate',
+      component: AddProductVariant
+    },
+
+    {
       path: '/about',
       name: 'about',
       // route level code-splitting
@@ -109,6 +141,20 @@ const router = createRouter({
       // which is lazy-loaded when the route is visited.
       component: () => import('../views/AboutView.vue'),
     },
+    {
+      path: '/logout',
+      name: 'logout',
+      beforeEnter: (to, from, next) => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        // Nếu bạn lưu thêm thông tin user, có thể xoá thêm:
+        localStorage.removeItem("user");
+
+        // Chuyển hướng đến trang login
+        next('/login');
+      },
+    },
+
     {
       path: '/admin',
       component: AdminLayout,
@@ -139,6 +185,11 @@ const router = createRouter({
           component: Product,
         },
         {
+          path: 'product/form',
+          name: 'ProductFrom',
+          component: ProductFrom,
+        },
+        {
           path: 'category',
           name: 'Category',
           component: Category,
@@ -157,5 +208,41 @@ const router = createRouter({
     },
   ],
 })
+//  Hàm lấy thông tin user từ localStorage
+function getUserRole() {
+  try {
+    const role = (localStorage.getItem("role"));
+    return role ?? null;
+  } catch {
+    return null;
+  }
+}
 
+// Navigation Guard kiểm tra phân quyền truy cập
+router.beforeEach((to, from, next) => {
+  const role = getUserRole(); // 0 = Admin, 1 = User
+  const isLoggedIn = role !== null;
+
+  // Nếu chưa đăng nhập
+  if (!isLoggedIn) {
+    if (to.path.startsWith("/admin") || to.path.startsWith("/user")) {
+      return next("/login");
+    } else {
+      return next(); // Cho vào các trang public
+    }
+  }
+
+  // Nếu đã đăng nhập
+  if (role === 0 && to.path.startsWith("/user")) {
+    // Admin không được vào trang user
+    return next("/login");
+  }
+
+  if (role === 1 && to.path.startsWith("/admin")) {
+    // User không được vào trang admin
+    return next("/login");
+  }
+
+  return next(); // Các trường hợp còn lại được phép
+});
 export default router

@@ -1,3 +1,13 @@
+<script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function goLogout() {
+  router.push('/logout')
+}
+</script>
+
 <template>
   <aside class="side-nav" id="show-side-navigation1">
 
@@ -37,10 +47,11 @@
         ><router-link to="/admin/discount">Voucher</router-link>
       </li>
       <li>
-            <button class="btn btn-danger btn-sm" style="white-space: nowrap;">
-  <i class="fa fa-sign-out" aria-hidden="true"></i> Đăng xuất
-</button>
-      </li>
+  <button @click="goLogout" class="btn btn-danger btn-sm" style="white-space: nowrap;">
+    <i class="fa fa-sign-out" aria-hidden="true"></i> Đăng xuất
+  </button>
+</li>
+
 
 
     </ul>
