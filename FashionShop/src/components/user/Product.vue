@@ -519,14 +519,18 @@ const fetchProducts = async () => {
 
           <!-- Ảnh mặc định -->
           <img
-            :src="product.variants[0]?.imageName || '/default.jpg'"
-            class="img-fluid img-default"
-            :alt="product.name"
-          />
-          <img
             :src="
               product.variants[0]?.imageName
                 ? `http://localhost:8080/images/${product.variants[0].imageName}`
+                : '/default.jpg'
+            "
+            class="img-fluid img-default"
+            :alt="`${product.name} Hover`"
+          />
+          <img
+            :src="
+              product.variants[1]?.imageName
+                ? `http://localhost:8080/images/${product.variants[1].imageName}`
                 : '/default.jpg'
             "
             class="img-fluid img-hover"
