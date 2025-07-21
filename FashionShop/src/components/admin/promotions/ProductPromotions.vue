@@ -13,7 +13,7 @@ const token = localStorage.getItem('token')
 
 const fetchPromotions = async () => {
   try {
-    const res = await axios.get('http://localhost:8080/api/admin/product-promotions', {
+      const res = await axios.get(`http://localhost:8080/api/admin/product-promotions/promotion/${promotionId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     promotions.value = res.data

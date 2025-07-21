@@ -46,7 +46,7 @@ const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString('vi-VN')
 }
 const goToAddForm = () => {
-  router.push('/admin/promotion/form') 
+  router.push('/admin/promotion/form')
 }
 const editPromotion = (id) => {
   router.push(`/admin/promotion/form/${id}`)
@@ -74,6 +74,7 @@ onMounted(() => {
     <table class="table table-hover align-middle custom-table">
       <thead>
         <tr>
+          <th>#</th>
           <th>Tên chương trình</th>
           <th>Giảm (VNĐ)</th>
           <th>Ngày bắt đầu</th>
@@ -84,6 +85,7 @@ onMounted(() => {
       </thead>
       <tbody>
         <tr v-for="promo in promotions" :key="promo.id">
+          <td>{{ promo.id }}</td>
           <td>{{ promo.code }}</td>
           <td>{{ formatCurrency(promo.discountAmount) }}</td>
           <td>{{ formatDate(promo.startDate) }}</td>
