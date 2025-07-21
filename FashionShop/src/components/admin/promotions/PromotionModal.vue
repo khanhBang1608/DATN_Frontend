@@ -28,7 +28,6 @@ const fetchPromotionById = async () => {
       }
     })
     const promo = res.data
-    // Format lại ngày về dạng yyyy-MM-dd để hiển thị đúng trong input type="date"
     form.value = {
       ...promo,
       startDate: promo.startDate?.split('T')[0],
@@ -48,7 +47,7 @@ const createPromotion = async () => {
   }
 
   try {
-    const res = await axios.post('http://localhost:8080/api/admin/promotions', form.value, {
+    await axios.post('http://localhost:8080/api/admin/promotions', form.value, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -68,7 +67,7 @@ const updatePromotion = async () => {
   }
 
   try {
-    const res = await axios.put(`http://localhost:8080/api/admin/promotions/${id}`, form.value, {
+    await axios.put(`http://localhost:8080/api/admin/promotions/${id}`, form.value, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'
@@ -92,75 +91,50 @@ onMounted(() => {
 })
 </script>
 
-
 <template>
   <div class="card p-4 mb-4 shadow rounded bg-white">
-    <!-- Tiêu đề -->
     <div class="card-header bg-dark text-white rounded mb-3">
       <h5 class="mb-0">
         {{ isEdit ? '✏️ Sửa Khuyến mãi' : '➕ Thêm Khuyến mãi' }}
       </h5>
     </div>
 
-    <!-- Form -->
     <form @submit.prevent="isEdit ? updatePromotion() : createPromotion()">
       <div class="row g-3">
-        <!-- Tên chương trình -->
         <div class="col-md-6">
           <label class="form-label fw-semibold text-dark">Tên chương trình</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="form.code"
-            required
-          />
+          <input type="text" class="form-control" v-model="form.code" required />
         </div>
 
-        <!-- Giảm giá -->
         <div class="col-md-6">
           <label class="form-label fw-semibold text-dark">Giảm giá (VNĐ)</label>
-          <input
-            type="number"
-            class="form-control"
-            v-model="form.discountAmount"
-            required
-            min="1000"
-          />
+          <input type="number" class="form-control" v-model="form.discountAmount" required min="1000" />
         </div>
 
-        <!-- Mô tả -->
         <div class="col-md-12">
           <label class="form-label fw-semibold text-dark">Mô tả</label>
-          <textarea
-            class="form-control"
-            rows="3"
-            v-model="form.description"
-          ></textarea>
+          <textarea class="form-control" rows="3" v-model="form.description"></textarea>
         </div>
 
-        <!-- Ngày bắt đầu -->
         <div class="col-md-6">
           <label class="form-label fw-semibold text-dark">Ngày bắt đầu</label>
-          <input
-            type="date"
-            class="form-control"
-            v-model="form.startDate"
-            required
-          />
+          <input type="date" class="form-control" v-model="form.startDate" required />
         </div>
 
-        <!-- Ngày kết thúc -->
         <div class="col-md-6">
           <label class="form-label fw-semibold text-dark">Ngày kết thúc</label>
-          <input
-            type="date"
-            class="form-control"
-            v-model="form.endDate"
-            required
-          />
+          <input type="date" class="form-control" v-model="form.endDate" required />
         </div>
 
-        <!-- Nút hành động -->
+        <!-- Trạng thái -->
+        <div class="col-md-6">
+          <label class="form-label fw-semibold text-dark">Trạng thái</label>
+          <select class="form-select" v-model="form.status">
+            <option :value="true">Đang hoạt động</option>
+            <option :value="false">Ngừng hoạt động</option>
+          </select>
+        </div>
+
         <div class="col-12 d-flex justify-content-end gap-2">
           <button type="submit" class="btn btn-success">
             <i class="bi" :class="isEdit ? 'bi-pencil-square' : 'bi-check-circle'"></i>
@@ -174,6 +148,3 @@ onMounted(() => {
     </form>
   </div>
 </template>
-
-
-

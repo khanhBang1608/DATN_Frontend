@@ -28,6 +28,8 @@ import DiscountForm from '../components/admin/discounts/DiscountModal.vue'
 import ProductVariantList from '@/components/admin/product/ProductVariantList.vue'
 import AddProductVariant from '@/components/admin/product/AddProductVariant.vue'
 import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
+import ProductPromotions from '@/components/admin/promotions/ProductPromotions.vue'
+import ProductPromotionForm from '@/components/admin/promotions/ProductPromotionForm.vue'
 
 
 const router = createRouter({
@@ -149,6 +151,23 @@ const router = createRouter({
       name: 'EditPromotion',
       component: PromotionModal
     },
+    {
+      path: '/admin/ProductPromotions/:promotionId',
+      name: 'ProductPromotions',
+      component: ProductPromotions
+    },
+    {
+      path: '/admin/ProductPromotionForm/:promotionId',
+      name: 'ProductPromotionFormCreate',
+      component: ProductPromotionForm
+    },
+    {
+      path: '/admin/ProductPromotionForm/:promotionId/:id',
+      name: 'ProductPromotionFormUpdate',
+      component: ProductPromotionForm
+    },
+
+
 
     {
       path: '/about',

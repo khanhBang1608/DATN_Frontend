@@ -75,7 +75,7 @@ onMounted(fetchDiscounts);
             <td>{{ formatDate(discount.startDate) }} - {{ formatDate(discount.endDate) }}</td>
             <td>
               <span :class="['badge', discount.status === 1 ? 'bg-success' : 'bg-secondary']">
-                {{ discount.status === 1 ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
+                {{ discount.status ? 'Đang hoạt động' : 'Ngừng hoạt động' }}
               </span>
             </td>
             <td class="text-center">

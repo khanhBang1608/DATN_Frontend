@@ -94,7 +94,7 @@ const formatDate = (dateStr) => {
             <td>{{ formatPrice(getMinPrice(product.variants)) }}</td>
             <td>
               <span :class="['badge', product.status === 1 ? 'bg-success' : 'bg-secondary']">
-                {{ product.status === 1 ? 'Đang bán' : 'Ngừng bán' }}
+                {{ product.status ? 'Đang bán' : 'Ngừng bán' }}
               </span>
             </td>
             <td>{{ formatDate(product.dateCreated) }}</td>

@@ -52,6 +52,11 @@ const editPromotion = (id) => {
   router.push(`/admin/promotion/form/${id}`)
 }
 
+const goToPromotionProducts = (id) => {
+  router.push(`/admin/ProductPromotions/${id}`)
+}
+
+
 
 onMounted(() => {
   fetchPromotions()
@@ -91,6 +96,9 @@ onMounted(() => {
           <td class="text-center">
             <button class="btn btn-sm btn-warning m-1" @click="editPromotion(promo.id)">✏️ Sửa</button>
             <button class="btn btn-sm btn-danger m-1" @click="deletePromotion(promo.id)">🗑️ Xóa</button>
+            <button class="btn btn-outline-info me-2" @click="goToPromotionProducts(promo.id)">
+              🎁 Sản phẩm khuyến mãi
+            </button>
           </td>
         </tr>
         <tr v-if="promotions.length === 0">
