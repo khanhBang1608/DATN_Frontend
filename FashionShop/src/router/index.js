@@ -30,7 +30,7 @@ import AddProductVariant from '@/components/admin/product/AddProductVariant.vue'
 import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
 import ProductPromotions from '@/components/admin/promotions/ProductPromotions.vue'
 import ProductPromotionForm from '@/components/admin/promotions/ProductPromotionForm.vue'
-
+import ProductPromotionForm2 from '@/components/admin/promotions/ProductPromotionForm2.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -116,60 +116,6 @@ const router = createRouter({
       component: AddressView,
     },
     {
-      path: '/admin/discount/form',
-      name: 'discountForm',
-      component: DiscountForm, 
-    },
-    {
-      path: '/admin/discount/form/:id',
-      name: 'discountFormUpdate',
-      component: DiscountForm,
-    },
-
-    {
-      path: '/admin/product/:id/variants',
-      name:'ProductVariantList',
-      component: ProductVariantList
-    },
-    {
-      path: '/admin/product/:id/variants/add',
-      name:'AddProductVariant',
-      component: AddProductVariant
-    },
-    {
-      path: '/admin/product/:id/variants/add/:variantId',
-      name:'AddProductVariantUpdate',
-      component: AddProductVariant
-    },
-    {
-      path: '/admin/promotion/form',
-      name:'PromotionForm',
-      component: PromotionModal
-    },
-    {
-      path: '/admin/promotion/form/:id',
-      name: 'EditPromotion',
-      component: PromotionModal
-    },
-    {
-      path: '/admin/ProductPromotions/:promotionId',
-      name: 'ProductPromotions',
-      component: ProductPromotions
-    },
-    {
-      path: '/admin/ProductPromotionForm/:promotionId',
-      name: 'ProductPromotionFormCreate',
-      component: ProductPromotionForm
-    },
-    {
-      path: '/admin/ProductPromotionForm/:promotionId/:id',
-      name: 'ProductPromotionFormUpdate',
-      component: ProductPromotionForm
-    },
-
-
-
-    {
       path: '/about',
       name: 'about',
       // route level code-splitting
@@ -205,6 +151,16 @@ const router = createRouter({
           name: 'Discount',
           component: Discount,
         },
+                {
+          path: 'discount/form',
+          name: 'discountForm',
+          component: DiscountForm,
+        },
+        {
+          path: 'form/:id',
+          name: 'discountFormUpdate',
+          component: DiscountForm,
+        },
         {
           path: 'promotion',
           name: 'Promotion',
@@ -224,6 +180,46 @@ const router = createRouter({
           path: 'product/form',
           name: 'ProductFrom',
           component: ProductFrom,
+        },
+        {
+          path: 'product/:id/variants',
+          name:'ProductVariantList',
+          component: ProductVariantList
+        },
+        {
+          path: 'product/:id/variants/add',
+          name:'AddProductVariant',
+          component: AddProductVariant
+        },
+        {
+          path: 'product/:id/variants/add/:variantId',
+          name:'AddProductVariantUpdate',
+          component: AddProductVariant
+        },
+        {
+          path: 'promotion/form',
+          name:'PromotionForm',
+          component: PromotionModal
+        },
+        {
+          path: 'promotion/form/:id',
+          name: 'EditPromotion',
+          component: PromotionModal
+        },
+        {
+          path: 'ProductPromotions/:promotionId',
+          name: 'ProductPromotions',
+          component: ProductPromotions
+        },
+        {
+          path: 'ProductPromotionForm/:promotionId',
+          name: 'ProductPromotionFormCreate',
+          component: ProductPromotionForm
+        },
+        {
+          path: 'ProductPromotionForm/:promotionId/:id',
+          name: 'ProductPromotionFormUpdate',
+          component: ProductPromotionForm2
         },
         {
           path: 'category',
