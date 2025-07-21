@@ -8,5 +8,4 @@
     <div class="container py-5">
       <PromotionMain />
   </div>
-  <PromotionModal />
 </template>
