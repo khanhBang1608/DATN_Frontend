@@ -141,7 +141,7 @@ const submitPromotionVariants = async () => {
 
 // Tiện ích: lấy tên sản phẩm từ productId
 const getProductName = (productId) => {
-  const product = allProducts.value.find(p => p.productId == productId) 
+  const product = allProducts.value.find(p => p.productId == productId)
   return product ? product.name : 'Không rõ'
 }
 
