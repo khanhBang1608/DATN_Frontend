@@ -23,25 +23,33 @@
 
     <!-- Sản phẩm mới -->
     <div class="container my-5">
-      <h3 class="text-center mb-4 fw-bold">NEW PRODUCTS</h3>
-      <div class="swiper new-products-swiper">
+      <h3 class="text-center mb-4 fw-bold">TOP 10 SẢN PHẨM MỚI NHẤT</h3>
+      <div class="swiper top-newest-products-swiper">
         <div class="swiper-wrapper">
-          <div class="swiper-slide" v-for="(product, index) in newProducts" :key="index">
-            <a href="#" class="product-link">
+          <div
+            class="swiper-slide"
+            v-for="(product, index) in topNewestProducts"
+            :key="index"
+          >
+            <a :href="`/product/${product.productId}`" class="product-link">
               <div class="product-item">
-                <span class="discount-badge">{{ product.discount }}</span>
-                <img :src="product.imageDefault" class="img-fluid img-default" />
-                <img :src="product.imageHover" class="img-fluid img-hover" />
+                <img
+                  :src="getProductImage(product)"
+                  class="img-fluid img-default"
+                  alt="Hình sản phẩm"
+                  onerror="this.onerror=null;this.src='https://via.placeholder.com/200x200?text=No+Image';"
+                />
               </div>
               <div class="product-name">{{ product.name }}</div>
               <div>
-                <span class="discounted-price">{{ product.discountedPrice }}₫</span>
-                <span class="original-price">{{ product.originalPrice }}₫</span>
+                <span class="discounted-price">
+                  {{ formatPrice(product.variants[0]?.price) }}₫
+                </span>
               </div>
             </a>
           </div>
         </div>
-        <div class="new-swiper-pagination mt-5"></div>
+        <div class="top-newest-swiper-pagination mt-5"></div>
       </div>
     </div>
 
@@ -111,15 +119,10 @@
           <a :href="`/product/${item.productId}`" class="product-link">
             <div class="product-item">
               <img
-                :src="
-                  item.image
-                    ? `http://localhost:8080/images/${item.image}`
-                    : 'https://via.placeholder.com/60'
-                "
+                :src="item.image ? `http://localhost:8080/images/${item.image}` : 'https://via.placeholder.com/60'"
                 alt="Ảnh sản phẩm"
                 width="60"
                 class="img-fluid"
-                onerror="this.onerror=null;this.src='https://via.placeholder.com/60';"
               />
             </div>
             <div class="product-name mt-2">{{ item.name }}</div>
@@ -141,12 +144,6 @@ import axios from "axios";
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { categories, useScrollCategory } from "@/assets/js/scrollcategory.js";
 import {
-  newProducts,
-  initializeNewSwiper,
-  handleResizeNewSwiper,
-  destroyNewSwiper,
-} from "@/assets/js/newproductcarousel.js";
-import {
   bestSellerProducts,
   initializeBestsellerSwiper,
   handleResizeBestsellerSwiper,
@@ -156,17 +153,30 @@ import {
 const scrollContent = ref(null);
 const { pauseScroll, resumeScroll } = useScrollCategory(scrollContent);
 
-const newProductList = ref(newProducts);
-let resizeNewHandler;
-
 const bestProductList = ref(bestSellerProducts);
 let resizeBestsellerHandler;
 
+const topNewestProducts = ref([]);
 const recentViewedProducts = ref([]);
+
+const getProductImage = (product) => {
+  return product.variants?.[0]?.imageName
+    ? `http://localhost:8080/images/${product.variants[0].imageName}`
+    : "https://via.placeholder.com/200x200?text=No+Image";
+};
 
 const formatPrice = (value) => {
   if (!value) return "0";
   return value.toLocaleString("vi-VN");
+};
+
+const fetchTopNewestProducts = async () => {
+  try {
+    const response = await axios.get("/api/public/products/top10");
+    topNewestProducts.value = response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy sản phẩm mới nhất:", error);
+  }
 };
 
 const fetchRecentViews = async () => {
@@ -179,15 +189,12 @@ const fetchRecentViews = async () => {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log("Dữ liệu từ API:", response.data);
 
     if (Array.isArray(response.data)) {
       const seen = new Map();
-
       response.data.forEach((item) => {
         const product = item.product?.[0];
         const variant = product?.variants?.[0];
-
         if (product?.productId && !seen.has(product.productId)) {
           const image = variant?.imageName || "";
           seen.set(product.productId, {
@@ -202,7 +209,6 @@ const fetchRecentViews = async () => {
           existing.viewCount++;
         }
       });
-
       recentViewedProducts.value = Array.from(seen.values());
     }
   } catch (error) {
@@ -210,21 +216,35 @@ const fetchRecentViews = async () => {
   }
 };
 
-onMounted(fetchRecentViews);
+const initializeTopNewestSwiper = () => {
+  new Swiper(".top-newest-products-swiper", {
+    slidesPerView: 2,
+    spaceBetween: 20,
+    breakpoints: {
+      576: { slidesPerView: 2 },
+      768: { slidesPerView: 3 },
+      992: { slidesPerView: 4 },
+      1200: { slidesPerView: 5 },
+    },
+    pagination: {
+      el: ".top-newest-swiper-pagination",
+      clickable: true,
+    },
+  });
+};
+
+let resizeTopNewestHandler;
 
 onMounted(async () => {
+  await fetchTopNewestProducts();
   await nextTick();
-  initializeNewSwiper();
-  resizeNewHandler = () => handleResizeNewSwiper();
-  window.addEventListener("resize", resizeNewHandler);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("resize", resizeNewHandler);
-  destroyNewSwiper();
+  initializeTopNewestSwiper();
+  resizeTopNewestHandler = () => initializeTopNewestSwiper();
+  window.addEventListener("resize", resizeTopNewestHandler);
 });
 
 onMounted(async () => {
+  fetchRecentViews();
   await nextTick();
   initializeBestsellerSwiper();
   resizeBestsellerHandler = () => handleResizeBestsellerSwiper();
@@ -234,6 +254,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener("resize", resizeBestsellerHandler);
   destroyBestsellerSwiper();
+  window.removeEventListener("resize", resizeTopNewestHandler);
 });
 </script>
 
