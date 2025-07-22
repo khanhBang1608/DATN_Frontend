@@ -4,6 +4,18 @@ import { useRoute } from "vue-router";
 import { getProductDetail } from "@/api/ProductClient";
 import ReviewComponent from "@/components/user/Review.vue";
 import promotionApi from "@/api/PromotionClien";
+import { toggleFavorite } from "@/api/user/FavoriteAPI";
+
+
+const isFavorite = ref(false); 
+const handleToggleFavorite = async () => {
+  try {
+    await toggleFavorite(product.value.productId);
+    isFavorite.value = !isFavorite.value;
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 
 const route = useRoute();
@@ -234,7 +246,12 @@ function getImageUrl(imageName) {
         <!-- Yêu thích & Tìm -->
         <div class="mb-2">
           <div class="d-flex justify-content-between text-muted small">
-            <div><i class="bi bi-heart me-1"></i> Thêm vào Danh sách yêu thích</div>
+            <div @click="handleToggleFavorite" style="cursor: pointer;">
+              <i 
+                :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
+              ></i>
+              {{ isFavorite ? 'Đã yêu thích' : 'Thêm vào Danh sách yêu thích' }}
+            </div>
             <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
           </div>
         </div>
