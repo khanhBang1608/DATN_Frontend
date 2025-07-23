@@ -1,313 +1,24 @@
-<script>
-export default {
-  data() {
-    return {
-      orders: [
-        {
-          id: "1001",
-          createdAt: "2025-05-30",
-          total: 500000,
-          status: "pending",
-          paid: false,
-          reviewed: false,
-          items: [
-            {
-              id: "1",
-              name: "Sản phẩm 1",
-              price: 100000,
-              quantity: 2,
-              imageUrl: "https://via.placeholder.com/50?text=SP1",
-              description: "Sản phẩm 1 chất lượng cao",
-            },
-            {
-              id: "2",
-              name: "Sản phẩm 2",
-              price: 200000,
-              quantity: 1,
-              imageUrl: "https://via.placeholder.com/50?text=SP2",
-              description: "Sản phẩm 2 bền đẹp",
-            },
-          ],
-        },
-        {
-          id: "1002",
-          createdAt: "2025-05-29",
-          total: 900000,
-          status: "delivered",
-          paid: true,
-          reviewed: false,
-          items: [
-            {
-              id: "3",
-              name: "Sản phẩm 3",
-              price: 150000,
-              quantity: 3,
-              imageUrl: "https://via.placeholder.com/50?text=SP3",
-              description: "Sản phẩm 3 tiện dụng",
-            },
-            {
-              id: "4",
-              name: "Sản phẩm 4",
-              price: 300000,
-              quantity: 2,
-              imageUrl: "https://via.placeholder.com/50?text=SP4",
-              description: "Sản phẩm 4 cao cấp",
-            },
-          ],
-        },
-        {
-          id: "1003",
-          createdAt: "2025-05-28",
-          total: 300000,
-          status: "processing",
-          paid: false,
-          reviewed: false,
-          items: [
-            {
-              id: "1",
-              name: "Sản phẩm 1",
-              price: 100000,
-              quantity: 3,
-              imageUrl: "https://via.placeholder.com/50?text=SP1",
-              description: "Sản phẩm 1 chất lượng cao",
-            },
-          ],
-        },
-        {
-          id: "1004",
-          createdAt: "2025-05-27",
-          total: 600000,
-          status: "delivered",
-          paid: true,
-          reviewed: true,
-          items: [
-            {
-              id: "2",
-              name: "Sản phẩm 2",
-              price: 200000,
-              quantity: 3,
-              imageUrl: "https://via.placeholder.com/50?text=SP2",
-              description: "Sản phẩm 2 bền đẹp",
-            },
-          ],
-        },
-        {
-          id: "1005",
-          createdAt: "2025-05-26",
-          total: 200000,
-          status: "cancelled",
-          paid: false,
-          reviewed: false,
-          items: [
-            {
-              id: "1",
-              name: "Sản phẩm 1",
-              price: 100000,
-              quantity: 2,
-              imageUrl: "https://via.placeholder.com/50?text=SP1",
-              description: "Sản phẩm 1 chất lượng cao",
-            },
-          ],
-        },
-      ],
-      selectedStatus: "",
-      showReviewModal: false,
-      selectedOrder: null,
-      reviewRating: 0,
-      reviewComment: "",
-      reviewType: "text",
-      filePreview: null,
-      mediaData: null,
-      showProductModal: false,
-      selectedProduct: null,
-    };
-  },
-  computed: {
-    filteredOrders() {
-      if (!this.selectedStatus) return this.orders;
-      return this.orders.filter((order) => order.status === this.selectedStatus);
-    },
-  },
-  methods: {
-    getStatusText(status) {
-      const statusMap = {
-        pending: "Chờ xác nhận",
-        processing: "Đang xử lý",
-        shipping: "Đang giao",
-        delivered: "Đã giao",
-        cancelled: "Đã hủy",
-      };
-      return statusMap[status] || "Không xác định";
-    },
-    getStatusClass(status) {
-      return {
-        "status status-pending": status === "pending",
-        "status status-processing": status === "processing",
-        "status status-shipping": status === "shipping",
-        "status status-delivered": status === "delivered",
-        "status status-cancelled": status === "cancelled",
-      };
-    },
-    viewOrder(orderId) {
-      Toastify({
-        text: `Xem chi tiết đơn hàng #${orderId}`,
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "#10b981",
-      }).showToast();
-    },
-    cancelOrder(order) {
-      this.orders = this.orders.map((o) =>
-        o.id === order.id ? { ...o, status: "cancelled" } : o
-      );
-      Toastify({
-        text: `Đã hủy đơn hàng #${order.id}`,
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "#ef4444",
-      }).showToast();
-    },
-    openReviewModal(order) {
-      this.selectedOrder = order;
-      this.reviewRating = 0;
-      this.reviewComment = "";
-      this.reviewType = "text";
-      this.filePreview = null;
-      this.mediaData = null;
-      this.showReviewModal = true;
-    },
-    closeReviewModal() {
-      this.showReviewModal = false;
-      this.selectedOrder = null;
-      this.filePreview = null;
-      this.mediaData = null;
-    },
-    handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
 
-      const maxSize = 5 * 1024 * 1024;
-      const imageTypes = ["image/jpeg", "image/png", "image/gif"];
-      const videoTypes = ["video/mp4", "video/webm", "video/ogg"];
-
-      if (file.size > maxSize) {
-        Toastify({
-          text: "File quá lớn! Vui lòng chọn file dưới 5MB.",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "#ef4444",
-        }).showToast();
-        return;
-      }
-
-      if (this.reviewType === "image" && !imageTypes.includes(file.type)) {
-        Toastify({
-          text: "Vui lòng chọn file hình ảnh (jpg, png, gif)!",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "#ef4444",
-        }).showToast();
-        return;
-      }
-
-      if (this.reviewType === "video" && !videoTypes.includes(file.type)) {
-        Toastify({
-          text: "Vui lòng chọn file video (mp4, webm, ogg)!",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "#ef4444",
-        }).showToast();
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.filePreview = reader.result;
-        this.mediaData = reader.result;
-      };
-      reader.readAsDataURL(file);
-    },
-    submitReview() {
-      if (this.reviewRating === 0) {
-        Toastify({
-          text: "Vui lòng chọn số sao đánh giá",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "#ef4444",
-        }).showToast();
-        return;
-      }
-      if (!this.reviewComment.trim()) {
-        Toastify({
-          text: "Vui lòng nhập bình luận",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "#ef4444",
-        }).showToast();
-        return;
-      }
-      if (this.reviewType !== "text" && !this.mediaData) {
-        Toastify({
-          text: `Vui lòng tải lên ${this.reviewType === "image" ? "hình ảnh" : "video"}`,
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "#ef4444",
-        }).showToast();
-        return;
-      }
-      this.orders = this.orders.map((o) =>
-        o.id === this.selectedOrder.id ? { ...o, reviewed: true } : o
-      );
-      Toastify({
-        text: `Đã gửi đánh giá cho đơn hàng #${this.selectedOrder.id}`,
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "#10b981",
-      }).showToast();
-      this.closeReviewModal();
-    },
-    handleImageError(event) {
-      console.log("Lỗi tải hình ảnh sản phẩm:", event.target.src);
-      event.target.src = "https://via.placeholder.com/50?text=No+Image";
-    },
-    openProductModal(item) {
-      this.selectedProduct = item;
-      this.showProductModal = true;
-    },
-    closeProductModal() {
-      this.showProductModal = false;
-      this.selectedProduct = null;
-    },
-  },
-};
-</script>
 <template>
   <div class="custom-breadcrumb-wrapper">
     <nav class="custom-breadcrumb container">
-      <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
+      <router-link to="/" class="custom-breadcrumb-link">Trang chủ</router-link>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Quản lý đơn hàng</a
-      >
+      <router-link to="/order-history" class="custom-breadcrumb-link custom-breadcrumb-current">
+        Quản lý đơn hàng
+      </router-link>
     </nav>
   </div>
   <div class="container order-management mt-3">
     <h4 class="order-management-title text-center">Quản Lý Đơn Hàng</h4>
     <div class="order-management-nav mt-3">
-      <a href="reviews.html" class="order-management-nav-link">
+      <!-- <router-link to="/reviews" class="order-management-nav-link">
         Xem lịch sử đánh giá
-      </a>
+      </router-link> -->
     </div>
-    <div class="order-management-tabs">
+    <div class="row my-3">
+      <div class="col-md-9">
+         <div class="order-management-tabs">
       <div
         class="order-management-tab"
         :class="{ active: selectedStatus === '' }"
@@ -324,17 +35,17 @@ export default {
       </div>
       <div
         class="order-management-tab"
-        :class="{ active: selectedStatus === 'processing' }"
-        @click="selectedStatus = 'processing'"
+        :class="{ active: selectedStatus === 'taking' }"
+        @click="selectedStatus = 'taking'"
       >
-        Đang xử lý
+        Chờ lấy hàng
       </div>
       <div
         class="order-management-tab"
-        :class="{ active: selectedStatus === 'shipping' }"
-        @click="selectedStatus = 'shipping'"
+        :class="{ active: selectedStatus === 'processing' }"
+        @click="selectedStatus = 'processing'"
       >
-        Đang giao
+        Chờ giao hàng
       </div>
       <div
         class="order-management-tab"
@@ -345,27 +56,47 @@ export default {
       </div>
       <div
         class="order-management-tab"
+        :class="{ active: selectedStatus === 'refund' }"
+        @click="selectedStatus = 'refund'"
+      >
+        Trả hàng
+      </div>
+      <div
+        class="order-management-tab"
         :class="{ active: selectedStatus === 'cancelled' }"
         @click="selectedStatus = 'cancelled'"
       >
         Đã hủy
       </div>
     </div>
+      </div>
 
-    <div v-if="filteredOrders.length === 0" class="order-management-empty">
+    <div class="col-md-3">
+    <label for="dateFilter">Ngày đặt hàng:</label>
+    <input
+      id="dateFilter"
+      type="date"
+      class="form-control"
+      v-model="selectedDate"
+    />
+    </div>
+    </div>
+    <div v-if="loading" class="text-center">
+      <p>Đang tải đơn hàng...</p>
+    </div>
+    <div v-else-if="filteredOrders.length === 0" class="order-management-empty">
       <div class="order-management-empty-icon">
         <i class="bi bi-box text-secondary fs-3"></i>
       </div>
       <h2 class="order-management-empty-title">Chưa có đơn hàng</h2>
       <p class="order-management-empty-message">Hãy đặt hàng để bắt đầu!</p>
-      <a href="/" class="order-management-start-btn">
+      <router-link to="/" class="order-management-start-btn">
         <i class="bi bi-bag me-2"></i>
         Bắt đầu mua sắm
-      </a>
+      </router-link>
     </div>
 
-    <!-- Giả sử có bộ lọc đơn hàng hoặc loading -->
-    <div class="order-management-table-wrapper">
+    <div v-else class="order-management-table-wrapper">
       <table class="order-management-table">
         <thead>
           <tr>
@@ -377,37 +108,25 @@ export default {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="order in filteredOrders" :key="order.id">
-            <td>#{{ order.id }}</td>
-            <td>{{ order.createdAt }}</td>
-            <td>{{ order.total.toLocaleString() }}đ</td>
+          <tr v-for="order in filteredOrders" :key="order.orderId">
+            <td>#{{ order.orderId }}</td>
+            <td>{{ formatDate(order.orderDate) }}</td>
+            <td>{{ formatPrice(order.totalAmount) }}</td>
             <td>
               <span :class="getStatusClass(order.status)">
                 {{ getStatusText(order.status) }}
               </span>
             </td>
             <td>
-              <button
-                class="order-management-action-btn view"
-                @click="viewOrder(order.id)"
-              >
+              <button class="order-management-action-btn view" @click="viewOrder(order.orderId)">
                 <i class="bi bi-eye me-1"></i> Xem
               </button>
-
               <button
-                v-if="order.status === 'pending' || order.status === 'processing'"
+                v-if="order.status === 0"
                 class="order-management-action-btn cancel"
-                @click="cancelOrder(order)"
+                @click="cancelOrder(order.orderId)"
               >
                 <i class="bi bi-x-lg me-1"></i> Hủy
-              </button>
-
-              <button
-                v-if="order.status === 'delivered' && order.paid && !order.reviewed"
-                class="order-management-action-btn review"
-                @click="openReviewModal(order)"
-              >
-                <i class="bi bi-star-fill me-1"></i> Đánh giá
               </button>
             </td>
           </tr>
@@ -415,99 +134,446 @@ export default {
       </table>
     </div>
   </div>
-
-  <!-- Modal Đánh giá -->
-  <div v-if="showReviewModal" class="order-review-modal">
-    <div class="order-review-modal-content">
-      <div class="order-review-modal-header">
-        <h3>Đánh giá đơn hàng #{{ selectedOrder.id }}</h3>
-        <button class="order-review-modal-close-btn" @click="closeReviewModal">
+  <!-- Modal Chi tiết đơn hàng -->
+  <div v-if="showOrderModal" class="product-detail-modal">
+    <div class="product-detail-modal-content">
+      <div class="product-detail-modal-header">
+        <h3>Chi tiết đơn hàng #{{ selectedOrder.orderId }}</h3>
+        <button class="product-detail-modal-close-btn" @click="closeOrderModal">
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
-
-      <div class="order-review-modal-form-group">
-        <label>Điểm đánh giá</label>
-        <div class="order-review-modal-stars">
-          <i
-            v-for="n in 5"
-            :key="n"
-            :class="[
-              'bi',
-              n <= reviewRating ? 'bi-star-fill filled' : 'bi-star',
-              'order-review-modal-star',
-            ]"
-            @click="reviewRating = n"
-          ></i>
-        </div>
-      </div>
-
-      <div class="order-review-modal-form-group">
-        <label>Bình luận</label>
-        <textarea v-model="reviewComment" placeholder="Nhập bình luận của bạn"></textarea>
-      </div>
-
-      <div class="order-review-modal-form-group">
-        <label>Loại đánh giá</label>
-        <select v-model="reviewType">
-          <option value="text">Chỉ văn bản</option>
-          <option value="image">Hình ảnh</option>
-          <option value="video">Video</option>
-        </select>
-      </div>
-
-      <div class="order-review-modal-form-group" v-if="reviewType !== 'text'">
-        <label>Tải lên {{ reviewType === "image" ? "hình ảnh" : "video" }}</label>
-        <input
-          type="file"
-          class="order-review-modal-file-input"
-          :accept="
-            reviewType === 'image'
-              ? 'image/jpeg,image/png,image/gif'
-              : 'video/mp4,video/webm,video/ogg'
-          "
-          @change="handleFileUpload"
-        />
-        <div v-if="filePreview" class="order-review-modal-file-preview">
-          <img v-if="reviewType === 'image'" :src="filePreview" alt="Preview" />
-          <video v-else :src="filePreview" controls></video>
-        </div>
-      </div>
-
-      <button class="order-review-modal-submit-btn" @click="submitReview">
-        Gửi đánh giá
-      </button>
-    </div>
-  </div>
-
-  <!-- Modal Chi tiết sản phẩm -->
-  <div v-if="showProductModal" class="product-detail-modal">
-    <div class="product-detail-modal-content">
-      <div class="product-detail-modal-header">
-        <h3>Chi tiết sản phẩm</h3>
-        <button class="product-detail-modal-close-btn" @click="closeProductModal">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
       <div class="product-detail-modal-body">
-        <img
-          :src="selectedProduct.imageUrl"
-          class="product-detail-modal-image"
-          :alt="selectedProduct.name"
-          @error="handleImageError"
-        />
-        <div class="product-detail-modal-info">
-          <h4>{{ selectedProduct.name }}</h4>
-          <p>Giá: {{ selectedProduct.price.toLocaleString() }}đ</p>
-          <p>Số lượng: {{ selectedProduct.quantity }}</p>
-          <p v-if="selectedProduct.description">
-            Mô tả: {{ selectedProduct.description }}
-          </p>
-          <p v-else>Mô tả: Không có</p>
+        <p><strong>Ngày đặt:</strong> {{ formatDate(selectedOrder.orderDate) }}</p>
+        <p><strong>Tổng tiền:</strong> {{ formatPrice(selectedOrder.totalAmount) }}</p>
+        <p><strong>Trạng thái:</strong> {{ getStatusText(selectedOrder.status) }}</p>
+        <p><strong>Địa chỉ:</strong> {{ selectedOrder.address }}</p>
+        <p><strong>Phương thức thanh toán:</strong> {{ selectedOrder.paymentMethod }}</p>
+        <p><strong>Phí vận chuyển:</strong> {{ formatPrice(selectedOrder.shippingFee) }}</p>
+        <p><strong>Giảm giá:</strong> {{ formatPrice(selectedOrder.discountAmount) }}</p>
+        <h4>Sản phẩm</h4>
+        <div v-for="item in selectedOrder.orderDetails" :key="item.orderDetailId" class="mb-3">
+          <div class="d-flex align-items-center">
+            <img
+              :src="`http://localhost:8080/images/${item.imageUrl}`"
+              :alt="item.productName"
+              class="me-3"
+              width="80"
+              height="90"
+              @error="handleImageError"
+            />
+            <div class="flex-grow-1">
+              <p class="mb-0 fw-bold">{{ item.productName }}</p>
+              <p class="mb-0">Size: {{ item.size }} | Màu: {{ item.color }}</p>
+              <p class="mb-0">Số lượng: {{ item.quantity }}</p>
+              <p class="mb-0">Giá: {{ formatPrice(item.price) }}</p>
+            </div>
+            <div class="ms-auto">
+              <div class="fw-bold mb-2">{{ formatPrice(item.price * item.quantity) }}</div>
+              <button
+                v-if="selectedOrder.status === 3 && !item.reviewed"
+                class="order-management-action-btn review"
+                @click="toggleReviewCollapse(item.orderDetailId)"
+              >
+                <i class="bi bi-star-fill me-1"></i> Đánh giá
+              </button>
+            </div>
+          </div>
+          <!-- Collapse Form Đánh giá -->
+          <div
+            v-if="selectedOrder.status === 3 && !item.reviewed"
+            :id="'review-collapse-' + item.orderDetailId"
+            class="collapse mt-3"
+            :class="{ show: activeReviewCollapse === item.orderDetailId }"
+          >
+            <div class="review-form card p-3">
+              <h5>Đánh giá sản phẩm {{ item.productName }}</h5>
+              <div class="form-group mb-3">
+                <label>Điểm đánh giá</label>
+                <div class="review-stars">
+                  <i
+                    v-for="n in 5"
+                    :key="n"
+                    :class="[
+                      'bi',
+                      n <= reviewRatings[item.orderDetailId] || 0 ? 'bi-star-fill filled' : 'bi-star',
+                      'review-star',
+                    ]"
+                    @click="setReviewRating(item.orderDetailId, n)"
+                  ></i>
+                </div>
+              </div>
+              <div class="form-group mb-3">
+                <label>Bình luận</label>
+                <textarea
+                  v-model="reviewComments[item.orderDetailId]"
+                  placeholder="Nhập bình luận của bạn"
+                  class="form-control"
+                ></textarea>
+              </div>
+              <div class="form-group mb-3">
+                <label>Loại đánh giá</label>
+                <select
+                  v-model="reviewTypes[item.orderDetailId]"
+                  class="form-control"
+                >
+                  <option value="text">Chỉ văn bản</option>
+                  <option value="image">Hình ảnh</option>
+                  <option value="video">Video</option>
+                </select>
+              </div>
+              <div v-if="reviewTypes[item.orderDetailId] !== 'text'" class="form-group mb-3">
+                <label>Tải lên {{ reviewTypes[item.orderDetailId] === 'image' ? 'hình ảnh' : 'video' }}</label>
+                <input
+                  type="file"
+                  class="form-control"
+                  :accept="
+                    reviewTypes[item.orderDetailId] === 'image'
+                      ? 'image/jpeg,image/png,image/gif'
+                      : 'video/mp4,video/webm,video/ogg'
+                  "
+                  @change="handleFileUpload($event, item.orderDetailId)"
+                />
+                <div v-if="filePreviews[item.orderDetailId]" class="file-preview mt-2">
+                  <img
+                    v-if="reviewTypes[item.orderDetailId] === 'image'"
+                    :src="filePreviews[item.orderDetailId]"
+                    alt="Preview"
+                    class="img-fluid"
+                    style="max-width: 200px;"
+                  />
+                  <video
+                    v-else
+                    :src="filePreviews[item.orderDetailId]"
+                    controls
+                    class="img-fluid"
+                    style="max-width: 200px;"
+                  ></video>
+                </div>
+              </div>
+              <button
+                class="btn btn-primary"
+                @click="submitReview(item.orderDetailId, item.productName)"
+              >
+                Gửi đánh giá
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<script>
+import { getUserOrders, getOrderDetails, cancelOrder } from '@/api/user/orderAPI';
+import { createReview, checkReviewsForOrderDetails } from '@/api/user/reviewAPI';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
+
+export default {
+  data() {
+    return {
+      selectedDate: '',
+      orders: [],
+      selectedStatus: '',
+      selectedOrder: null,
+      showOrderModal: false,
+      loading: false,
+      activeReviewCollapse: null, // Theo dõi collapse đang mở
+      reviewRatings: {}, // Lưu rating cho từng orderDetailId
+      reviewComments: {}, // Lưu comment cho từng orderDetailId
+      reviewTypes: {}, // Lưu loại đánh giá cho từng orderDetailId
+      filePreviews: {}, // Lưu preview URL cho từng orderDetailId
+      mediaFiles: {}, // Lưu file gốc cho từng orderDetailId
+    };
+  },
+ computed: {
+  filteredOrders() {
+    return this.orders.filter(order => {
+      const statusMap = {
+        pending: 0,
+        taking: 1,
+        processing: 2,
+        delivered: 3,
+        refund: 4,
+        cancelled: 5,
+      };
+      const matchesStatus =
+        !this.selectedStatus || order.status === statusMap[this.selectedStatus];
+
+      const matchesDate =
+        !this.selectedDate ||
+        new Date(order.orderDate).toISOString().slice(0, 10) === this.selectedDate;
+
+      return matchesStatus && matchesDate;
+    });
+  },
+},
+
+  methods: {
+    formatPrice(price) {
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+      }).format(price);
+    },
+    formatDate(date) {
+      return new Date(date).toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    },
+    getStatusText(status) {
+      const statusMap = {
+        0: 'Chờ xác nhận',
+        1: 'Chờ lấy hàng',
+        2: 'Chờ giao hàng',
+        3: 'Đã giao',
+        4: 'Đang xử lý hoàn tiền',
+        5: 'Đã hủy',
+      };
+      return statusMap[status] || 'Không xác định';
+    },
+    getStatusClass(status) {
+      return {
+        'status status-pending': status === 0,
+        'status status-taking': status === 1,
+        'status status-processing': status === 2,
+        'status status-delivered': status === 3,
+        'status status-refund': status === 4,
+        'status status-cancelled': status === 5,
+      };
+    },
+    async fetchOrders() {
+      this.loading = true;
+      try {
+        this.orders = await getUserOrders();
+        console.log('Đơn hàng từ API:', this.orders);
+        const orderDetailIds = this.orders
+          .filter(order => order.status === 3)
+          .flatMap(order => order.orderDetails.map(item => item.orderDetailId));
+        if (orderDetailIds.length > 0) {
+          try {
+            const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
+            console.log('Trạng thái đánh giá:', reviewStatus);
+            this.orders = this.orders.map(order => ({
+              ...order,
+              orderDetails: order.orderDetails.map(item => ({
+                ...item,
+                reviewed: reviewStatus[item.orderDetailId] || false,
+              })),
+            }));
+          } catch (error) {
+            console.error('Lỗi khi kiểm tra trạng thái đánh giá:', error);
+            toast.error('Không thể kiểm tra trạng thái đánh giá.');
+          }
+        }
+        toast.success('Tải danh sách đơn hàng thành công!');
+      } catch (error) {
+        console.error('Lỗi khi tải đơn hàng:', error);
+        toast.error(error.message || 'Không thể tải danh sách đơn hàng.');
+      } finally {
+        this.loading = false;
+      }
+    },
+    async viewOrder(orderId) {
+      try {
+        this.selectedOrder = await getOrderDetails(orderId);
+        const orderDetailIds = this.selectedOrder.orderDetails.map(item => item.orderDetailId);
+        if (orderDetailIds.length > 0 && this.selectedOrder.status === 3) {
+          const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
+          console.log('Trạng thái đánh giá cho selectedOrder:', reviewStatus);
+          this.selectedOrder = {
+            ...this.selectedOrder,
+            orderDetails: this.selectedOrder.orderDetails.map(item => ({
+              ...item,
+              reviewed: reviewStatus[item.orderDetailId] || false,
+            })),
+          };
+        }
+        this.showOrderModal = true;
+        this.activeReviewCollapse = null;
+        this.reviewRatings = {};
+        this.reviewComments = {};
+        this.reviewTypes = {};
+        this.filePreviews = {};
+        this.mediaFiles = {};
+        toast.success(`Xem chi tiết đơn hàng #${orderId}`);
+      } catch (error) {
+        toast.error(error.message || 'Không thể xem chi tiết đơn hàng.');
+      }
+    },
+    async cancelOrder(orderId) {
+      try {
+        await cancelOrder(orderId);
+        this.orders = this.orders.map(o =>
+          o.orderId === orderId ? { ...o, status: 5 } : o
+        );
+        toast.success(`Đã hủy đơn hàng #${orderId}`);
+      } catch (error) {
+        toast.error(error.message || 'Hủy đơn hàng thất bại.');
+      }
+    },
+    toggleReviewCollapse(orderDetailId) {
+      this.activeReviewCollapse = this.activeReviewCollapse === orderDetailId ? null : orderDetailId;
+      if (this.activeReviewCollapse) {
+        this.reviewRatings[orderDetailId] = 0;
+        this.reviewComments[orderDetailId] = '';
+        this.reviewTypes[orderDetailId] = 'text';
+        this.filePreviews[orderDetailId] = null;
+        this.mediaFiles[orderDetailId] = null;
+      }
+    },
+    setReviewRating(orderDetailId, rating) {
+      this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: rating };
+    },
+    handleFileUpload(event, orderDetailId) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      const imageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      const videoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+
+      if (file.size > maxSize) {
+        toast.error('File quá lớn! Vui lòng chọn file dưới 5MB.');
+        return;
+      }
+
+      if (this.reviewTypes[orderDetailId] === 'image' && !imageTypes.includes(file.type)) {
+        toast.error('Vui lòng chọn file hình ảnh (jpg, png, gif)!');
+        return;
+      }
+
+      if (this.reviewTypes[orderDetailId] === 'video' && !videoTypes.includes(file.type)) {
+        toast.error('Vui lòng chọn file video (mp4, webm, ogg)!');
+        return;
+      }
+
+      // Lưu file gốc để gửi FormData
+      this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: file };
+
+      // Tạo preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.filePreviews = { ...this.filePreviews, [orderDetailId]: reader.result };
+      };
+      reader.readAsDataURL(file);
+    },
+    async submitReview(orderDetailId, productName) {
+      if (!this.reviewRatings[orderDetailId]) {
+        toast.error('Vui lòng chọn số sao đánh giá');
+        return;
+      }
+      if (!this.reviewComments[orderDetailId]?.trim()) {
+        toast.error('Vui lòng nhập bình luận');
+        return;
+      }
+      if (this.reviewTypes[orderDetailId] !== 'text' && !this.mediaFiles[orderDetailId]) {
+        toast.error(`Vui lòng tải lên ${this.reviewTypes[orderDetailId] === 'image' ? 'hình ảnh' : 'video'}`);
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('rating', this.reviewRatings[orderDetailId]);
+        formData.append('comment', this.reviewComments[orderDetailId]);
+        formData.append('orderDetailId', orderDetailId);
+        if (this.reviewTypes[orderDetailId] !== 'text') {
+          formData.append('media', this.mediaFiles[orderDetailId]);
+          formData.append('reviewType', this.reviewTypes[orderDetailId]);
+        } else {
+          formData.append('reviewType', 'text');
+        }
+
+        await createReview(formData);
+
+        // Cập nhật trạng thái reviewed trong orders và selectedOrder
+        this.orders = this.orders.map(o =>
+          o.orderId === this.selectedOrder.orderId
+            ? {
+                ...o,
+                orderDetails: o.orderDetails.map(item =>
+                  item.orderDetailId === orderDetailId
+                    ? { ...item, reviewed: true }
+                    : item
+                ),
+              }
+            : o
+        );
+        this.selectedOrder = {
+          ...this.selectedOrder,
+          orderDetails: this.selectedOrder.orderDetails.map(item =>
+            item.orderDetailId === orderDetailId
+              ? { ...item, reviewed: true }
+              : item
+          ),
+        };
+
+        // Gọi lại checkReviewsForOrderDetails để đồng bộ với backend
+        const orderDetailIds = this.selectedOrder.orderDetails.map(item => item.orderDetailId);
+        if (orderDetailIds.length > 0) {
+          const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
+          console.log('Trạng thái đánh giá sau khi gửi:', reviewStatus);
+          this.orders = this.orders.map(o =>
+            o.orderId === this.selectedOrder.orderId
+              ? {
+                  ...o,
+                  orderDetails: o.orderDetails.map(item => ({
+                    ...item,
+                    reviewed: reviewStatus[item.orderDetailId] || false,
+                  })),
+                }
+              : o
+          );
+          this.selectedOrder = {
+            ...this.selectedOrder,
+            orderDetails: this.selectedOrder.orderDetails.map(item => ({
+              ...item,
+              reviewed: reviewStatus[item.orderDetailId] || false,
+            })),
+          };
+        }
+
+        // Reset collapse và dữ liệu form
+        this.activeReviewCollapse = null;
+        this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: 0 };
+        this.reviewComments = { ...this.reviewComments, [orderDetailId]: '' };
+        this.reviewTypes = { ...this.reviewTypes, [orderDetailId]: 'text' };
+        this.filePreviews = { ...this.filePreviews, [orderDetailId]: null };
+        this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: null };
+
+        toast.success(`Đã gửi đánh giá cho sản phẩm ${productName}`);
+      } catch (error) {
+        toast.error(error.message || 'Gửi đánh giá thất bại.');
+      }
+    },
+    handleImageError(event) {
+      event.target.src = 'https://via.placeholder.com/50?text=No+Image';
+    },
+    closeOrderModal() {
+      this.showOrderModal = false;
+      this.selectedOrder = null;
+      this.activeReviewCollapse = null;
+      this.reviewRatings = {};
+      this.reviewComments = {};
+      this.reviewTypes = {};
+      this.filePreviews = {};
+      this.mediaFiles = {};
+    },
+  },
+  mounted() {
+    if (!localStorage.getItem('token')) {
+      toast.error('Vui lòng đăng nhập để xem đơn hàng.');
+      this.$router.push('/login');
+    } else {
+      this.fetchOrders();
+    }
+  },
+};
+</script>
 
 <style src="@/assets/css/order-management.css"></style>

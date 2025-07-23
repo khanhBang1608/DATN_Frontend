@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API_URL = 'http://localhost:8080/api/user/cart';
-const PRODUCT_API_URL = 'http://localhost:8080/api/products';
+const PRODUCT_API_URL = 'http://localhost:8080/api/public/products';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
