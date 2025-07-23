@@ -155,7 +155,7 @@
         <div v-for="item in selectedOrder.orderDetails" :key="item.orderDetailId" class="mb-3">
           <div class="d-flex align-items-center">
             <img
-              :src="item.imageUrl"
+              :src="`http://localhost:8080/images/${item.imageUrl}`"
               :alt="item.productName"
               class="me-3"
               width="80"

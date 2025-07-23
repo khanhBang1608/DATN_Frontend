@@ -1,3 +1,138 @@
+
+<script>
+import { createOrder } from '@/api/user/orderAPI'
+import { clearCart } from '@/api/user/cartAPI'
+import { useToast } from 'vue-toastification'
+import axios from 'axios'
+
+const toast = useToast()
+
+export default {
+  data() {
+    return {
+      provinces: [],
+      districts: [],
+      wards: [],
+      cartDetails: [],
+      form: {
+        fullName: '',
+        email: '',
+        phone: '',
+        address: '',
+        country: 'Vietnam',
+        city: '',
+        district: '',
+        ward: '',
+      },
+
+      paymentMethod: 'COD',
+      discountCode: '',
+      discountAmount: 0,
+      discountError: '',
+      shippingFee: 10000,
+      isMobileOrderVisible: false,
+      loading: false,
+    }
+  },
+  watch: {
+    'form.city'(provinceName) {
+      const selectedProvince = this.provinces.find((p) => p.name === provinceName)
+      if (selectedProvince) {
+        axios
+          .get(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
+          .then((res) => {
+            this.districts = res.data.districts
+            this.form.district = ''
+            this.wards = []
+            this.form.ward = ''
+          })
+      }
+    },
+    'form.district'(districtName) {
+      const selectedDistrict = this.districts.find((d) => d.name === districtName)
+      if (selectedDistrict) {
+        axios
+          .get(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
+          .then((res) => {
+            this.wards = res.data.wards
+            this.form.ward = ''
+          })
+      }
+    },
+  },
+  computed: {
+    subtotal() {
+      return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0)
+    },
+    total() {
+      return this.subtotal + this.shippingFee - this.discountAmount
+    },
+    toggleIcon() {
+      return this.isMobileOrderVisible ? 'bi-chevron-up' : 'bi-chevron-down'
+    },
+  },
+  methods: {
+    formatPrice(price) {
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+      }).format(price)
+    },
+    toggleOrderCollapse() {
+      this.isMobileOrderVisible = !this.isMobileOrderVisible
+    },
+    async applyDiscount() {
+      this.discountError = ''
+      // Giả định mã giảm giá được kiểm tra trong API createOrder
+      // Nếu cần API riêng để kiểm tra discount, có thể thêm vào orderAPI.js
+    },
+    async placeOrder() {
+      if (this.cartDetails.length === 0) {
+        toast.error('Giỏ hàng trống. Vui lòng thêm sản phẩm.')
+        return
+      }
+      this.loading = true
+      try {
+        const orderData = {
+          address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.city}, ${this.form.country}`,
+          paymentMethod: this.paymentMethod,
+          discountCode: this.discountCode || null,
+          orderDetails: this.cartDetails.map((item) => ({
+            productVariantId: item.productVariantId,
+            quantity: item.quantity,
+          })),
+        }
+        const response = await createOrder(orderData)
+        await clearCart() // Xóa giỏ hàng sau khi đặt hàng thành công
+        toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`)
+        this.$router.push('/user/order-management')
+      } catch (error) {
+        toast.error(error || 'Đặt hàng thất bại. Vui lòng thử lại.')
+      } finally {
+        this.loading = false
+      }
+    },
+  },
+  mounted() {
+    axios.get('https://provinces.open-api.vn/api/p/').then((res) => {
+      this.provinces = res.data
+    })
+    if (!localStorage.getItem('token')) {
+      toast.error('Vui lòng đăng nhập để tiếp tục.')
+      this.$router.push('/login')
+    } else {
+      const cartDetails = localStorage.getItem('cartDetails')
+      if (cartDetails) {
+        this.cartDetails = JSON.parse(cartDetails)
+      } else {
+        toast.error('Không tìm thấy thông tin giỏ hàng.')
+        this.$router.push('/user/cart')
+      }
+    }
+  },
+}
+</script>
+
 <template>
   <div class="checkout-container container">
     <div class="row g-0">
@@ -42,7 +177,7 @@
               class="checkout-product d-flex align-items-center mb-3"
             >
               <img
-                :src="item.imageUrl"
+                :src="`http://localhost:8080/images/${item.imageUrl}`"
                 :alt="item.productName"
                 width="40"
                 height="40"
@@ -246,7 +381,7 @@
               class="checkout-product d-flex align-items-center mb-3"
             >
               <img
-                :src="item.imageUrl"
+                :src="`http://localhost:8080/images/${item.imageUrl}`"
                 :alt="item.productName"
                 width="80"
                 height="90"
@@ -301,139 +436,5 @@
     </div>
   </div>
 </template>
-
-<script>
-import { createOrder } from '@/api/user/orderAPI'
-import { clearCart } from '@/api/user/cartAPI'
-import { useToast } from 'vue-toastification'
-import axios from 'axios'
-
-const toast = useToast()
-
-export default {
-  data() {
-    return {
-      provinces: [],
-      districts: [],
-      wards: [],
-      cartDetails: [],
-      form: {
-        fullName: '',
-        email: '',
-        phone: '',
-        address: '',
-        country: 'Vietnam',
-        city: '',
-        district: '',
-        ward: '',
-      },
-
-      paymentMethod: 'COD',
-      discountCode: '',
-      discountAmount: 0,
-      discountError: '',
-      shippingFee: 10000,
-      isMobileOrderVisible: false,
-      loading: false,
-    }
-  },
-  watch: {
-    'form.city'(provinceName) {
-      const selectedProvince = this.provinces.find((p) => p.name === provinceName)
-      if (selectedProvince) {
-        axios
-          .get(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
-          .then((res) => {
-            this.districts = res.data.districts
-            this.form.district = ''
-            this.wards = []
-            this.form.ward = ''
-          })
-      }
-    },
-    'form.district'(districtName) {
-      const selectedDistrict = this.districts.find((d) => d.name === districtName)
-      if (selectedDistrict) {
-        axios
-          .get(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
-          .then((res) => {
-            this.wards = res.data.wards
-            this.form.ward = ''
-          })
-      }
-    },
-  },
-  computed: {
-    subtotal() {
-      return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0)
-    },
-    total() {
-      return this.subtotal + this.shippingFee - this.discountAmount
-    },
-    toggleIcon() {
-      return this.isMobileOrderVisible ? 'bi-chevron-up' : 'bi-chevron-down'
-    },
-  },
-  methods: {
-    formatPrice(price) {
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-      }).format(price)
-    },
-    toggleOrderCollapse() {
-      this.isMobileOrderVisible = !this.isMobileOrderVisible
-    },
-    async applyDiscount() {
-      this.discountError = ''
-      // Giả định mã giảm giá được kiểm tra trong API createOrder
-      // Nếu cần API riêng để kiểm tra discount, có thể thêm vào orderAPI.js
-    },
-    async placeOrder() {
-      if (this.cartDetails.length === 0) {
-        toast.error('Giỏ hàng trống. Vui lòng thêm sản phẩm.')
-        return
-      }
-      this.loading = true
-      try {
-        const orderData = {
-          address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.city}, ${this.form.country}`,
-          paymentMethod: this.paymentMethod,
-          discountCode: this.discountCode || null,
-          orderDetails: this.cartDetails.map((item) => ({
-            productVariantId: item.productVariantId,
-            quantity: item.quantity,
-          })),
-        }
-        const response = await createOrder(orderData)
-        await clearCart() // Xóa giỏ hàng sau khi đặt hàng thành công
-        toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`)
-        this.$router.push('/user/order-management')
-      } catch (error) {
-        toast.error(error || 'Đặt hàng thất bại. Vui lòng thử lại.')
-      } finally {
-        this.loading = false
-      }
-    },
-  },
-  mounted() {
-    axios.get('https://provinces.open-api.vn/api/p/').then((res) => {
-      this.provinces = res.data
-    })
-    if (!localStorage.getItem('token')) {
-      toast.error('Vui lòng đăng nhập để tiếp tục.')
-      this.$router.push('/login')
-    } else {
-      const cartDetails = localStorage.getItem('cartDetails')
-      if (cartDetails) {
-        this.cartDetails = JSON.parse(cartDetails)
-      } else {
-        toast.error('Không tìm thấy thông tin giỏ hàng.')
-        this.$router.push('/user/cart')
-      }
-    }
-  },
-}
-</script>
 
 <style src="@/assets/css/checkout.css"></style>

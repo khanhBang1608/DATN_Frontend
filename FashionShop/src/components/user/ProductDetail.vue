@@ -5,9 +5,17 @@ import { getProductDetail } from "@/api/ProductClient";
 import ReviewComponent from "@/components/user/Review.vue";
 import promotionApi from "@/api/PromotionClien";
 import { toggleFavorite } from "@/api/user/FavoriteAPI";
+import {
+  getCart,
+  addToCart,
+  updateCartItem,
+  removeCartItem,
+  clearCart,
+  getRelatedProducts,
+} from '@/api/user/cartAPI'
 
 
-const isFavorite = ref(false); 
+const isFavorite = ref(false);
 const handleToggleFavorite = async () => {
   try {
     await toggleFavorite(product.value.productId);
@@ -16,7 +24,6 @@ const handleToggleFavorite = async () => {
     console.error(err);
   }
 };
-
 
 const route = useRoute();
 const product = ref({ variants: [] });
@@ -55,6 +62,45 @@ const displayedPrice = computed(() => {
     originalPrice: minVariant.originalPrice ?? minVariant.price,
   };
 });
+
+const selectedVariant = computed(() => {
+  return product.value.variants.find(
+    (v) =>
+      v.colorId === selectedColorId.value &&
+      v.sizeId === selectedSizeId.value
+  );
+});
+
+const handleAddToCart = async () => {
+  // Kiểm tra đăng nhập
+  const token = localStorage.getItem("token");
+  if (!token) {
+    alert("⚠️ Bạn cần đăng nhập để thêm vào giỏ hàng.");
+    return;
+  }
+
+  // Kiểm tra chọn màu và size
+  if (!selectedColorId.value || !selectedSizeId.value) {
+    alert("⚠️ Vui lòng chọn đầy đủ màu sắc và kích thước.");
+    return;
+  }
+
+  // Tìm biến thể phù hợp
+  const variant = selectedVariant.value;
+  if (!variant) {
+    alert("❌ Không tìm thấy biến thể phù hợp.");
+    return;
+  }
+
+  // Gửi request
+  try {
+    await addToCart(variant.productVariantId, 1); // quantity mặc định = 1
+    alert("✅ Sản phẩm đã được thêm vào giỏ hàng!");
+  } catch (error) {
+    alert("❌ Thêm vào giỏ hàng thất bại: " + (error.message || "Lỗi không xác định"));
+    console.error(error);
+  }
+};
 
 onMounted(async () => {
   try {
@@ -129,6 +175,16 @@ function getColorHex(colorName) {
   };
   return map[colorName] || "#cccccc";
 }
+
+const displayedStock = computed(() => {
+  // Nếu đã chọn biến thể → trả về tồn kho của biến thể
+  if (selectedVariant.value) {
+    return selectedVariant.value.stock;
+  }
+
+  // Nếu chưa chọn → tính tổng tồn kho tất cả biến thể
+  return product.value.variants.reduce((sum, v) => sum + v.stock, 0);
+});
 
 // Lấy đường dẫn ảnh
 function getImageUrl(imageName) {
@@ -236,18 +292,29 @@ function getImageUrl(imageName) {
           <hr class="product-detail-divider" />
         </div>
 
-        <!-- Thêm vào giỏ -->
         <div class="mb-4">
-          <button class="btn product-detail-btn w-100 py-2 text-uppercase">
-            Thêm vào giỏ hàng
-          </button>
+          <strong>Số lượng còn lại: </strong>
+          <span v-if="selectedVariant">
+            {{ displayedStock }} sản phẩm (biến thể đã chọn)
+          </span>
+          <span v-else>
+            {{ displayedStock }} sản phẩm (tổng toàn bộ biến thể)
+          </span>
         </div>
+
+        <!-- Thêm vào giỏ -->
+        <button
+          class="btn product-detail-btn w-100 py-2 text-uppercase"
+          @click="handleAddToCart"
+        >
+          Thêm vào giỏ hàng
+        </button>
 
         <!-- Yêu thích & Tìm -->
         <div class="mb-2">
           <div class="d-flex justify-content-between text-muted small">
             <div @click="handleToggleFavorite" style="cursor: pointer;">
-              <i 
+              <i
                 :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
               ></i>
               {{ isFavorite ? 'Đã yêu thích' : 'Thêm vào Danh sách yêu thích' }}

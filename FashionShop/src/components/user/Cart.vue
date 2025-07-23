@@ -25,10 +25,15 @@
           </div>
           <div v-for="item in cart.details" :key="item.cartDetailId" class="d-flex p-3 cart-item">
             <!-- Ảnh -->
-            <input type="checkbox" :value="item.cartDetailId" v-model="selectedItems" />
+            <div class="me-5 d-flex align-items-center">
+              <input type="checkbox" :value="item.cartDetailId" v-model="selectedItems" style="transform: scale(1.5); width: 15px; height: 15px;"/>
+            </div>
 
-            <img :src="item.imageUrl" :alt="item.productName" class="me-3 cart-item-img" />
-
+            <img
+              :src="`http://localhost:8080/images/${item.imageUrl}`"
+              :alt="item.productName"
+              class="me-3 cart-item-img"
+            />
             <!-- Thông tin -->
             <div class="flex-grow-1">
               <h5 class="mb-1">{{ item.productName }}</h5>
