@@ -1,9 +1,9 @@
-
 <script>
 import { createOrder } from '@/api/user/orderAPI'
 import { clearCart } from '@/api/user/cartAPI'
 import { useToast } from 'vue-toastification'
 import axios from 'axios'
+import { getAddressList } from '@/api/user/addressAPI';
 
 const toast = useToast()
 
@@ -16,7 +16,6 @@ export default {
       cartDetails: [],
       form: {
         fullName: '',
-        email: '',
         phone: '',
         address: '',
         country: 'Vietnam',
@@ -35,6 +34,18 @@ export default {
     }
   },
   watch: {
+    selectedAddressId(newId) {
+      const selected = this.savedAddresses.find(addr => addr.addressId === newId)
+      if (selected) {
+        this.form.fullName = selected.customerName
+        this.form.phone = selected.phone
+        this.form.address = selected.address || ''
+        this.form.city = selected.provinceName || ''
+        this.form.district = selected.districtName || ''
+        this.form.ward = selected.wardName || ''
+        this.form.country = 'Vietnam' // mặc định
+      }
+    },
     'form.city'(provinceName) {
       const selectedProvince = this.provinces.find((p) => p.name === provinceName)
       if (selectedProvince) {
@@ -42,9 +53,17 @@ export default {
           .get(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
           .then((res) => {
             this.districts = res.data.districts
-            this.form.district = ''
-            this.wards = []
-            this.form.ward = ''
+            // Nếu đang có districtName thì tự set lại
+            if (this.form.district) {
+              const matchedDistrict = res.data.districts.find(
+                d => d.name === this.form.district
+              )
+              if (!matchedDistrict) {
+                this.form.district = ''
+                this.form.ward = ''
+                this.wards = []
+              }
+            }
           })
       }
     },
@@ -55,10 +74,15 @@ export default {
           .get(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
           .then((res) => {
             this.wards = res.data.wards
-            this.form.ward = ''
+            if (this.form.ward) {
+              const matchedWard = res.data.wards.find(w => w.name === this.form.ward)
+              if (!matchedWard) {
+                this.form.ward = ''
+              }
+            }
           })
       }
-    },
+    }
   },
   computed: {
     subtotal() {
@@ -113,10 +137,11 @@ export default {
       }
     },
   },
-  mounted() {
+ mounted() {
     axios.get('https://provinces.open-api.vn/api/p/').then((res) => {
       this.provinces = res.data
     })
+
     if (!localStorage.getItem('token')) {
       toast.error('Vui lòng đăng nhập để tiếp tục.')
       this.$router.push('/login')
@@ -128,8 +153,17 @@ export default {
         toast.error('Không tìm thấy thông tin giỏ hàng.')
         this.$router.push('/user/cart')
       }
+
+      // Lấy danh sách địa chỉ
+      getAddressList()
+        .then((res) => {
+          this.savedAddresses = res
+        })
+        .catch((err) => {
+          toast.error('Không thể tải danh sách địa chỉ.')
+        })
     }
-  },
+  }
 }
 </script>
 
@@ -241,15 +275,7 @@ export default {
               />
             </div>
             <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <input
-                  type="email"
-                  class="form-control"
-                  placeholder="Email"
-                  v-model="form.email"
-                  required
-                />
-              </div>
+
               <div class="col-md-6">
                 <input
                   type="text"
@@ -303,6 +329,21 @@ export default {
                   <option value="" disabled>Chọn phường / xã</option>
                   <option v-for="ward in wards" :key="ward.code" :value="ward.name">
                     {{ ward.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="mb-4">
+                <label class="font-semibold block mb-1">Chọn địa chỉ giao hàng</label>
+                <select v-model="selectedAddressId" class="form-select">
+                  <option value="">-- Chọn địa chỉ đã lưu --</option>
+                  <option
+                    v-for="addr in savedAddresses"
+                    :key="addr.addressId"
+                    :value="addr.addressId"
+                  >
+                    {{ addr.customerName }} - {{ addr.phone }} - {{ addr.address }},
+                    {{ addr.wardName }}, {{ addr.districtName }}, {{ addr.provinceName }}
                   </option>
                 </select>
               </div>
