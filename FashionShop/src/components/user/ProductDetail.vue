@@ -3,6 +3,19 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { getProductDetail } from "@/api/ProductClient";
 import ReviewComponent from "@/components/user/Review.vue";
+import promotionApi from "@/api/PromotionClien";
+import { toggleFavorite } from "@/api/user/FavoriteAPI";
+
+
+const isFavorite = ref(false); 
+const handleToggleFavorite = async () => {
+  try {
+    await toggleFavorite(product.value.productId);
+    isFavorite.value = !isFavorite.value;
+  } catch (err) {
+    console.error(err);
+  }
+};
 
 
 const route = useRoute();
@@ -11,35 +24,78 @@ const selectedColorId = ref(null);
 const selectedSizeId = ref(null);
 
 const displayedPrice = computed(() => {
-  if (!product.value.variants || product.value.variants.length === 0) return 0;
+  if (!product.value.variants || product.value.variants.length === 0) return { price: 0, originalPrice: 0 };
 
-  // Nếu đã chọn cả màu và kích thước
+  // Nếu đã chọn cả màu và size
   if (selectedColorId.value && selectedSizeId.value) {
     const match = product.value.variants.find(
       (v) => v.colorId === selectedColorId.value && v.sizeId === selectedSizeId.value
     );
-    return match ? match.price : "Không có giá";
+    if (match) {
+      const price = match.discountedPrice ?? match.price;
+      const original = match.originalPrice ?? match.price;
+      return { price, originalPrice: original };
+    }
   }
 
-  // Nếu chưa chọn → lấy giá nhỏ nhất
-  const prices = product.value.variants.map((v) => v.price);
-  return Math.min(...prices);
+  // Nếu chưa chọn → tìm biến thể có giá thấp nhất (ưu tiên giá đã giảm nếu có)
+  let minVariant = product.value.variants[0];
+  let minPrice = minVariant.discountedPrice ?? minVariant.price;
+
+  product.value.variants.forEach((v) => {
+    const effectivePrice = v.discountedPrice ?? v.price;
+    if (effectivePrice < minPrice) {
+      minPrice = effectivePrice;
+      minVariant = v;
+    }
+  });
+
+  return {
+    price: minVariant.discountedPrice ?? minVariant.price,
+    originalPrice: minVariant.originalPrice ?? minVariant.price,
+  };
 });
 
 onMounted(async () => {
   try {
     const id = route.params.id;
     const res = await getProductDetail(id);
-    product.value = res.data;
+    const data = res.data;
+
+    // Gọi khuyến mãi
+    const promos = await promotionApi.getActivePromotions();
+    const promotionMap = new Map();
+    promos.forEach((promo) => {
+      promo.productPromotions.forEach((pp) => {
+        promotionMap.set(pp.productVariantId, promo);
+      });
+    });
+
+    // Áp dụng khuyến mãi cho từng biến thể
+    data.variants = data.variants.map((v) => {
+      const promo = promotionMap.get(v.productVariantId);
+      if (promo) {
+        const discount = promo.discountAmount || 0;
+        return {
+          ...v,
+          originalPrice: v.price,
+          discountedPrice: v.price - discount
+        };
+      }
+      return v;
+    });
+
+    product.value = data;
   } catch (error) {
     console.error("Lỗi khi tải sản phẩm:", error);
   }
 });
 
-// Tạo danh sách màu sắc duy nhất
+// Màu sắc khả dụng theo size đang chọn
 const uniqueColors = computed(() => {
   const seen = new Set();
   return product.value.variants.filter((v) => {
+    if (selectedSizeId.value && v.sizeId !== selectedSizeId.value) return false;
     if (!seen.has(v.colorId)) {
       seen.add(v.colorId);
       return true;
@@ -48,10 +104,11 @@ const uniqueColors = computed(() => {
   });
 });
 
-// Tạo danh sách kích thước duy nhất
+// Kích thước khả dụng theo màu đang chọn
 const uniqueSizes = computed(() => {
   const seen = new Set();
   return product.value.variants.filter((v) => {
+    if (selectedColorId.value && v.colorId !== selectedColorId.value) return false;
     if (!seen.has(v.sizeId)) {
       seen.add(v.sizeId);
       return true;
@@ -77,6 +134,7 @@ function getColorHex(colorName) {
 function getImageUrl(imageName) {
   return imageName ? `http://localhost:8080/images/${imageName}` : "/default.jpg";
 }
+
 </script>
 <template>
   <div class="custom-breadcrumb-wrapper">
@@ -131,41 +189,46 @@ function getImageUrl(imageName) {
           <span class="text-muted"> {{ product.name }}</span>
         </h4>
         <div class="price fs-4 fw-bold mb-4">
-          {{
-            typeof displayedPrice === "number"
-              ? displayedPrice.toLocaleString() + "₫"
-              : displayedPrice
-          }}
+          <span class="text-danger">
+            {{ displayedPrice.price.toLocaleString() }}₫
+          </span>
+          <span
+            class="text-muted text-decoration-line-through ms-2"
+            v-if="displayedPrice.originalPrice > displayedPrice.price"
+          >
+            {{ displayedPrice.originalPrice.toLocaleString() }}₫
+          </span>
         </div>
 
         <hr class="product-detail-divider" />
 
         <!-- Màu sắc -->
         <div class="mb-4">
-          <div class="fw-semibold mb-1">Màu sắc: <span class="text-muted"></span></div>
-          <div
-            v-for="(color, index) in uniqueColors"
-            :key="index"
-            class="product-detail-color"
-            :title="color.colorName"
-            :style="{ backgroundColor: getColorHex(color.colorName) }"
-            @click="selectedColorId = color.colorId"
-          ></div>
-
+          <div class="fw-semibold mb-1">Màu sắc:</div>
+          <div class="d-flex gap-2 flex-wrap">
+            <div
+              v-for="(color, index) in uniqueColors"
+              :key="index"
+              class="product-detail-color"
+              :title="color.colorName"
+              :style="{ backgroundColor: getColorHex(color.colorName), border: selectedColorId === color.colorId ? '2px solid #000' : '' }"
+             @click="selectedColorId = selectedColorId === color.colorId ? null : color.colorId"
+            ></div>
+          </div>
           <hr class="product-detail-divider" />
         </div>
 
+
         <!-- Kích thước -->
         <div class="mb-4">
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="fw-semibold">Kích thước: <strong>S</strong></span>
-          </div>
-          <div class="d-flex gap-2 py-2">
+          <div class="fw-semibold mb-2">Kích thước:</div>
+          <div class="d-flex gap-2 py-2 flex-wrap">
             <div
               v-for="(size, index) in uniqueSizes"
               :key="index"
               class="product-detail-size"
-              @click="selectedSizeId = size.sizeId"
+              :class="{ active: selectedSizeId === size.sizeId }"
+              @click="selectedSizeId = selectedSizeId === size.sizeId ? null : size.sizeId"
             >
               {{ size.sizeName }}
             </div>
@@ -183,7 +246,12 @@ function getImageUrl(imageName) {
         <!-- Yêu thích & Tìm -->
         <div class="mb-2">
           <div class="d-flex justify-content-between text-muted small">
-            <div><i class="bi bi-heart me-1"></i> Thêm vào Danh sách yêu thích</div>
+            <div @click="handleToggleFavorite" style="cursor: pointer;">
+              <i 
+                :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
+              ></i>
+              {{ isFavorite ? 'Đã yêu thích' : 'Thêm vào Danh sách yêu thích' }}
+            </div>
             <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
           </div>
         </div>

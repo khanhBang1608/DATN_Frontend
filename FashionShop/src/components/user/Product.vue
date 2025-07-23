@@ -2,6 +2,7 @@
 import { onMounted, ref, nextTick } from "vue";
 import { setupFilterSidebar } from "@/assets/js/product";
 import { getAllProducts } from "@/api/ProductClient";
+import promotionApi from "@/api/PromotionClien";
 
 const products = ref([]);
 
@@ -14,7 +15,49 @@ onMounted(async () => {
 const fetchProducts = async () => {
   try {
     const res = await getAllProducts();
-    products.value = res.data; // ✅ chỉ lấy phần data
+    const activePromotions = await promotionApi.getActivePromotions();
+
+    const promotionMap = new Map();
+
+    // Map các khuyến mãi theo productVariantId
+    activePromotions.forEach(promo => {
+      promo.productPromotions.forEach(pp => {
+        promotionMap.set(pp.productVariantId, promo);
+      });
+    });
+
+    // Duyệt từng sản phẩm
+    res.data.forEach(product => {
+      if (!product.variants || product.variants.length === 0) return;
+
+      // Tìm biến thể có giá thấp nhất
+      let minVariant = product.variants[0];
+      product.variants.forEach(v => {
+        if (v.price < minVariant.price) {
+          minVariant = v;
+        }
+      });
+
+      // Xử lý khuyến mãi nếu có
+      const promo = promotionMap.get(minVariant.productVariantId);
+      if (promo) {
+        const discountAmount = promo.discountAmount || 0;
+        const originalPrice = minVariant.price;
+        const discountedPrice = originalPrice - discountAmount;
+
+        product.originalPrice = originalPrice;
+        minVariant = {
+          ...minVariant,
+          price: discountedPrice
+        };
+        product.discount = Math.round((discountAmount / originalPrice) * 100);
+      }
+
+      // Đặt biến thể có giá thấp nhất làm biến thể chính để hiển thị
+      product.variants = [minVariant, ...product.variants.filter(v => v !== minVariant)];
+    });
+
+    products.value = res.data;
   } catch (err) {
     console.error("Lỗi khi tải sản phẩm:", err);
   }
@@ -258,6 +301,8 @@ const fetchProducts = async () => {
                   type="button"
                   data-bs-toggle="collapse"
                   data-bs-target="#collapseColor"
+                  aria-expanded="false"
+                  aria-controls="collapseColor"
                 >
                   <i class="bi bi-chevron-down me-2 rotate-icon"></i>
                   MÀU SẮC
@@ -469,63 +514,71 @@ const fetchProducts = async () => {
 
     <div class="product-content-wrapper">
       <div class="container mt-5">
-        <div class="row g-3">
-          <div
-            v-for="product in products"
-            :key="product.productId"
-            class="col-6 col-sm-6 col-md-4 col-lg-3"
-          >
-            <a :href="`product-detail/${product.productId}`" class="product-link">
-              <div class="product-item">
-                <!-- Nếu có biến thể và có discount -->
-                <span class="discount-badge" v-if="product.discount"
-                  >-{{ product.discount }}%</span
-                >
+       <div class="row g-3">
+      <template
+        v-for="product in products"
+        :key="product.productId"
+      >
+        <div
+          v-if="product.variants && product.variants.length > 0"
+          class="col-6 col-sm-6 col-md-4 col-lg-3"
+        >
+          <a :href="`product-detail/${product.productId}`" class="product-link">
+            <div class="product-item">
+              <!-- Nếu có biến thể và có discount -->
+              <span class="discount-badge" v-if="product.discount">
+                -{{ product.discount }}%
+              </span>
 
-                <!-- Ảnh mặc định -->
-                <img
-                  :src="product.variants[0]?.imageName || '/default.jpg'"
-                  class="img-fluid img-default"
-                  :alt="product.name"
-                />
-                <img
-                  :src="
-                    product.variants[0]?.imageName
-                      ? `http://localhost:8080/images/${product.variants[0].imageName}`
-                      : '/default.jpg'
-                  "
-                  class="img-fluid img-hover"
-                  :alt="`${product.name} Hover`"
-                />
-              </div>
+              <!-- Ảnh mặc định -->
+              <img
+                :src="
+                  product.variants[0]?.imageName
+                    ? `http://localhost:8080/images/${product.variants[0].imageName}`
+                    : '/default.jpg'
+                "
+                class="img-fluid img-default"
+                :alt="`${product.name} Hover`"
+              />
+              <img
+                :src="
+                  product.variants[1]?.imageName
+                    ? `http://localhost:8080/images/${product.variants[1].imageName}`
+                    : '/default.jpg'
+                "
+                class="img-fluid img-hover"
+                :alt="`${product.name} Hover`"
+              />
+            </div>
 
-              <!-- Tên sản phẩm -->
-              <div class="product-name">{{ product.name }}</div>
+            <!-- Tên sản phẩm -->
+            <div class="product-name">{{ product.name }}</div>
 
-              <!-- Giá -->
-              <div>
-                <span class="discounted-price">
-                  {{
-                    product.variants[0]?.price
-                      ? product.variants[0].price.toLocaleString()
-                      : "0"
-                  }}₫
-                </span>
+            <!-- Giá -->
+            <div>
+              <span class="discounted-price">
+                {{
+                  product.variants[0]?.price
+                    ? product.variants[0].price.toLocaleString()
+                    : "0"
+                }}₫
+              </span>
 
-                <!-- Giá gạch nếu có originalPrice (tùy bạn tính thêm discount ở backend) -->
-                <span
-                  class="original-price"
-                  v-if="
-                    product.originalPrice &&
-                    product.originalPrice > product.variants[0]?.price
-                  "
-                >
-                  {{ product.originalPrice.toLocaleString() }}₫
-                </span>
-              </div>
-            </a>
-          </div>
+              <!-- Giá gạch nếu có originalPrice -->
+              <span
+                class="original-price"
+                v-if="
+                  product.originalPrice &&
+                  product.originalPrice > product.variants[0]?.price
+                "
+              >
+                {{ product.originalPrice.toLocaleString() }}₫
+              </span>
+            </div>
+          </a>
         </div>
+      </template>
+</div>
 
         <!-- phân trang giả lập -->
         <ul class="pagination mt-3">
