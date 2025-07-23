@@ -83,10 +83,10 @@ const handleCancel = () => {
 </script>
 
 <template>
-  <div class="container mt-4">
-    <div class="card">
+  <!-- <div class="container mt-4"> -->
+    <div class="card p-4">
       <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">{{ isEditing ? '✏️ Cập nhật sản phẩm' : '➕ Thêm sản phẩm' }}</h5>
+        <h2 class="mb-0">{{ isEditing ? '✏️ Cập nhật sản phẩm' : '➕ Thêm sản phẩm' }}</h2>
       </div>
 
       <form @submit.prevent="handleSubmit">
@@ -145,5 +145,5 @@ const handleCancel = () => {
 
       </form>
     </div>
-  </div>
+  <!-- </div> -->
 </template>

@@ -1,12 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import axios from "axios";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
 const token = localStorage.getItem("token");
 
 const rawCategories = ref([]);
 const expandedNodes = ref(new Set());
-const errorMessage = ref("");
 
 const newCategory = ref({ categoryName: "", parentId: null, status: "1" });
 const editCategory = ref({
@@ -16,11 +17,21 @@ const editCategory = ref({
   status: "1",
 });
 
+const formErrors = ref({ name: "", status: "" });
+
 const searchQuery = ref("");
 const selectedStatus = ref("all");
 
 const currentPage = ref(1);
 const itemsPerPage = 10;
+
+const showSystemError = (message) => {
+  iziToast.error({
+    title: "Lỗi",
+    message: message,
+    position: "topRight",
+  });
+};
 
 const fetchCategories = async () => {
   try {
@@ -28,9 +39,8 @@ const fetchCategories = async () => {
       headers: { Authorization: `Bearer ${token}` },
     });
     rawCategories.value = res.data;
-    errorMessage.value = "";
   } catch (err) {
-    errorMessage.value = "Lỗi khi tải danh mục: " + (err.response?.data || err.message);
+    showSystemError("Lỗi khi tải danh mục: " + (err.response?.data || err.message));
   }
 };
 
@@ -87,7 +97,6 @@ const displayedCategories = computed(() => {
 
 const totalPages = computed(() => Math.ceil(filteredTree.value.length / itemsPerPage));
 
-// ✅ Lấy toàn bộ danh mục cha, không chỉ trang hiện tại
 const parentCategories = computed(() =>
   rawCategories.value
     .filter((cat) => !cat.parentId)
@@ -95,15 +104,25 @@ const parentCategories = computed(() =>
 );
 
 const validateForm = (form) => {
+  formErrors.value = { name: "", status: "" };
+  let valid = true;
+
   if (!form.categoryName || form.categoryName.trim() === "") {
-    errorMessage.value = "Tên danh mục không được để trống";
-    return false;
+    formErrors.value.name = "Tên danh mục không được để trống";
+    valid = false;
   }
-  return true;
+
+  if (form.status !== "1" && form.status !== "0") {
+    formErrors.value.status = "Trạng thái không hợp lệ";
+    valid = false;
+  }
+
+  return valid;
 };
 
 const createCategory = async () => {
   if (!validateForm(newCategory.value)) return;
+
   try {
     await axios.post(
       "http://localhost:8080/api/admin/category/create",
@@ -114,11 +133,27 @@ const createCategory = async () => {
       },
       { headers: { Authorization: `Bearer ${token}` } }
     );
+
+    iziToast.success({
+      title: "Thành công",
+      message: "Tạo danh mục thành công",
+      position: "topRight",
+    });
+
     await fetchCategories();
     document.getElementById("addCategoryModalClose").click();
     newCategory.value = { categoryName: "", parentId: null, status: "1" };
   } catch (err) {
-    errorMessage.value = err.response?.data || "Lỗi khi tạo danh mục";
+    if (Array.isArray(err.response?.data)) {
+      const errors = err.response.data;
+      formErrors.value = { name: "", status: "" };
+      errors.forEach((msg) => {
+        if (msg.includes("Tên danh mục")) formErrors.value.name = msg;
+        else if (msg.includes("Trạng thái")) formErrors.value.status = msg;
+      });
+    } else {
+      showSystemError(err.response?.data || "Lỗi khi tạo danh mục");
+    }
   }
 };
 
@@ -129,11 +164,12 @@ const editCategoryData = (item) => {
     parentId: item.parentId,
     status: item.status ? "1" : "0",
   };
-  errorMessage.value = "";
+  formErrors.value = { name: "", status: "" };
 };
 
 const updateCategory = async () => {
   if (!validateForm(editCategory.value)) return;
+
   try {
     await axios.put(
       `http://localhost:8080/api/admin/category/update/${editCategory.value.categoryId}`,
@@ -144,10 +180,26 @@ const updateCategory = async () => {
       },
       { headers: { Authorization: `Bearer ${token}` } }
     );
+
+    iziToast.success({
+      title: "Thành công",
+      message: "Cập nhật danh mục thành công",
+      position: "topRight",
+    });
+
     await fetchCategories();
     document.getElementById("editCategoryModalClose").click();
   } catch (err) {
-    errorMessage.value = err.response?.data || "Lỗi khi cập nhật danh mục";
+    if (Array.isArray(err.response?.data)) {
+      const errors = err.response.data;
+      formErrors.value = { name: "", status: "" };
+      errors.forEach((msg) => {
+        if (msg.includes("Tên danh mục")) formErrors.value.name = msg;
+        else if (msg.includes("Trạng thái")) formErrors.value.status = msg;
+      });
+    } else {
+      showSystemError(err.response?.data || "Lỗi khi cập nhật danh mục");
+    }
   }
 };
 
@@ -156,14 +208,14 @@ onMounted(fetchCategories);
 
 <template>
   <div class="card p-4">
-    <div class="d-flex justify-content-between mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
       <h2>📁 Danh mục sản phẩm</h2>
       <button
         class="btn btn-primary"
         data-bs-toggle="modal"
         data-bs-target="#addCategoryModal"
       >
-        ➕ Thêm danh mục
+        + Thêm danh mục
       </button>
     </div>
 
@@ -183,8 +235,6 @@ onMounted(fetchCategories);
         </select>
       </div>
     </div>
-
-    <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
 
     <div class="table-responsive">
       <table class="table table-hover text-light custom-table w-100">
@@ -290,7 +340,7 @@ onMounted(fetchCategories);
     <div class="modal-dialog">
       <form @submit.prevent="createCategory" class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title">➕ Thêm Danh mục</h5>
+          <h5 class="modal-title">Thêm Danh mục</h5>
           <button
             type="button"
             class="btn-close btn-close-white"
@@ -299,12 +349,25 @@ onMounted(fetchCategories);
           ></button>
         </div>
         <div class="modal-body">
+          <!-- Label cho Tên danh mục -->
+          <label for="categoryNameInput" class="form-label">Tên danh mục:</label>
           <input
+            id="categoryNameInput"
             v-model="newCategory.categoryName"
             placeholder="Tên danh mục"
-            class="form-control mb-3"
+            class="form-control mb-2"
           />
-          <select v-model="newCategory.parentId" class="form-select mb-3">
+          <div v-if="formErrors.name" class="text-danger small mb-2">
+            {{ formErrors.name }}
+          </div>
+
+          <!-- Label cho Danh mục cha -->
+          <label for="parentCategorySelect" class="form-label">Loại:</label>
+          <select
+            id="parentCategorySelect"
+            v-model="newCategory.parentId"
+            class="form-select mb-2"
+          >
             <option :value="null">-- Không có --</option>
             <option
               v-for="cat in parentCategories"
@@ -314,15 +377,20 @@ onMounted(fetchCategories);
               {{ cat.categoryName }}
             </option>
           </select>
-          <select v-model="newCategory.status" class="form-select mb-3">
+
+          <!-- Label cho Trạng thái -->
+          <label for="statusSelect" class="form-label">Trạng thái:</label>
+          <select id="statusSelect" v-model="newCategory.status" class="form-select mb-2">
             <option value="1">Đang bán</option>
             <option value="0">Ngừng bán</option>
           </select>
-          <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div v-if="formErrors.status" class="text-danger small mb-2">
+            {{ formErrors.status }}
+          </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-success">Lưu</button>
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button class="btn btn-success">Thêm mới</button>
         </div>
       </form>
     </div>
@@ -342,8 +410,24 @@ onMounted(fetchCategories);
           ></button>
         </div>
         <div class="modal-body">
-          <input v-model="editCategory.categoryName" class="form-control mb-3" />
-          <select v-model="editCategory.parentId" class="form-select mb-3">
+          <!-- Tên danh mục -->
+          <label for="editCategoryName" class="form-label">Tên danh mục:</label>
+          <input
+            id="editCategoryName"
+            v-model="editCategory.categoryName"
+            class="form-control mb-1"
+          />
+          <div v-if="formErrors.name" class="text-danger small mb-2">
+            {{ formErrors.name }}
+          </div>
+
+          <!-- Danh mục cha -->
+          <label for="editParentCategory" class="form-label mt-2">Loại</label>
+          <select
+            id="editParentCategory"
+            v-model="editCategory.parentId"
+            class="form-select mb-3"
+          >
             <option :value="null">-- Không có --</option>
             <option
               v-for="cat in parentCategories"
@@ -353,15 +437,20 @@ onMounted(fetchCategories);
               {{ cat.categoryName }}
             </option>
           </select>
-          <select v-model="editCategory.status" class="form-select mb-3">
+
+          <!-- Trạng thái -->
+          <label for="editStatus" class="form-label">Trạng thái:</label>
+          <select id="editStatus" v-model="editCategory.status" class="form-select mb-1">
             <option value="1">Đang bán</option>
             <option value="0">Ngừng bán</option>
           </select>
-          <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+          <div v-if="formErrors.status" class="text-danger small mb-2">
+            {{ formErrors.status }}
+          </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-warning text-white">Cập nhật</button>
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button class="btn btn-success">Cập nhật</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
         </div>
       </form>
     </div>
