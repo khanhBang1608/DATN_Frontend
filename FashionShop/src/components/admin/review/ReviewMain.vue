@@ -2,32 +2,56 @@
   <div class="card p-4" ref="reviewContent">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
       <h2 class="mb-3 mb-md-0">⭐ Quản lý Đánh giá sản phẩm</h2>
-      <div class="d-flex flex-wrap gap-2">
-        <select class="form-select" v-model="filters.rating" multiple>
+    </div>
+    <div class="mb-4">
+      <!-- Đánh giá sao -->
+      <div class="mb-3 w-25">
+        <label class="form-label">Đánh giá</label>
+        <select class="form-select" v-model="filters.rating">
           <option value="">Tất cả sao</option>
           <option v-for="rating in [1, 2, 3, 4, 5]" :key="rating" :value="rating">
             {{ rating }} sao
           </option>
         </select>
-        <input
-          type="date"
-          class="form-control"
-          v-model="filters.startDate"
-          placeholder="Từ ngày"
-        />
-        <input
-          type="date"
-          class="form-control"
-          v-model="filters.endDate"
-          placeholder="Đến ngày"
-        />
+      </div>
+
+      <!-- Ngày đánh giá -->
+      <div class="mb-3">
+        <label class="form-label">Ngày đánh giá</label>
+        <div class="d-flex gap-2 flex-wrap">
+          <input
+            type="date"
+            class="form-control"
+            v-model="filters.startDate"
+            placeholder="Từ ngày"
+            style="max-width: 180px"
+          />
+          Đến
+          <input
+            type="date"
+            class="form-control"
+            v-model="filters.endDate"
+            placeholder="Đến ngày"
+            style="max-width: 180px"
+          />
+        </div>
+      </div>
+
+      <!-- Tên khách hàng -->
+      <div class="mb-3 w-50">
+        <label class="form-label">Tên khách hàng</label>
         <input
           type="text"
           class="form-control"
           v-model="filters.userFullName"
-          placeholder="Tên khách hàng"
+          placeholder="Nhập tên..."
         />
-        <button class="btn btn-primary" @click="applyFilters">🔍 Tìm</button>
+      </div>
+
+      <!-- Nút lọc -->
+      <div>
+        <button class="btn btn-primary me-2" @click="applyFilters">🔍 Tìm</button>
+        <button class="btn btn-secondary" @click="clearFilters">Xóa bộ lọc</button>
       </div>
     </div>
 
@@ -40,7 +64,11 @@
     <div v-if="loading" class="text-center">
       <p>Đang tải đánh giá...</p>
     </div>
-    <div v-else-if="error" class="text-center text-danger alert alert-danger" role="alert">
+    <div
+      v-else-if="error"
+      class="text-center text-danger alert alert-danger"
+      role="alert"
+    >
       {{ error }}
       <button @click="error = null" class="btn btn-sm btn-outline-danger">Đóng</button>
     </div>
@@ -58,16 +86,24 @@
         </thead>
         <tbody>
           <tr v-for="review in paginatedReviews" :key="review.reviewId">
-            <td>{{ review.productName || 'Không xác định' }}</td>
-            <td>{{ review.userFullName || 'Không xác định' }}</td>
-            <td><span class="rating-stars">{{ displayStars(review.rating) }}</span></td>
+            <td>{{ review.productName || "Không xác định" }}</td>
+            <td>{{ review.userFullName || "Không xác định" }}</td>
+            <td>
+              <span class="rating-stars">{{ displayStars(review.rating) }}</span>
+            </td>
             <td>{{ truncateComment(review.comment) }}</td>
             <td>{{ formatDate(review.reviewDate) }}</td>
             <td class="text-center">
-              <button class="btn btn-sm btn-info text-white m-1" @click="viewReview(review.reviewId)">
+              <button
+                class="btn btn-sm btn-info text-white m-1"
+                @click="viewReview(review.reviewId)"
+              >
                 👁️
               </button>
-              <button class="btn btn-sm btn-danger m-1" @click="deleteReview(review.reviewId)">
+              <button
+                class="btn btn-sm btn-danger m-1"
+                @click="deleteReview(review.reviewId)"
+              >
                 🗑️
               </button>
             </td>
@@ -81,7 +117,12 @@
         <li class="page-item" :class="{ disabled: currentPage === 1 }">
           <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)">«</a>
         </li>
-        <li class="page-item" v-for="page in totalPages" :key="page" :class="{ active: currentPage === page }">
+        <li
+          class="page-item"
+          v-for="page in totalPages"
+          :key="page"
+          :class="{ active: currentPage === page }"
+        >
           <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
         </li>
         <li class="page-item" :class="{ disabled: currentPage === totalPages }">
@@ -93,10 +134,10 @@
 </template>
 
 <script>
-import { getAllReviews, deleteReview } from '@/api/admin/reviewAPI';
+import { getAllReviews, deleteReview } from "@/api/admin/reviewAPI";
 
 export default {
-  name: 'ReviewMain',
+  name: "ReviewMain",
   data() {
     return {
       reviews: [],
@@ -107,10 +148,10 @@ export default {
       loading: false,
       error: null,
       filters: {
-        rating: [],
-        startDate: '',
-        endDate: '',
-        userFullName: '',
+        rating: "", // ✅ Mặc định "Tất cả sao"
+        startDate: "",
+        endDate: "",
+        userFullName: "",
       },
     };
   },
@@ -121,34 +162,34 @@ export default {
   },
   methods: {
     formatDate(date) {
-      return new Intl.DateTimeFormat('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
+      return new Intl.DateTimeFormat("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
       }).format(new Date(date));
     },
     truncateComment(comment) {
-      return comment.length > 50 ? comment.slice(0, 47) + '...' : comment;
+      return comment.length > 50 ? comment.slice(0, 47) + "..." : comment;
     },
     displayStars(rating) {
-      return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+      return "★".repeat(rating) + "☆".repeat(5 - rating);
     },
     async fetchReviews() {
       this.loading = true;
       this.error = null;
       try {
         this.reviews = await getAllReviews({
-          ratings: this.filters.rating.length ? this.filters.rating : null,
+            ratings: this.filters.rating ? [this.filters.rating] : null,
           startDate: this.filters.startDate || null,
           endDate: this.filters.endDate || null,
           userFullName: this.filters.userFullName.trim() || null,
         });
         this.applyFilters();
       } catch (error) {
-        console.error('Error fetching reviews:', error.message);
-        this.error = error.message.includes('Access denied')
-          ? 'Bạn không có quyền truy cập. Vui lòng đăng nhập tài khoản admin.'
-          : 'Không thể tải danh sách đánh giá.';
+        console.error("Error fetching reviews:", error.message);
+        this.error = error.message.includes("Access denied")
+          ? "Bạn không có quyền truy cập. Vui lòng đăng nhập tài khoản admin."
+          : "Không thể tải danh sách đánh giá.";
       } finally {
         this.loading = false;
       }
@@ -170,27 +211,27 @@ export default {
       }
     },
     async viewReview(reviewId) {
-      this.$emit('view-review', reviewId);
+      this.$emit("view-review", reviewId);
     },
     async deleteReview(reviewId) {
-      if (!confirm('Bạn có chắc muốn xóa đánh giá này?')) return;
+      if (!confirm("Bạn có chắc muốn xóa đánh giá này?")) return;
       this.loading = true;
       this.error = null;
       try {
         await deleteReview(reviewId);
         await this.fetchReviews();
       } catch (error) {
-        console.error('Error deleting review:', error.message);
-        this.error = 'Không thể xóa đánh giá.';
+        console.error("Error deleting review:", error.message);
+        this.error = "Không thể xóa đánh giá.";
       } finally {
         this.loading = false;
       }
     },
   },
   mounted() {
-    if (!localStorage.getItem('token')) {
-      this.error = 'Vui lòng đăng nhập tài khoản admin.';
-      this.$router.push('/login');
+    if (!localStorage.getItem("token")) {
+      this.error = "Vui lòng đăng nhập tài khoản admin.";
+      this.$router.push("/login");
     } else {
       this.fetchReviews();
     }
@@ -199,14 +240,39 @@ export default {
 </script>
 
 <style scoped>
-.card { background-color: #2c3e50; color: #ecf0f1; }
-.custom-table { background-color: #34495e; }
-.table thead { background-color: #1a252f; }
-.table-hover tbody tr:hover { background-color: #3e5c76; }
-.rating-stars { color: #ffc107; }
-.alert-danger { max-width: 600px; margin: 20px auto; }
-.btn-primary { background-color: #3498db; border-color: #3498db; }
-.btn-danger { background-color: #dc3545; border-color: #dc3545; }
-.btn-info { background-color: #17a2b8; border-color: #17a2b8; }
-.form-select[multiple] { height: auto; }
+.card {
+  background-color: #2c3e50;
+  color: #ecf0f1;
+}
+.custom-table {
+  background-color: #34495e;
+}
+.table thead {
+  background-color: #1a252f;
+}
+.table-hover tbody tr:hover {
+  background-color: #3e5c76;
+}
+.rating-stars {
+  color: #ffc107;
+}
+.alert-danger {
+  max-width: 600px;
+  margin: 20px auto;
+}
+.btn-primary {
+  background-color: #3498db;
+  border-color: #3498db;
+}
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+.btn-info {
+  background-color: #17a2b8;
+  border-color: #17a2b8;
+}
+.form-select[multiple] {
+  height: auto;
+}
 </style>

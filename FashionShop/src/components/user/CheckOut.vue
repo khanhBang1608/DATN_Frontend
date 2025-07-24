@@ -2,6 +2,7 @@
 import { createOrder } from '@/api/user/orderAPI'
 import { clearCart } from '@/api/user/cartAPI'
 import { useToast } from 'vue-toastification'
+import { getDiscount  } from '@/api/user/discountAPI'
 import axios from 'axios'
 import { getAddressList } from '@/api/user/addressAPI';
 
@@ -25,12 +26,16 @@ export default {
       },
 
       paymentMethod: 'COD',
-      discountCode: '',
-      discountAmount: 0,
-      discountError: '',
       shippingFee: 10000,
       isMobileOrderVisible: false,
       loading: false,
+
+      // Discount
+      discountList: [],
+      selectedDiscount: null,
+      discountCode: '',
+      discountAmount: 0,
+      discountError: '',
     }
   },
   watch: {
@@ -105,10 +110,29 @@ export default {
     toggleOrderCollapse() {
       this.isMobileOrderVisible = !this.isMobileOrderVisible
     },
-    async applyDiscount() {
+    applyDiscount() {
+      this.discountAmount = 0
+      this.discountCode = ''
       this.discountError = ''
-      // Giả định mã giảm giá được kiểm tra trong API createOrder
-      // Nếu cần API riêng để kiểm tra discount, có thể thêm vào orderAPI.js
+
+      const discount = this.selectedDiscount
+      if (!discount) return
+
+      // Kiểm tra đơn hàng có đủ điều kiện áp dụng
+      if (this.subtotal < (discount.minOrderAmount || 0)) {
+        this.discountError = `Cần mua tối thiểu ${this.formatPrice(discount.minOrderAmount)} để dùng mã này.`
+        return
+      }
+
+      // Tính phần trăm giảm
+      const percentDiscount = (this.subtotal * discount.discountPercent) / 100
+      const maxDiscount = discount.maxDiscountAmount || percentDiscount
+      this.discountAmount = Math.min(percentDiscount, maxDiscount)
+
+      // Cập nhật mã giảm giá
+      this.discountCode = discount.discountCode
+
+      toast.success(`Áp dụng mã ${this.discountCode} thành công!`)
     },
     async placeOrder() {
       if (this.cartDetails.length === 0) {
@@ -121,13 +145,14 @@ export default {
           address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.city}, ${this.form.country}`,
           paymentMethod: this.paymentMethod,
           discountCode: this.discountCode || null,
+          discountAmount: this.discountAmount || 0,
           orderDetails: this.cartDetails.map((item) => ({
             productVariantId: item.productVariantId,
             quantity: item.quantity,
           })),
         }
         const response = await createOrder(orderData)
-        await clearCart() // Xóa giỏ hàng sau khi đặt hàng thành công
+        await clearCart()
         toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`)
         this.$router.push('/user/order-management')
       } catch (error) {
@@ -141,6 +166,14 @@ export default {
     axios.get('https://provinces.open-api.vn/api/p/').then((res) => {
       this.provinces = res.data
     })
+
+    getDiscount()
+  .then(res => {
+    this.discountList = res // KHÔNG cần `.data` nữa
+  })
+  .catch(() => {
+    this.discountError = 'Không thể tải mã giảm giá.'
+  })
 
     if (!localStorage.getItem('token')) {
       toast.error('Vui lòng đăng nhập để tiếp tục.')
@@ -166,6 +199,7 @@ export default {
   }
 }
 </script>
+
 
 <template>
   <div class="checkout-container container">
@@ -438,18 +472,18 @@ export default {
               <div class="ms-auto fw-bold">{{ formatPrice(item.price * item.quantity) }}</div>
             </div>
 
-            <div class="checkout-discount mb-3">
-              <div class="input-group">
-                <input
-                  type="text"
-                  class="form-control"
-                  placeholder="Mã giảm giá"
-                  v-model="discountCode"
-                />
-                <button class="btn btn-secondary" @click="applyDiscount">Sử dụng</button>
-              </div>
-              <div v-if="discountError" class="text-danger mt-2">{{ discountError }}</div>
-            </div>
+            <div class="mb-3">
+  <label class="form-label fw-bold">Mã giảm giá:</label>
+  <select class="form-select" v-model="selectedDiscount" @change="applyDiscount">
+    <option disabled value="">-- Chọn mã --</option>
+    <option v-for="d in discountList" :key="d.discountId" :value="d">
+      {{ d.discountCode }} - Giảm {{ d.discountPercent }}%
+      (Tối đa {{ formatPrice(d.maxDiscountAmount || 0) }})
+    </option>
+  </select>
+  <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
+</div>
+
 
             <div class="checkout-subtotal d-flex justify-content-between mb-2">
               <span>Tạm tính</span>
