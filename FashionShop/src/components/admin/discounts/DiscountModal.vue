@@ -104,8 +104,8 @@ onMounted(fetchDiscount);
         <div class="col-md-6">
           <label class="form-label fw-semibold text-dark">Trạng thái</label>
           <select v-model="form.status" class="form-select">
-            <option :value="1">🟢 Đang hoạt động</option>
-            <option :value="0">🔴 Ngừng hoạt động</option>
+            <option :value="true">🟢 Đang hoạt động</option>
+            <option :value="false">🔴 Ngừng hoạt động</option>
           </select>
         </div>
 

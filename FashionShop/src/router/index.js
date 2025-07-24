@@ -157,7 +157,7 @@ const router = createRouter({
           component: DiscountForm,
         },
         {
-          path: 'form/:id',
+          path: 'discount/form/:id',
           name: 'discountFormUpdate',
           component: DiscountForm,
         },
