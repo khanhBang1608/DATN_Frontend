@@ -1,9 +1,8 @@
-
 <script>
 import { createOrder } from '@/api/user/orderAPI'
 import { clearCart } from '@/api/user/cartAPI'
 import { useToast } from 'vue-toastification'
-import { getDiscount  } from '@/api/user/discountAPI'
+import { getDiscount } from '@/api/user/discountAPI'
 import axios from 'axios'
 
 const toast = useToast()
@@ -11,10 +10,14 @@ const toast = useToast()
 export default {
   data() {
     return {
+      // Địa chỉ hành chính
       provinces: [],
       districts: [],
       wards: [],
-      cartDetails: [],
+      addressList: [],
+      selectedAddressId: '',
+
+      // Form người dùng
       form: {
         fullName: '',
         email: '',
@@ -24,14 +27,16 @@ export default {
         city: '',
         district: '',
         ward: '',
+        province: '',
       },
 
+      cartDetails: [],
       paymentMethod: 'COD',
       shippingFee: 10000,
       isMobileOrderVisible: false,
       loading: false,
 
-      // Discount
+      // Giảm giá
       discountList: [],
       selectedDiscount: null,
       discountCode: '',
@@ -39,13 +44,14 @@ export default {
       discountError: '',
     }
   },
+
   watch: {
-    'form.city'(provinceName) {
-      const selectedProvince = this.provinces.find((p) => p.name === provinceName)
+    'form.province'(provinceName) {
+      const selectedProvince = this.provinces.find(p => p.name === provinceName)
       if (selectedProvince) {
         axios
           .get(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
-          .then((res) => {
+          .then(res => {
             this.districts = res.data.districts
             this.form.district = ''
             this.wards = []
@@ -54,17 +60,18 @@ export default {
       }
     },
     'form.district'(districtName) {
-      const selectedDistrict = this.districts.find((d) => d.name === districtName)
+      const selectedDistrict = this.districts.find(d => d.name === districtName)
       if (selectedDistrict) {
         axios
           .get(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
-          .then((res) => {
+          .then(res => {
             this.wards = res.data.wards
             this.form.ward = ''
           })
       }
     },
   },
+
   computed: {
     subtotal() {
       return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0)
@@ -76,6 +83,7 @@ export default {
       return this.isMobileOrderVisible ? 'bi-chevron-up' : 'bi-chevron-down'
     },
   },
+
   methods: {
     formatPrice(price) {
       return new Intl.NumberFormat('vi-VN', {
@@ -83,9 +91,11 @@ export default {
         currency: 'VND',
       }).format(price)
     },
+
     toggleOrderCollapse() {
       this.isMobileOrderVisible = !this.isMobileOrderVisible
     },
+
     applyDiscount() {
       this.discountAmount = 0
       this.discountCode = ''
@@ -94,22 +104,19 @@ export default {
       const discount = this.selectedDiscount
       if (!discount) return
 
-      // Kiểm tra đơn hàng có đủ điều kiện áp dụng
       if (this.subtotal < (discount.minOrderAmount || 0)) {
         this.discountError = `Cần mua tối thiểu ${this.formatPrice(discount.minOrderAmount)} để dùng mã này.`
         return
       }
 
-      // Tính phần trăm giảm
       const percentDiscount = (this.subtotal * discount.discountPercent) / 100
       const maxDiscount = discount.maxDiscountAmount || percentDiscount
       this.discountAmount = Math.min(percentDiscount, maxDiscount)
-
-      // Cập nhật mã giảm giá
       this.discountCode = discount.discountCode
 
       toast.success(`Áp dụng mã ${this.discountCode} thành công!`)
     },
+
     async placeOrder() {
       if (this.cartDetails.length === 0) {
         toast.error('Giỏ hàng trống. Vui lòng thêm sản phẩm.')
@@ -118,11 +125,11 @@ export default {
       this.loading = true
       try {
         const orderData = {
-          address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.city}, ${this.form.country}`,
+          address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`,
           paymentMethod: this.paymentMethod,
           discountCode: this.discountCode || null,
           discountAmount: this.discountAmount || 0,
-          orderDetails: this.cartDetails.map((item) => ({
+          orderDetails: this.cartDetails.map(item => ({
             productVariantId: item.productVariantId,
             quantity: item.quantity,
           })),
@@ -137,21 +144,53 @@ export default {
         this.loading = false
       }
     },
+
+    async fetchAddresses() {
+      try {
+        const res = await axios.get('/api/user/address/list', {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('token')
+          }
+        })
+        this.addressList = res.data
+      } catch (err) {
+        console.error('Lỗi khi lấy địa chỉ:', err)
+      }
+    },
+
+    onSelectAddress() {
+      const selected = this.addressList.find(a => a.addressId === this.selectedAddressId)
+      if (!selected) return
+
+      // Fill vào form
+      this.form.fullName = selected.customerName
+      this.form.phone = selected.phone
+      this.form.address = selected.address
+      this.form.province = selected.provinceName
+      this.form.district = selected.districtName
+      this.form.ward = selected.wardName
+    },
   },
+
   mounted() {
-    axios.get('https://provinces.open-api.vn/api/p/').then((res) => {
+    // Load danh sách tỉnh
+    axios.get('https://provinces.open-api.vn/api/p/').then(res => {
       this.provinces = res.data
     })
 
+    // Load danh sách mã giảm giá
     getDiscount()
-  .then(res => {
-    this.discountList = res // KHÔNG cần `.data` nữa
-  })
-  .catch(() => {
-    this.discountError = 'Không thể tải mã giảm giá.'
-  })
+      .then(res => {
+        this.discountList = res
+      })
+      .catch(() => {
+        this.discountError = 'Không thể tải mã giảm giá.'
+      })
 
+    // Load danh sách địa chỉ đã lưu
+    this.fetchAddresses()
 
+    // Kiểm tra đăng nhập và giỏ hàng
     if (!localStorage.getItem('token')) {
       toast.error('Vui lòng đăng nhập để tiếp tục.')
       this.$router.push('/login')
@@ -164,24 +203,19 @@ export default {
         this.$router.push('/user/cart')
       }
     }
-  },
+  }
 }
 </script>
-
 
 <template>
   <div class="checkout-container container">
     <div class="row g-0">
+
       <!-- Thông tin đơn hàng mobile -->
       <div class="col-md-5 bg-light px-4 py-3 d-md-none">
         <div class="checkout-sidebar">
-          <div
-            class="checkout-toggle mb-3 d-flex justify-content-between align-items-center"
-            @click="toggleOrderCollapse"
-          >
-            <button
-              class="btn btn-link w-100 p-0 text-decoration-none text-dark d-flex justify-content-between align-items-center"
-            >
+          <div class="checkout-toggle mb-3 d-flex justify-content-between align-items-center" @click="toggleOrderCollapse">
+            <button class="btn btn-link w-100 p-0 text-decoration-none text-dark d-flex justify-content-between align-items-center">
               <span><i class="bi bi-cart"></i> Hiển thị thông tin đơn hàng</span>
               <i :class="toggleIcon"></i>
             </button>
@@ -190,41 +224,19 @@ export default {
           <!-- Mã giảm giá -->
           <div class="checkout-discount mb-3">
             <div class="input-group">
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Mã giảm giá"
-                v-model="discountCode"
-              />
+              <input type="text" class="form-control" placeholder="Mã giảm giá" v-model="discountCode" />
               <button class="btn btn-secondary" @click="applyDiscount">Sử dụng</button>
             </div>
             <div v-if="discountError" class="text-danger mt-2">{{ discountError }}</div>
           </div>
 
           <!-- Collapse đơn hàng -->
-          <div
-            id="orderCollapse"
-            class="collapse checkout-summary rounded"
-            :class="{ show: isMobileOrderVisible }"
-          >
-            <div
-              v-for="item in cartDetails"
-              :key="item.cartDetailId"
-              class="checkout-product d-flex align-items-center mb-3"
-            >
-              <img
-                :src="`http://localhost:8080/images/${item.imageUrl}`"
-                :alt="item.productName"
-                width="40"
-                height="40"
-                class="me-3 rounded"
-              />
+          <div id="orderCollapse" class="collapse checkout-summary rounded" :class="{ show: isMobileOrderVisible }">
+            <div v-for="item in cartDetails" :key="item.cartDetailId" class="checkout-product d-flex align-items-center mb-3">
+              <img :src="`http://localhost:8080/images/${item.imageUrl}`" :alt="item.productName" width="40" height="40" class="me-3 rounded" />
               <div class="flex-grow-1">
                 <p class="mb-0 fw-bold">{{ item.productName }}</p>
-                <small
-                  >Size: {{ item.size }} | Màu: {{ item.color }} | Số lượng:
-                  {{ item.quantity }}</small
-                >
+                <small>Size: {{ item.size }} | Màu: {{ item.color }} | Số lượng: {{ item.quantity }}</small>
               </div>
               <div class="ms-auto fw-bold">{{ formatPrice(item.price * item.quantity) }}</div>
             </div>
@@ -237,10 +249,7 @@ export default {
               <span>Phí vận chuyển</span>
               <span>{{ formatPrice(shippingFee) }}</span>
             </div>
-            <div
-              class="checkout-discount-amount d-flex justify-content-between mb-2"
-              v-if="discountAmount > 0"
-            >
+            <div class="checkout-discount-amount d-flex justify-content-between mb-2" v-if="discountAmount > 0">
               <span>Giảm giá</span>
               <span>-{{ formatPrice(discountAmount) }}</span>
             </div>
@@ -253,7 +262,7 @@ export default {
         </div>
       </div>
 
-      <!-- Form điền thông tin -->
+      <!-- Form thông tin giao hàng -->
       <div class="col-md-7 border-end bg-white px-4 py-3">
         <div class="checkout-form-container">
           <nav class="checkout-breadcrumb mb-3">
@@ -267,81 +276,28 @@ export default {
           </div>
 
           <form class="checkout-form" @submit.prevent="placeOrder">
+            <!-- Dropdown địa chỉ -->
             <div class="mb-3">
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Họ và tên"
-                v-model="form.fullName"
-                required
-              />
+              <select v-model="selectedAddressId" @change="onSelectAddress" class="form-select">
+                <option disabled value="">-- Chọn địa chỉ đã lưu --</option>
+                <option v-for="address in addressList" :key="address.addressId" :value="address.addressId">
+                  {{ address.customerName }} - {{ address.fullAddress || address.address }}
+                </option>
+              </select>
             </div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <input
-                  type="email"
-                  class="form-control"
-                  placeholder="Email"
-                  v-model="form.email"
-                  required
-                />
-              </div>
-              <div class="col-md-6">
-                <input
-                  type="text"
-                  class="form-control"
-                  placeholder="Số điện thoại"
-                  v-model="form.phone"
-                  required
-                />
-              </div>
+
+            <!-- Input tên, SĐT, địa chỉ -->
+            <div class="mb-3">
+            <h5>Họ tên người nhận :</h5>
+              <input type="text" class="form-control" placeholder="Họ tên người nhận" v-model="form.fullName" required />
             </div>
             <div class="mb-3">
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Địa chỉ"
-                v-model="form.address"
-                required
-              />
+            <h5>Số điện thoại :</h5>
+              <input type="text" class="form-control" placeholder="Số điện thoại" v-model="form.phone" required />
             </div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <select class="form-select" v-model="form.country" required>
-                  <option value="Vietnam">Vietnam</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <select class="form-select" v-model="form.city" required>
-                  <option value="" disabled>Chọn tỉnh / thành</option>
-                  <option v-for="province in provinces" :key="province.code" :value="province.name">
-                    {{ province.name }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <select
-                  class="form-select"
-                  v-model="form.district"
-                  :disabled="!districts.length"
-                  required
-                >
-                  <option value="" disabled>Chọn quận / huyện</option>
-                  <option v-for="district in districts" :key="district.code" :value="district.name">
-                    {{ district.name }}
-                  </option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <select class="form-select" v-model="form.ward" :disabled="!wards.length" required>
-                  <option value="" disabled>Chọn phường / xã</option>
-                  <option v-for="ward in wards" :key="ward.code" :value="ward.name">
-                    {{ ward.name }}
-                  </option>
-                </select>
-              </div>
+            <div class="mb-3">
+            <h5>Địa chỉ chi tiết :</h5>
+              <input type="text" class="form-control" placeholder="Địa chỉ chi tiết" v-model="form.address" required />
             </div>
 
             <!-- Phương thức vận chuyển -->
@@ -354,44 +310,21 @@ export default {
             <!-- Phương thức thanh toán -->
             <div class="checkout-section-title">Phương thức thanh toán</div>
             <div class="checkout-payment-methods my-4">
-              <div class="card border-0 shadow-none bg-transparent">
-                <div class="card-body p-0">
-                  <div class="list-group list-group-flush">
-                    <label class="list-group-item border-0 d-flex align-items-center gap-3">
-                      <input
-                        class="form-check-input mt-0"
-                        type="radio"
-                        name="payment"
-                        value="COD"
-                        v-model="paymentMethod"
-                      />
-                      <img
-                        src="https://cdn-icons-png.flaticon.com/128/484/484167.png"
-                        alt="COD"
-                        width="24"
-                      />
-                      <span class="fw-medium">Thanh toán khi giao hàng (COD)</span>
-                    </label>
-                    <label class="list-group-item border-0 d-flex align-items-center gap-3">
-                      <input
-                        class="form-check-input mt-0"
-                        type="radio"
-                        name="payment"
-                        value="VNPAY"
-                        v-model="paymentMethod"
-                      />
-                      <img
-                        src="https://cdn-icons-png.flaticon.com/128/196/196565.png"
-                        alt="VNPay"
-                        width="24"
-                      />
-                      <span class="fw-medium">Ví VNPay</span>
-                    </label>
-                  </div>
-                </div>
+              <div class="list-group">
+                <label class="list-group-item d-flex align-items-center gap-3">
+                  <input class="form-check-input" type="radio" value="COD" v-model="paymentMethod" />
+                  <img src="https://cdn-icons-png.flaticon.com/128/484/484167.png" alt="COD" width="24" />
+                  <span>Thanh toán khi giao hàng (COD)</span>
+                </label>
+                <label class="list-group-item d-flex align-items-center gap-3">
+                  <input class="form-check-input" type="radio" value="VNPAY" v-model="paymentMethod" />
+                  <img src="https://cdn-icons-png.flaticon.com/128/196/196565.png" alt="VNPAY" width="24" />
+                  <span>Ví VNPAY</span>
+                </label>
               </div>
             </div>
 
+            <!-- Nút hoàn tất -->
             <div class="checkout-actions d-flex justify-content-between align-items-center gap-3">
               <router-link to="/cart" class="link-cart text-center">Giỏ hàng</router-link>
               <button type="submit" class="btn btn-complete" :disabled="loading">
@@ -436,12 +369,18 @@ export default {
             <div class="mb-3">
   <label class="form-label fw-bold">Mã giảm giá:</label>
   <select class="form-select" v-model="selectedDiscount" @change="applyDiscount">
-    <option disabled value="">-- Chọn mã --</option>
-    <option v-for="d in discountList" :key="d.discountId" :value="d">
-      {{ d.discountCode }} - Giảm {{ d.discountPercent }}%
-      (Tối đa {{ formatPrice(d.maxDiscountAmount || 0) }})
-    </option>
-  </select>
+  <option
+    v-for="d in discountList"
+    :key="d.discountId"
+    :value="d"
+    :disabled="d.quantityLimit === 0"
+  >
+    {{ d.discountCode }} - Giảm {{ d.discountPercent }}%
+    (Tối đa {{ formatPrice(d.maxDiscountAmount || 0) }}) -
+    Số lượng: {{ d.quantityLimit === 0 ? '0' : d.quantityLimit }}
+  </option>
+</select>
+
   <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
 </div>
 
@@ -472,5 +411,6 @@ export default {
     </div>
   </div>
 </template>
+
 
 <style src="@/assets/css/checkout.css"></style>
