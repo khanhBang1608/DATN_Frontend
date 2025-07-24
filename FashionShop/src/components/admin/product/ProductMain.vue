@@ -223,9 +223,9 @@ onMounted(fetchProducts);
       <div class="modal-content">
         <form @submit.prevent="handleSubmit">
           <div class="modal-header bg-primary text-white">
-            <h4 class="modal-title">
-              {{ isEditing ? "✏️ Cập nhật sản phẩm" : "Thêm sản phẩm" }}
-            </h4>
+            <h5 class="modal-title">
+              {{ isEditing ? "Cập nhật sản phẩm" : "Thêm sản phẩm" }}
+            </h5>
             <button type="button" class="btn-close" @click="closeModal"></button>
           </div>
           <div class="modal-body row g-3">
