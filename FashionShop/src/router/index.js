@@ -10,6 +10,7 @@ import Category from '@/views/CategoryView.vue'
 import User from '@/views/UserView.vue'
 import Product from '@/views/admin/ProductView.vue'
 import Color from '@/views/admin/ColorView.vue'
+import size from '@/views/admin/SizeView.vue'
 import ProductFrom from '@/views/admin/ProductFormViews.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -177,10 +178,15 @@ const router = createRouter({
           name: 'Product',
           component: Product,
         },
-         {
-          path: 'attribute/color',
+        {
+          path: 'attribute/colors',
           name: 'Color',
           component: Color,
+        },
+        {
+          path: 'attribute/sizes',
+          name: 'size',
+          component: size,
         },
         {
           path: 'product/form',
