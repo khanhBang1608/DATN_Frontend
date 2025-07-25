@@ -25,12 +25,14 @@ const handleVerifyOtp = async (e) => {
   isVerifying.value = true
 
   try {
-    const response = await axios.post('http://localhost:8080/api/verify-otp', null, {
+    const response = await axios.post('http://localhost:8080/api/verify-otp', null, 
+    {
       params: {
         email: email.value,
         otp: otp.value,
       },
-    })
+    }
+  )
 
     const res = response.data
 
