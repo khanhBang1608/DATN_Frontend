@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { getProductDetail } from "@/api/ProductClient";
 import ReviewComponent from "@/components/user/Review.vue";
 import promotionApi from "@/api/PromotionClien";
@@ -14,7 +14,7 @@ import {
   getRelatedProducts,
 } from '@/api/user/cartAPI'
 
-
+const router = useRouter()
 const isFavorite = ref(false);
 const handleToggleFavorite = async () => {
   try {
@@ -76,6 +76,8 @@ const handleAddToCart = async () => {
   const token = localStorage.getItem("token");
   if (!token) {
     alert("⚠️ Bạn cần đăng nhập để thêm vào giỏ hàng.");
+
+    router.push('/login')
     return;
   }
 
