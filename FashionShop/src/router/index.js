@@ -252,7 +252,8 @@ function getUserRole() {
 
 // Navigation Guard kiểm tra phân quyền truy cập
 router.beforeEach((to, from, next) => {
-  const role = getUserRole(); // 0 = Admin, 1 = User
+  const role = parseInt(getUserRole());
+
   const isLoggedIn = role !== null;
 
   // Nếu chưa đăng nhập
