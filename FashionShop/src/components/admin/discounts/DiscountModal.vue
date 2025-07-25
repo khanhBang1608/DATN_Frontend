@@ -14,7 +14,6 @@ const isEdit = ref(!!id);
 // Form data
 const form = ref({
   discountCode: '',
-  description: '',
   discountPercent: null,
   minOrderAmount: null,
   maxDiscountAmount: null,
@@ -138,12 +137,6 @@ onMounted(fetchDiscount);
           <label class="form-label fw-semibold text-dark">Ngày kết thúc</label>
           <input type="date" v-model="form.endDate" class="form-control" />
           <div v-if="errors.endDate" class="text-danger">{{ errors.endDate }}</div>
-        </div>
-
-        <div class="col-12">
-          <label class="form-label fw-semibold text-dark">Mô tả</label>
-          <textarea v-model="form.description" rows="3" class="form-control" placeholder="Mô tả mã giảm giá (tùy chọn)" />
-          <div v-if="errors.description" class="text-danger">{{ errors.description }}</div>
         </div>
 
         <div class="col-12 d-flex justify-content-between">
