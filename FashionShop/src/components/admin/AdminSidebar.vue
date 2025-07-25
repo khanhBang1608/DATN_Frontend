@@ -46,8 +46,8 @@ function goLogout() {
           <i class="fas fa-users fa-fw"></i>
           <a href="#" class="user-li">Thuộc tính</a>
           <ul class="side-nav-dropdown">
-            <li><router-link to="/admin/attribute/color">Màu sắc</router-link></li>
-            <!-- <li><router-link to="/admin/attribute/sizes">Kích thước</router-link></li> -->
+            <li><router-link to="/admin/attribute/colors">Màu sắc</router-link></li>
+            <li><router-link to="/admin/attribute/sizes">Kích thước</router-link></li>
           </ul>
         </li>
         <li>

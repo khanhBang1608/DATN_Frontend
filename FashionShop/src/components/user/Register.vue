@@ -4,12 +4,14 @@ import axios from 'axios'
 import { useRouter, useRoute } from 'vue-router'
 
 const router = useRouter()
-const route = useRoute()
 
 onMounted(() => {
-  const verifiedEmail = route.query.email
-  if (verifiedEmail) {
-    form.value.email = verifiedEmail // ✅ gán email đã xác thực vào form
+  const emailFromSession = sessionStorage.getItem("verifiedEmail")
+  if (emailFromSession) {
+    form.value.email = emailFromSession
+  } else {
+    // Nếu không có email → quay lại trang OTP
+    router.replace("/register/otp")
   }
 })
 
@@ -38,36 +40,22 @@ const passwordMismatch = computed(
 )
 
 async function handleSubmit() {
-
-  if (!form.value.email) {
-  alert('Vui lòng xác thực email trước khi đăng ký.')
-  return
-}
-
-
   submitted.value = true
-  const formEl = document.querySelector('form')
-
-  if (!formEl.checkValidity() || passwordMismatch.value) {
+  if (!form.value.email) {
+    alert('Vui lòng xác thực email trước khi đăng ký.')
     return
   }
 
-  // Gửi form đăng ký tới API
-  try {
-    const formData = new FormData()
-    formData.append('fullName', form.value.fullName)
-    formData.append('email', form.value.email)
-    formData.append('password', form.value.password)
-    formData.append('confirmPassword', form.value.confirmPassword)
+  const formEl = document.querySelector('form')
+  if (!formEl.checkValidity() || passwordMismatch.value) return
 
-    const res = await axios.post('http://localhost:8080/api/register', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+  try {
+    const res = await axios.post('http://localhost:8080/api/register', form.value, {
+      headers: { 'Content-Type': 'application/json' },
     })
 
-    // Thành công → chuyển đến trang login
     alert('Tạo tài khoản thành công!')
+    sessionStorage.removeItem("verifiedEmail") // ✅ xoá email sau khi dùng xong
     router.push('/login').then(() => window.location.reload())
   } catch (err) {
     const resErrors = err.response?.data
@@ -78,7 +66,6 @@ async function handleSubmit() {
     }
   }
 }
-
 </script>
 <template>
   <div class="container py-5">

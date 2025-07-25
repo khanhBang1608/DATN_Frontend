@@ -7,86 +7,84 @@ import "izitoast/dist/css/iziToast.min.css";
 
 const token = localStorage.getItem("token");
 
-const colors = ref([]);
-const newColor = ref({ colorName: "" });
-const editColor = ref({ colorId: null, colorName: "" });
+const sizes = ref([]);
+const newSize = ref({ sizeName: "" });
+const editSize = ref({ sizeId: null, sizeName: "" });
 const formErrors = ref({ name: "" });
 
-const fetchColors = async () => {
+const fetchSizes = async () => {
   try {
-    const res = await axios.get("http://localhost:8080/api/admin/attributes/colors", {
+    const res = await axios.get("http://localhost:8080/api/admin/attributes/sizes", {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    // Sắp xếp theo colorId tăng dần
-    const sortedColors = res.data.sort((a, b) => a.colorId - b.colorId);
-    colors.value = sortedColors;
+    sizes.value = res.data.sort((a, b) => a.sizeId - b.sizeId);
   } catch (err) {
-    iziToast.error({ title: "Lỗi", message: "Không thể tải màu.", position: "topRight" });
+    iziToast.error({ title: "Lỗi", message: "Không thể tải kích thước.", position: "topRight" });
   }
 };
 
-const validateColorForm = (form) => {
+const validateSizeForm = (form) => {
   formErrors.value.name = "";
-  if (!form.colorName || form.colorName.trim() === "") {
-    formErrors.value.name = "Tên màu không được để trống";
+  if (!form.sizeName || form.sizeName.trim() === "") {
+    formErrors.value.name = "Tên kích thước không được để trống";
     return false;
   }
   return true;
 };
 
-const createColor = async () => {
-  if (!validateColorForm(newColor.value)) return;
+const createSize = async () => {
+  if (!validateSizeForm(newSize.value)) return;
 
   try {
-    await axios.post("http://localhost:8080/api/admin/attributes/colors", newColor.value, {
+    await axios.post("http://localhost:8080/api/admin/attributes/sizes", newSize.value, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    iziToast.success({ title: "Thành công", message: "Tạo màu thành công", position: "topRight" });
-    await fetchColors();
-    document.getElementById("addColorModalClose").click();
-    newColor.value = { colorName: "" };
+    iziToast.success({ title: "Thành công", message: "Tạo kích thước thành công", position: "topRight" });
+    await fetchSizes();
+    document.getElementById("addSizeModalClose").click();
+    newSize.value = { sizeName: "" };
   } catch (err) {
     iziToast.error({
       title: "Lỗi",
-      message: err.response?.data || "Không thể tạo màu",
+      message: err.response?.data || "Không thể tạo kích thước",
       position: "topRight",
     });
   }
 };
 
-const openEditColor = (color) => {
-  editColor.value = { ...color };
+const openEditSize = (size) => {
+  editSize.value = { ...size };
   formErrors.value.name = "";
 };
 
-const updateColor = async () => {
-  if (!validateColorForm(editColor.value)) return;
+const updateSize = async () => {
+  if (!validateSizeForm(editSize.value)) return;
 
   try {
     await axios.put(
-      `http://localhost:8080/api/admin/attributes/colors/${editColor.value.colorId}`,
-      editColor.value,
+      `http://localhost:8080/api/admin/attributes/sizes/${editSize.value.sizeId}`,
+      editSize.value,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    iziToast.success({ title: "Thành công", message: "Cập nhật màu thành công", position: "topRight" });
-    await fetchColors();
-    document.getElementById("editColorModalClose").click();
+    iziToast.success({ title: "Thành công", message: "Cập nhật kích thước thành công", position: "topRight" });
+    await fetchSizes();
+    document.getElementById("editSizeModalClose").click();
   } catch (err) {
     iziToast.error({
       title: "Lỗi",
-      message: err.response?.data || "Không thể cập nhật màu",
+      message: err.response?.data || "Không thể cập nhật kích thước",
       position: "topRight",
     });
   }
 };
 
-const deleteColor = async (id) => {
+const deleteSize = async (id) => {
   const result = await Swal.fire({
     title: "Bạn có chắc chắn?",
-    text: "Màu này sẽ bị xoá vĩnh viễn!",
+    text: "Kích thước này sẽ bị xoá vĩnh viễn!",
     icon: "warning",
     showCancelButton: true,
     confirmButtonText: "Xoá",
@@ -97,40 +95,39 @@ const deleteColor = async (id) => {
 
   if (result.isConfirmed) {
     try {
-      await axios.delete(`http://localhost:8080/api/admin/attributes/colors/${id}`, {
+      await axios.delete(`http://localhost:8080/api/admin/attributes/sizes/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      await fetchColors();
+      await fetchSizes();
       iziToast.success({
         title: "Thành công",
-        message: "Màu đã được xoá.",
+        message: "Kích thước đã được xoá.",
         position: "topRight",
       });
     } catch (err) {
       iziToast.error({
         title: "Lỗi",
-        message: err.response?.data || "Xoá màu thất bại!",
+        message: err.response?.data || "Xoá kích thước thất bại!",
         position: "topRight",
       });
     }
   }
 };
 
-// Reset form khi modal đóng
 onMounted(() => {
-  fetchColors();
+  fetchSizes();
 
-  const addModal = document.getElementById("addColorModal");
-  const editModal = document.getElementById("editColorModal");
+  const addModal = document.getElementById("addSizeModal");
+  const editModal = document.getElementById("editSizeModal");
 
   addModal?.addEventListener("hidden.bs.modal", () => {
-    newColor.value = { colorName: "" };
+    newSize.value = { sizeName: "" };
     formErrors.value.name = "";
   });
 
   editModal?.addEventListener("hidden.bs.modal", () => {
-    editColor.value = { colorId: null, colorName: "" };
+    editSize.value = { sizeId: null, sizeName: "" };
     formErrors.value.name = "";
   });
 });
@@ -139,9 +136,9 @@ onMounted(() => {
 <template>
   <div class="card p-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2>🎨 Danh sách Màu</h2>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addColorModal">
-        + Thêm màu
+      <h2>📏 Danh sách Kích thước</h2>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSizeModal">
+        + Thêm kích thước
       </button>
     </div>
 
@@ -150,24 +147,24 @@ onMounted(() => {
         <thead>
           <tr>
             <th style="width: 50px">STT</th>
-            <th>Tên màu</th>
+            <th>Tên kích thước</th>
             <th style="width: 160px" class="text-end">Hành động</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(color, index) in colors" :key="color.colorId">
+          <tr v-for="(size, index) in sizes" :key="size.sizeId">
             <td>{{ index + 1 }}</td>
-            <td>{{ color.colorName }}</td>
+            <td>{{ size.sizeName }}</td>
             <td class="text-end">
               <button
                 class="btn btn-warning btn-sm me-1"
                 data-bs-toggle="modal"
-                data-bs-target="#editColorModal"
-                @click="openEditColor(color)"
+                data-bs-target="#editSizeModal"
+                @click="openEditSize(size)"
               >
                 ✏️ Sửa
               </button>
-              <button class="btn btn-danger btn-sm" @click="deleteColor(color.colorId)">
+              <button class="btn btn-danger btn-sm" @click="deleteSize(size.sizeId)">
                 🗑️ Xóa
               </button>
             </td>
@@ -178,21 +175,21 @@ onMounted(() => {
   </div>
 
   <!-- Modal Thêm -->
-  <div class="modal fade" id="addColorModal" tabindex="-1">
+  <div class="modal fade" id="addSizeModal" tabindex="-1">
     <div class="modal-dialog">
-      <form @submit.prevent="createColor" class="modal-content">
+      <form @submit.prevent="createSize" class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title">Thêm Màu</h5>
+          <h5 class="modal-title">Thêm Kích thước</h5>
           <button
             type="button"
             class="btn-close btn-close-white"
             data-bs-dismiss="modal"
-            id="addColorModalClose"
+            id="addSizeModalClose"
           ></button>
         </div>
         <div class="modal-body">
-          <label class="form-label">Tên màu:</label>
-          <input v-model="newColor.colorName" class="form-control mb-2" />
+          <label class="form-label">Tên kích thước:</label>
+          <input v-model="newSize.sizeName" class="form-control mb-2" />
           <div v-if="formErrors.name" class="text-danger small mb-2">
             {{ formErrors.name }}
           </div>
@@ -206,21 +203,21 @@ onMounted(() => {
   </div>
 
   <!-- Modal Sửa -->
-  <div class="modal fade" id="editColorModal" tabindex="-1">
+  <div class="modal fade" id="editSizeModal" tabindex="-1">
     <div class="modal-dialog">
-      <form @submit.prevent="updateColor" class="modal-content">
+      <form @submit.prevent="updateSize" class="modal-content">
         <div class="modal-header bg-warning text-white">
-          <h5 class="modal-title">Sửa Màu</h5>
+          <h5 class="modal-title">Sửa Kích thước</h5>
           <button
             type="button"
             class="btn-close btn-close-white"
             data-bs-dismiss="modal"
-            id="editColorModalClose"
+            id="editSizeModalClose"
           ></button>
         </div>
         <div class="modal-body">
-          <label class="form-label">Tên màu:</label>
-          <input v-model="editColor.colorName" class="form-control mb-2" />
+          <label class="form-label">Tên kích thước:</label>
+          <input v-model="editSize.sizeName" class="form-control mb-2" />
           <div v-if="formErrors.name" class="text-danger small mb-2">
             {{ formErrors.name }}
           </div>
