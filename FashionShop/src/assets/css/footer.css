@@ -1,6 +1,6 @@
  /* ========== Tổng thể footer ========== */
  .footer {
-     background-color: #ffffff;
+     background: white;
      color: #212529;
      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
  }
@@ -29,7 +29,7 @@
  .footer-list-item a {
      display: inline-block;
      text-decoration: none;
-     color: #fff;
+     color: #212529;
      opacity: 0.85;
      transform: scale(1);
      transition: opacity 0.3s ease, transform 0.3s ease;
@@ -37,7 +37,7 @@
 
  .footer-list a:hover,
  .footer-list-item a:hover {
-     color: #ccc;
+     color: #000;
      opacity: 1;
      transform: scale(1.03);
      text-decoration: underline;
@@ -75,7 +75,6 @@
      border-bottom-left-radius: 0;
      margin-left: -1px;
      transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
-     border: 1px solid #000;
  }
 
  .footer-btn:hover {
@@ -85,29 +84,29 @@
  }
 
  /* ========== Accordion trong mobile ========== */
- .footer-accordion-item {
+ .accordion-item {
      border: none !important;
      border-bottom: 1px solid #dee2e6 !important;
      border-radius: 0;
  }
 
- .footer-accordion-item .accordion-button.accordion-button-custom {
+ .accordion-button {
      border: none;
      border-radius: 0;
      box-shadow: none;
  }
 
- .footer-accordion-item .accordion-button.accordion-button-custom:not(.collapsed) {
+ .accordion-button:not(.collapsed) {
      background-color: transparent;
      box-shadow: none;
  }
 
- .footer-accordion-item .accordion-button:focus {
+ .accordion-button:focus {
      box-shadow: none;
      outline: none;
  }
 
- .footer-accordion-item .accordion-button-custom {
+ .accordion-button-custom {
      padding-left: 0;
      padding-right: 0;
      display: flex;
@@ -115,59 +114,59 @@
      align-items: center;
  }
 
- .footer-accordion-item .accordion-button.accordion-button-custom:focus {
+ .accordion-button.accordion-button-custom:focus {
      box-shadow: none;
      outline: none;
  }
 
- .footer-accordion-item .accordion-button-custom::after {
+ .accordion-button-custom::after {
      margin-left: auto;
      padding-right: 0;
      transform: scale(0.7);
      transition: transform 0.3s ease;
  }
 
- .footer-accordion-item .accordion-button-custom:not(.collapsed)::after {
+ .accordion-button-custom:not(.collapsed)::after {
      transform: rotate(-180deg) scale(0.7);
  }
 
 
- .footer-accordion-item .accordion-button-custom .accordion-body {
+ .accordion-body {
      padding: 0.5rem 1rem 0.75rem;
      border-top: none;
  }
 
- .footer-accordion-item .accordion-button-custom .footer-accordion-item .accordion-button-custom .accordion-body ul {
+ .accordion-body ul {
      padding-left: 0;
      margin-bottom: 0;
  }
 
- .footer-accordion-item .accordion-button-custom .accordion-body li {
+ .accordion-body li {
      margin-bottom: 0.5rem;
  }
 
- .accordion-body .footer-link {
+ .accordion-body a {
      display: inline-block;
      text-decoration: none;
-   color: #fff !important;
+     color: #212529;
      opacity: 0.85;
      transform: none;
      transition: none;
  }
 
- .accordion-body .footer-link:hover {
-    color: #ccc !important;
+ .accordion-body a:hover {
+     color: #212529;
      opacity: 0.85;
      transform: none;
      text-decoration: underline;
  }
 
- .footer-accordion-item .accordion-button.accordion-button-custom {
+ .accordion-button {
      padding-left: 0 !important;
      padding-right: 0 !important;
  }
 
- .footer-accordion-item .accordion-button.accordion-button-custom:not(.collapsed) {
+ .accordion-button:not(.collapsed) {
      background-color: transparent !important;
      box-shadow: none !important;
  }
@@ -185,7 +184,7 @@
  }
 
  .footer-social-icon {
-     color: #fff;
+     color: #212529;
      transition: color 0.3s;
  }
 
@@ -224,7 +223,7 @@
          font-size: 0.8rem;
      }
 
-     .footer-accordion-item .accordion-button-custom {
+     .accordion-button {
          font-size: 0.85rem;
          padding-top: 0.75rem;
          padding-bottom: 0.75rem;

@@ -25,7 +25,7 @@ import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
 import DiscountForm from '../components/admin/discounts/DiscountModal.vue'
-import ProductVariantList from '@/components/admin/product/ProductVariantList.vue'
+import ProductVariantList from '@/components/admin/product/ProductVariantMain.vue'
 import AddProductVariant from '@/components/admin/product/AddProductVariant.vue'
 import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
 import ProductPromotions from '@/components/admin/promotions/ProductPromotions.vue'
@@ -157,7 +157,7 @@ const router = createRouter({
           component: DiscountForm,
         },
         {
-          path: 'form/:id',
+          path: 'discount/form/:id',
           name: 'discountFormUpdate',
           component: DiscountForm,
         },
