@@ -292,7 +292,7 @@ export default {
               <input type="text" class="form-control" placeholder="Họ tên người nhận" v-model="form.fullName" required />
             </div>
             <div class="mb-3">
-            <h5>Số điện thoại :</h5>
+            <h5>Họ tên người nhận :</h5>
               <input type="text" class="form-control" placeholder="Số điện thoại" v-model="form.phone" required />
             </div>
             <div class="mb-3">
