@@ -9,6 +9,7 @@ import Order from '@/views/admin/OrderView.vue'
 import Category from '@/views/CategoryView.vue'
 import User from '@/views/UserView.vue'
 import Product from '@/views/admin/ProductView.vue'
+import Color from '@/views/admin/ColorView.vue'
 import ProductFrom from '@/views/admin/ProductFormViews.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -157,7 +158,7 @@ const router = createRouter({
           component: DiscountForm,
         },
         {
-          path: 'discount/form/:id',
+          path: 'form/:id',
           name: 'discountFormUpdate',
           component: DiscountForm,
         },
@@ -175,6 +176,11 @@ const router = createRouter({
           path: 'product',
           name: 'Product',
           component: Product,
+        },
+         {
+          path: 'attribute/color',
+          name: 'Color',
+          component: Color,
         },
         {
           path: 'product/form',
@@ -252,8 +258,7 @@ function getUserRole() {
 
 // Navigation Guard kiểm tra phân quyền truy cập
 router.beforeEach((to, from, next) => {
-  const role = parseInt(getUserRole());
-
+  const role = getUserRole(); // 0 = Admin, 1 = User
   const isLoggedIn = role !== null;
 
   // Nếu chưa đăng nhập
