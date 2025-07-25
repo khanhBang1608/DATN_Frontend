@@ -59,14 +59,8 @@ const confirmOtp = async () => {
     });
 
     if (res.data.message === "Xác thực OTP thành công.") {
-      message.value = res.data.message;
-      error.value = "";
-      if (res.data.email) {
-        router.push({
-          path: "/register",
-          query: { email: res.data.email }, // ← Không hiển thị trên URL
-        });
-      }
+      sessionStorage.setItem("verifiedEmail", res.data.email);
+      router.push("/register");
     } else {
       error.value = "Xác thực thất bại";
       message.value = "";
