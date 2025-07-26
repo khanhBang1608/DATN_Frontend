@@ -33,7 +33,8 @@ import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
 import ProductPromotions from '@/components/admin/promotions/ProductPromotions.vue'
 import ProductPromotionForm from '@/components/admin/promotions/ProductPromotionForm.vue'
 import ProductPromotionForm2 from '@/components/admin/promotions/ProductPromotionForm2.vue'
-
+import ListAddressView from '@/views/ListAddressView.vue'
+import EditAddressView from '@/views/EditAddressView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -116,6 +117,17 @@ const router = createRouter({
       path: '/user/address',
       name: 'address',
       component: AddressView,
+    },
+    {
+      path: '/user/listaddress',
+      name: 'listaddress',
+      component: ListAddressView,
+    },
+    {
+      path: '/user/editaddress/:id',
+      name: 'editaddress',
+      component: EditAddressView,
+      props: true
     },
     {
       path: '/about',

@@ -19,7 +19,7 @@
         <a href="/user/account">Tổng quan tài khoản</a><br />
         <a href="/user/profile">Thông tin của tôi</a><br />
         <a href="#" class="active">Đổi mật khẩu</a><br />
-        <a href="/user/address">Sổ địa chỉ</a><br />
+        <a href="/user/listaddress">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
         <a href="#">Danh sách yêu thích</a>

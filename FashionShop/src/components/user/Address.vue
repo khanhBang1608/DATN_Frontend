@@ -18,7 +18,7 @@
         <a href="/user/account">Tổng quan tài khoản</a><br />
         <a href="/user/profile">Thông tin của tôi</a><br />
         <a href="/user/change-password">Đổi mật khẩu</a><br />
-        <a href="#" class="active">Sổ địa chỉ</a><br />
+        <a href="/user/listaddress" class="active">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
         <a href="#">Danh sách yêu thích</a>
@@ -107,30 +107,6 @@
               v-model="form.specificAddress"
               class="form-control address-form-input"
             />
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label address-form-label">Ghi chú (tuỳ chọn)</label>
-            <textarea
-              v-model="form.note"
-              class="form-control address-form-textarea"
-              rows="2"
-            ></textarea>
-          </div>
-
-          <div class="form-check mb-3">
-            <input
-              class="form-check-input address-form-checkbox"
-              type="checkbox"
-              v-model="form.defaultAddress"
-              id="defaultAddress"
-            />
-            <label
-              class="form-check-label address-form-checkbox-label"
-              for="defaultAddress"
-            >
-              Đặt làm địa chỉ mặc định
-            </label>
           </div>
 
           <button type="submit" class="btn address-form-btn">Lưu địa chỉ</button>

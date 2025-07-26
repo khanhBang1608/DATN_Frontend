@@ -15,6 +15,7 @@
     "axios": "^1.9.0",
     "bootstrap": "^5.3.6",
     "bootstrap-icons": "^1.13.1",
+    "chart.js": "^4.5.0",
     "dragscroll": "^0.0.8",
     "fashionshop": "file:",
     "izitoast": "^1.4.0",

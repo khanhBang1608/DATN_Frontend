@@ -17,7 +17,7 @@
         <a href="#" class="active">Tổng quan tài khoản</a><br />
         <a href="/user/profile">Thông tin của tôi</a><br />
         <a href="/user/change-password">Đổi mật khẩu</a><br />
-        <a href="/user/address">Sổ địa chỉ</a><br />
+        <a href="/user/listaddress">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
         <a href="#">Danh sách yêu thích</a>
@@ -57,7 +57,7 @@
               <p class="account-card-desc">
                 Thêm và chỉnh sửa địa chỉ thanh toán và giao hàng của bạn
               </p>
-              <a href="/user/address" class="account-card-link">Quản lý địa chỉ của bạn</a>
+              <a href="/user/listaddress" class="account-card-link">Quản lý địa chỉ của bạn</a>
             </div>
           </div>
 
