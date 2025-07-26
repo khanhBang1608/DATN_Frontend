@@ -8,7 +8,6 @@ const token = localStorage.getItem("token")
 const promotionId = route.params.promotionId
 const id = route.params.id // lấy id nếu đang sửa
 
-
 const allProducts = ref([])
 const selectedProductIds = ref([])
 const allVariantsMap = ref({})
@@ -23,6 +22,7 @@ const fetchAllProducts = async () => {
     allProducts.value = res.data
   } catch (err) {
     console.error('Lỗi khi tải danh sách sản phẩm:', err)
+    alert('Không thể tải danh sách sản phẩm. Vui lòng thử lại.')
   }
 }
 
@@ -46,8 +46,11 @@ const fetchVariantsByProductId = async (productId) => {
     })
   } catch (err) {
     console.error(`Lỗi khi tải biến thể cho sản phẩm ${productId}:`, err)
+    alert(`Không thể tải biến thể cho sản phẩm ${productId}.`)
   }
 }
+
+// 3. Load dữ liệu khi sửa
 const loadEditData = async () => {
   if (!id) return
 
@@ -58,13 +61,13 @@ const loadEditData = async () => {
     const data = res.data
 
     // Gán biến thể được chọn & số lượng
-    selectedProductIds.value = [] // Không cần product, chỉ cần load variant
+    selectedProductIds.value = []
     selectedVariants.value[data.productVariantId] = {
       checked: true,
       promotionQuantity: data.quantityLimit
     }
 
-    // Gọi API lấy thông tin biến thể từ variantId → để biết productId
+    // Lấy thông tin biến thể từ variantId → để biết productId
     const variantRes = await axios.get(`http://localhost:8080/api/admin/product-variants/${data.productVariantId}`, {
       headers: { Authorization: `Bearer ${token}` }
     })
@@ -73,16 +76,14 @@ const loadEditData = async () => {
     const productId = variant.productId
 
     selectedProductIds.value.push(productId)
-
-    // Lấy danh sách biến thể cho productId này
     await fetchVariantsByProductId(productId)
   } catch (err) {
     console.error("Lỗi khi load dữ liệu sửa:", err)
+    alert('Không thể tải dữ liệu khuyến mãi. Vui lòng thử lại.')
   }
 }
 
-
-// 3. Theo dõi sản phẩm được chọn → lấy biến thể
+// 4. Theo dõi sản phẩm được chọn → lấy biến thể
 watch(selectedProductIds, (newIds) => {
   newIds.forEach(productId => {
     if (!allVariantsMap.value[productId]) {
@@ -96,11 +97,11 @@ onMounted(() => {
   loadEditData()
 })
 
-
 // 5. Gửi danh sách biến thể + số lượng về backend
 const submitPromotionVariants = async () => {
   const selectedList = []
 
+  // Thu thập các biến thể được chọn
   for (const [variantId, value] of Object.entries(selectedVariants.value)) {
     if (value.checked && value.promotionQuantity > 0) {
       selectedList.push({
@@ -112,30 +113,83 @@ const submitPromotionVariants = async () => {
   }
 
   if (selectedList.length === 0) {
-    alert("Vui lòng chọn ít nhất 1 biến thể với số lượng khuyến mãi.")
+    alert('Vui lòng chọn ít nhất 1 biến thể với số lượng khuyến mãi lớn hơn 0.')
+    return
+  }
+
+  // Kiểm tra số lượng khuyến mãi không vượt quá tồn kho
+  const invalidVariants = []
+  for (const item of selectedList) {
+    const variant = Object.values(allVariantsMap.value)
+      .flat()
+      .find(v => v.productVariantId === item.productVariantId)
+    if (variant && item.quantityLimit > variant.stock) {
+      invalidVariants.push({
+        id: item.productVariantId,
+        color: variant.colorName || 'Không có',
+        size: variant.sizeName || 'Không có',
+        stock: variant.stock,
+        quantity: item.quantityLimit
+      })
+    }
+  }
+
+  if (invalidVariants.length > 0) {
+    const errorMessage = invalidVariants
+      .map(v => `Biến thể ${v.id} (Màu: ${v.color}, Size: ${v.size}): Số lượng khuyến mãi (${v.quantity}) vượt quá tồn kho (${v.stock}).`)
+      .join('\n')
+    alert(`Lỗi: Số lượng khuyến mãi không hợp lệ:\n${errorMessage}`)
     return
   }
 
   try {
     if (id) {
-        // Chỉ update 1 item thôi
-        const item = selectedList[0]
-        await axios.put(`http://localhost:8080/api/admin/product-promotions/${id}`, item, {
-            headers: { Authorization: `Bearer ${token}` },
-            'Content-Type': 'application/json'
-        })
-        alert("Cập nhật thành công!")
+      // Chỉ update 1 item
+      const item = selectedList[0]
+      const response = await axios.put(`http://localhost:8080/api/admin/product-promotions/${id}`, item, {
+        headers: { Authorization: `Bearer ${token}` },
+        'Content-Type': 'application/json'
+      })
+      if (!response.data) {
+        alert(`Không thể cập nhật: Biến thể ${item.productVariantId} đã có khuyến mãi trùng thời gian.`)
+        return
+      }
+      alert("Cập nhật khuyến mãi thành công!")
     } else {
-        await axios.post(`http://localhost:8080/api/admin/product-promotions`, selectedList, {
-            headers: { Authorization: `Bearer ${token}` },
-            'Content-Type': 'application/json'
-        })
-        alert("Đã lưu khuyến mãi thành công!")
-    }
+      // Gửi danh sách biến thể
+      const response = await axios.post(`http://localhost:8080/api/admin/product-promotions`, selectedList, {
+        headers: { Authorization: `Bearer ${token}` },
+        'Content-Type': 'application/json'
+      })
 
+      const savedVariants = response.data
+      const savedVariantIds = savedVariants.map(item => item.productVariantId)
+      const failedVariants = selectedList.filter(item => !savedVariantIds.includes(item.productVariantId))
+
+      if (savedVariants.length === 0) {
+        alert('Không thể lưu: Tất cả biến thể đã có khuyến mãi trùng thời gian.')
+        return
+      }
+
+      let message = savedVariants.length > 0 ? `Đã lưu thành công ${savedVariants.length} biến thể.\n` : ''
+      if (failedVariants.length > 0) {
+        const failedDetails = failedVariants.map(item => {
+          const variant = Object.values(allVariantsMap.value)
+            .flat()
+            .find(v => v.productVariantId === item.productVariantId)
+          return `Biến thể ${item.productVariantId} (Màu: ${variant?.colorName || 'Không có'}, Size: ${variant?.sizeName || 'Không có'})`
+        }).join(', ')
+        message += `Các biến thể sau không được lưu do trùng thời gian khuyến mãi: ${failedDetails}.`
+      }
+      alert(message)
+    }
   } catch (err) {
     console.error("Lỗi khi lưu khuyến mãi:", err)
-    alert("Lỗi khi lưu khuyến mãi.")
+    if (err.response?.status === 400) {
+      alert('Không thể lưu: Một hoặc nhiều biến thể đã có khuyến mãi trùng thời gian.')
+    } else {
+      alert('Lỗi khi lưu khuyến mãi. Vui lòng thử lại.')
+    }
   }
 }
 
@@ -144,8 +198,6 @@ const getProductName = (productId) => {
   const product = allProducts.value.find(p => p.productId == productId)
   return product ? product.name : 'Không rõ'
 }
-
-
 </script>
 
 <template>
@@ -203,11 +255,15 @@ const getProductName = (productId) => {
             <input
               type="number"
               min="0"
+              :max="variant.stock"
               class="form-control"
               v-model.number="selectedVariants[variant.productVariantId].promotionQuantity"
             />
           </div>
         </div>
+      </div>
+      <div v-else class="alert alert-warning">
+        Không có biến thể nào cho sản phẩm này.
       </div>
     </div>
 
