@@ -2,11 +2,12 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
-const router = useRouter();
 
+const router = useRouter();
 const promotions = ref([]);
 const token = localStorage.getItem("token");
 
+// Lấy danh sách khuyến mãi
 const fetchPromotions = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/admin/promotions", {
@@ -20,6 +21,7 @@ const fetchPromotions = async () => {
   }
 };
 
+// Xoá khuyến mãi
 const deletePromotion = async (id) => {
   if (!confirm("Bạn có chắc chắn muốn xoá khuyến mãi này?")) return;
   try {
@@ -34,20 +36,16 @@ const deletePromotion = async (id) => {
   }
 };
 
-// Format tiền tệ VNĐ
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-    value
-  );
-};
-
-// Format ngày
+// Định dạng ngày theo kiểu Việt Nam
 const formatDate = (dateStr) => {
   return new Date(dateStr).toLocaleDateString("vi-VN");
 };
+
+// Điều hướng
 const goToAddForm = () => {
   router.push("/admin/promotion/form");
 };
+
 const editPromotion = (id) => {
   router.push(`/admin/promotion/form/${id}`);
 };
@@ -56,6 +54,7 @@ const goToPromotionProducts = (id) => {
   router.push(`/admin/ProductPromotions/${id}`);
 };
 
+// Gọi API khi component mounted
 onMounted(() => {
   fetchPromotions();
 });
@@ -67,12 +66,13 @@ onMounted(() => {
       <h2 class="mb-0">📢 Quản lý Khuyến mãi</h2>
       <button class="btn btn-primary" @click="goToAddForm">+ Thêm khuyến mãi</button>
     </div>
+
     <table class="table table-hover align-middle text-light custom-table">
       <thead>
         <tr>
           <th>#</th>
           <th>Tên chương trình</th>
-          <th>Giảm (VNĐ)</th>
+          <th>Giảm (%)</th>
           <th>Ngày bắt đầu</th>
           <th>Ngày kết thúc</th>
           <th>Trạng thái</th>
@@ -83,11 +83,11 @@ onMounted(() => {
         <tr v-for="promo in promotions" :key="promo.id">
           <td>{{ promo.id }}</td>
           <td>{{ promo.code }}</td>
-          <td>{{ formatCurrency(promo.discountAmount) }}</td>
+          <td>{{ promo.discountAmount }} %</td>
           <td>{{ formatDate(promo.startDate) }}</td>
           <td>{{ formatDate(promo.endDate) }}</td>
           <td>
-            <span :class="['badge', promo.status === 1 ? 'bg-success' : 'bg-secondary']">
+            <span :class="['badge', promo.status ? 'bg-success' : 'bg-secondary']">
               {{ promo.status ? "Đang hoạt động" : "Ngừng hoạt động" }}
             </span>
           </td>
@@ -96,7 +96,7 @@ onMounted(() => {
               ✏️ Sửa
             </button>
             <button class="btn btn-sm btn-danger m-1" @click="deletePromotion(promo.id)">
-              🗑️ Xóa
+              🗑️ Xoá
             </button>
             <button
               class="btn btn-outline-info me-2"
@@ -108,7 +108,7 @@ onMounted(() => {
         </tr>
         <tr v-if="promotions.length === 0">
           <td colspan="7" class="text-center text-white fs-5 py-4">
-          <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
             Không có khuyến mãi nào được tìm thấy.
           </td>
         </tr>
@@ -116,3 +116,18 @@ onMounted(() => {
     </table>
   </div>
 </template>
+
+<style scoped>
+.custom-table thead {
+  background-color: #1f1f1f;
+}
+.custom-table th,
+.custom-table td {
+  color: #fff;
+  vertical-align: middle;
+}
+.badge {
+  font-size: 0.9rem;
+  padding: 0.5em 0.75em;
+}
+</style>
