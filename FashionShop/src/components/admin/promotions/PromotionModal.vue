@@ -167,7 +167,7 @@ onMounted(() => {
 
         <!-- Giảm giá -->
         <div class="col-md-6">
-          <label class="form-label fw-semibold text-dark">Giảm giá (VNĐ)</label>
+          <label class="form-label fw-semibold text-dark">% giảm</label>
           <input type="number" class="form-control" v-model="form.discountAmount" />
           <small v-if="fieldErrors.discountAmount" class="text-danger">{{ fieldErrors.discountAmount }}</small>
         </div>

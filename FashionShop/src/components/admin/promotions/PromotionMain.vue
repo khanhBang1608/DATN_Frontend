@@ -11,7 +11,7 @@
           <tr>
             <th>Mã</th>
             <th>Tên chương trình</th>
-            <th>Giảm (VNĐ)</th>
+            <th>Giảm %</th>
             <th>Thời gian</th>
             <th>Trạng thái</th>
             <th class="text-center">Hành động</th>
@@ -24,7 +24,7 @@
           <tr v-for="promo in promotions" :key="promo.id">
             <td>{{ promo.code }}</td>
             <td>{{ promo.description }}</td>
-            <td>{{ formatCurrency(promo.discountAmount) }}</td>
+            <td>{{ formatDiscount(promo.discountAmount) }}</td>
             <td>{{ formatDate(promo.startDate) }} - {{ formatDate(promo.endDate) }}</td>
             <td>
               <span :class="['badge text-light', promo.status ? 'bg-success' : 'bg-danger']">
@@ -250,8 +250,8 @@ const goToPromotionProducts = (id) => {
   router.push(`/admin/ProductPromotions/${id}`);
 };
 
-const formatCurrency = (val) =>
-  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(val);
+const formatDiscount = (val) => `${val} %`;
+
 const formatDate = (d) =>
   new Date(d).toLocaleDateString("vi-VN", {
     day: "2-digit",
