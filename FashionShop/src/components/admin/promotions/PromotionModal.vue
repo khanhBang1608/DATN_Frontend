@@ -59,7 +59,11 @@ const parseErrors = (errors) => {
   for (const msg of errors) {
     if (msg.includes("Mã khuyến mãi")) map.code = msg;
     else if (msg.includes("Mô tả")) map.description = msg;
-    else if (msg.includes("phần trăm") || msg.includes("giảm giá") || msg.includes("lớn hơn")) {
+    else if (
+      msg.includes("phần trăm") ||
+      msg.includes("giảm giá") ||
+      msg.includes("lớn hơn")
+    ) {
       map.discountAmount = msg;
     } else if (msg.includes("bắt đầu")) map.startDate = msg;
     else if (msg.includes("kết thúc")) map.endDate = msg;
@@ -162,35 +166,45 @@ onMounted(() => {
         <div class="col-md-6">
           <label class="form-label fw-semibold text-dark">Tên chương trình</label>
           <input type="text" class="form-control" v-model="form.code" />
-          <small v-if="fieldErrors.code" class="text-danger">{{ fieldErrors.code }}</small>
+          <small v-if="fieldErrors.code" class="text-danger">{{
+            fieldErrors.code
+          }}</small>
         </div>
 
         <!-- Giảm giá -->
         <div class="col-md-6">
           <label class="form-label fw-semibold text-dark">% giảm</label>
           <input type="number" class="form-control" v-model="form.discountAmount" />
-          <small v-if="fieldErrors.discountAmount" class="text-danger">{{ fieldErrors.discountAmount }}</small>
+          <small v-if="fieldErrors.discountAmount" class="text-danger">{{
+            fieldErrors.discountAmount
+          }}</small>
         </div>
 
         <!-- Mô tả -->
         <div class="col-md-12">
           <label class="form-label fw-semibold text-dark">Mô tả</label>
           <textarea class="form-control" rows="3" v-model="form.description"></textarea>
-          <small v-if="fieldErrors.description" class="text-danger">{{ fieldErrors.description }}</small>
+          <small v-if="fieldErrors.description" class="text-danger">{{
+            fieldErrors.description
+          }}</small>
         </div>
 
         <!-- Ngày bắt đầu -->
         <div class="col-md-6">
           <label class="form-label fw-semibold text-dark">Ngày bắt đầu</label>
           <input type="date" class="form-control" v-model="form.startDate" />
-          <small v-if="fieldErrors.startDate" class="text-danger">{{ fieldErrors.startDate }}</small>
+          <small v-if="fieldErrors.startDate" class="text-danger">{{
+            fieldErrors.startDate
+          }}</small>
         </div>
 
         <!-- Ngày kết thúc -->
         <div class="col-md-6">
           <label class="form-label fw-semibold text-dark">Ngày kết thúc</label>
           <input type="date" class="form-control" v-model="form.endDate" />
-          <small v-if="fieldErrors.endDate" class="text-danger">{{ fieldErrors.endDate }}</small>
+          <small v-if="fieldErrors.endDate" class="text-danger">{{
+            fieldErrors.endDate
+          }}</small>
         </div>
 
         <!-- Trạng thái -->
@@ -200,7 +214,9 @@ onMounted(() => {
             <option :value="true">Đang hoạt động</option>
             <option :value="false">Ngừng hoạt động</option>
           </select>
-          <small v-if="fieldErrors.status" class="text-danger">{{ fieldErrors.status }}</small>
+          <small v-if="fieldErrors.status" class="text-danger">{{
+            fieldErrors.status
+          }}</small>
         </div>
 
         <!-- Nút hành động -->
