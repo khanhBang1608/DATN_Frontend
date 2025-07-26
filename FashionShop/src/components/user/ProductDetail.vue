@@ -1,18 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getProductDetail } from "@/api/ProductClient";
+import { getProductDetail, getRelatedProducts } from "@/api/ProductClient";
 import ReviewComponent from "@/components/user/Review.vue";
 import promotionApi from "@/api/PromotionClien";
 import { toggleFavorite } from "@/api/user/FavoriteAPI";
-import {
-  getCart,
-  addToCart,
-  updateCartItem,
-  removeCartItem,
-  clearCart,
-  getRelatedProducts,
-} from "@/api/user/cartAPI";
+import { addToCart } from "@/api/user/cartAPI";
 
 const router = useRouter();
 const isFavorite = ref(false);
@@ -24,6 +17,8 @@ const handleToggleFavorite = async () => {
     console.error(err);
   }
 };
+
+const relatedProducts = ref([]);
 
 const route = useRoute();
 const product = ref({ variants: [] });
@@ -142,6 +137,42 @@ onMounted(async () => {
     });
 
     product.value = data;
+    // Gọi API lấy sản phẩm liên quan
+    // Gọi API lấy sản phẩm liên quan
+try {
+  const resRelated = await getRelatedProducts(id, data.categoryId);
+  const related = resRelated.data;
+
+  // Áp dụng khuyến mãi cho từng biến thể sản phẩm liên quan
+  related.forEach((prod) => {
+    prod.variants = prod.variants.map((v) => {
+      const promo = promotionMap.get(v.productVariantId);
+      if (promo) {
+        const discountPercent = promo.discountAmount || 0;
+        const originalPrice = v.price;
+        const discountedPrice = originalPrice * (1 - discountPercent / 100);
+
+        return {
+          ...v,
+          originalPrice: originalPrice,
+          discountedPrice: Math.round(discountedPrice),
+          discountPercent: discountPercent,
+        };
+      }
+      return {
+        ...v,
+        originalPrice: v.price,
+        discountedPrice: v.price,
+        discountPercent: 0,
+      };
+    });
+  });
+
+  relatedProducts.value = related;
+} catch (err) {
+  console.error("Lỗi khi tải sản phẩm liên quan:", err);
+}
+
   } catch (error) {
     console.error("Lỗi khi tải sản phẩm:", error);
   }
@@ -158,7 +189,6 @@ const uniqueColors = computed(() => {
     return false;
   });
 });
-
 
 // Kích thước khả dụng theo màu đang chọn
 const uniqueSizes = computed(() => {
@@ -389,53 +419,45 @@ function getImageUrl(imageName) {
     <ReviewComponent :productId="product.productId" />
   </div>
 
-  <div class="container mb-3">
-    <h4 class="text-center mt-4 fw-bold">SẢN PHẦM LIÊN QUAN</h4>
+  <div v-if="relatedProducts.length > 0" class="container mb-3">
+    <h4 class="text-center mt-4 fw-bold">SẢN PHẨM LIÊN QUAN</h4>
     <div class="row g-3 mt-3">
-      <!-- Sản phẩm 1 -->
-      <div class="col-6 col-sm-6 col-md-4 col-lg-3">
-        <a href="#" class="product-link">
-          <div class="product-item">
-            <span class="discount-badge">-25%</span>
+      <div
+        v-for="item in relatedProducts"
+        :key="item.productId"
+        class="col-6 col-sm-6 col-md-4 col-lg-3"
+      >
+        <RouterLink :to="`/product-detail/${item.productId}`" class="product-link">
+          <div class="product-item position-relative">
+            <span v-if="item.variants?.[0]?.discountPercent > 0" class="discount-badge">
+              -{{ item.variants[0].discountPercent }}%
+            </span>
             <img
-              src="@/assets/img/slideshow_1.png"
+              :src="getImageUrl(item.variants?.[0]?.imageName)"
               class="img-fluid img-default"
-              alt="Quần Dài Wash Xám"
+              :alt="item.name"
             />
             <img
-              src="@/assets/img/slideshow_1.png"
+              :src="getImageUrl(item.variants?.[0]?.imageName)"
               class="img-fluid img-hover"
-              alt="Quần Dài Wash Xám Hover"
+              :alt="item.name"
             />
           </div>
-          <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
+          <div class="product-name mt-2 text-truncate">{{ item.name }}</div>
           <div>
-            <span class="discounted-price">630,000₫</span>
-            <span class="original-price">840,000₫</span>
+            <span class="discounted-price text-danger fw-bold">
+              {{ item.variants?.[0]?.discountedPrice?.toLocaleString() }}₫
+            </span>
+            <span
+              v-if="
+                item.variants?.[0]?.discountedPrice < item.variants?.[0]?.originalPrice
+              "
+              class="original-price text-muted text-decoration-line-through ms-2"
+            >
+              {{ item.variants?.[0]?.originalPrice?.toLocaleString() }}₫
+            </span>
           </div>
-        </a>
-      </div>
-      <div class="col-6 col-sm-6 col-md-4 col-lg-3">
-        <a href="#" class="product-link">
-          <div class="product-item">
-            <span class="discount-badge">-25%</span>
-            <img
-              src="@/assets/img/slideshow_1.png"
-              class="img-fluid img-default"
-              alt="Quần Dài Wash Xám"
-            />
-            <img
-              src="@/assets/img/slideshow_1.png"
-              class="img-fluid img-hover"
-              alt="Quần Dài Wash Xám Hover"
-            />
-          </div>
-          <div class="product-name">TSUN Quần Dài Rộng Ống Suông Wash Xám</div>
-          <div>
-            <span class="discounted-price">630,000₫</span>
-            <span class="original-price">840,000₫</span>
-          </div>
-        </a>
+        </RouterLink>
       </div>
     </div>
   </div>
