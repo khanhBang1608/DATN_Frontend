@@ -1,16 +1,36 @@
 <script setup>
-import { onMounted, ref, nextTick } from "vue";
+import { onMounted, ref, nextTick, watch } from "vue";
 import { setupFilterSidebar } from "@/assets/js/product";
-import { getAllProducts } from "@/api/ProductClient";
+import { getAllProducts, searchProductsByName } from "@/api/ProductClient";
 import promotionApi from "@/api/PromotionClien";
+import { useRoute } from "vue-router";
 
+const route = useRoute();
+const searchKeyword = ref(route.query.keyword || "");
 const products = ref([]);
 
 onMounted(async () => {
-  await fetchProducts();
+  if (searchKeyword.value) {
+    await handleSearch(); // nếu có keyword trong URL thì tìm kiếm
+  } else {
+    await fetchProducts(); // không có keyword thì load toàn bộ
+  }
   await nextTick();
   setupFilterSidebar();
 });
+
+// ✅ Theo dõi thay đổi URL keyword
+watch(
+  () => route.query.keyword,
+  async (newKeyword) => {
+    searchKeyword.value = newKeyword || "";
+    if (searchKeyword.value) {
+      await handleSearch();
+    } else {
+      await fetchProducts();
+    }
+  }
+);
 
 const fetchProducts = async () => {
   try {
@@ -18,19 +38,15 @@ const fetchProducts = async () => {
     const activePromotions = await promotionApi.getActivePromotions();
 
     const promotionMap = new Map();
-
-    // Map các khuyến mãi theo productVariantId
     activePromotions.forEach((promo) => {
       promo.productPromotions.forEach((pp) => {
         promotionMap.set(pp.productVariantId, promo);
       });
     });
 
-    // Duyệt từng sản phẩm
     res.data.forEach((product) => {
       if (!product.variants || product.variants.length === 0) return;
 
-      // Tìm biến thể có giá thấp nhất
       let minVariant = product.variants[0];
       product.variants.forEach((v) => {
         if (v.price < minVariant.price) {
@@ -38,24 +54,21 @@ const fetchProducts = async () => {
         }
       });
 
-      // Xử lý khuyến mãi nếu có
       const promo = promotionMap.get(minVariant.productVariantId);
       if (promo) {
-        const discountPercent = promo.discountAmount || 0; // Giảm theo %
+        const discountPercent = promo.discountAmount || 0;
         const originalPrice = minVariant.price;
-
         const discountedPrice = originalPrice * (1 - discountPercent / 100);
 
         product.originalPrice = originalPrice;
         minVariant = {
           ...minVariant,
-          price: Math.round(discountedPrice), // làm tròn giá sau giảm
+          price: Math.round(discountedPrice),
         };
 
-        product.discount = discountPercent; // hiện % giảm đúng như trong promo
+        product.discount = discountPercent;
       }
 
-      // Đặt biến thể có giá thấp nhất làm biến thể chính để hiển thị
       product.variants = [
         minVariant,
         ...product.variants.filter((v) => v !== minVariant),
@@ -65,6 +78,22 @@ const fetchProducts = async () => {
     products.value = res.data;
   } catch (err) {
     console.error("Lỗi khi tải sản phẩm:", err);
+  }
+};
+
+const handleSearch = async () => {
+  try {
+    const response = await searchProductsByName(searchKeyword.value);
+    const result = response.data;
+
+    if (result.length > 0) {
+      products.value = result;
+    } else {
+      products.value = [];
+      console.log("Không tìm thấy sản phẩm phù hợp.");
+    }
+  } catch (error) {
+    console.error("Lỗi khi tìm kiếm sản phẩm:", error);
   }
 };
 </script>

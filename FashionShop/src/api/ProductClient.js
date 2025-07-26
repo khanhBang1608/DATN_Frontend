@@ -26,3 +26,8 @@ export const getRelatedProducts = (categoryId, excludeProductId) =>
       excludeProductId
     }
   });
+
+export const searchProductsByName = (keyword) =>
+  axios.get(`${API_BASE}/products/search`, {
+    params: { keyword }
+  });

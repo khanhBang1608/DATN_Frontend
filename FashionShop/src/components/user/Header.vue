@@ -52,8 +52,20 @@ watch(isLoggedIn, (newVal) => {
     });
   }
 });
-</script>
 
+const searchKeyword = ref("");
+
+function handleSearch() {
+  const keyword = searchKeyword.value.trim();
+  if (keyword) {
+    // Nếu có từ khóa: chuyển hướng kèm keyword
+    router.push({ path: "/product", query: { keyword } });
+  } else {
+    // Nếu rỗng: chuyển hướng /product KHÔNG có query
+    router.push({ path: "/product" });
+  }
+}
+</script>
 
 <template>
   <header>
@@ -256,20 +268,23 @@ watch(isLoggedIn, (newVal) => {
       </div>
       <div class="w-100" style="border-bottom: 2px solid #e0e0e0"></div>
 
-      <div class="mobile-search-wrapper d-lg-none">
-        <form class="search-form">
-          <div class="input-group">
-            <input
-              type="text"
-              class="form-control search-input"
-              placeholder="Tìm kiếm sản phẩm..."
-            />
-            <button class="btn search-btn" type="submit">
-              <i class="bi bi-search"></i>
-            </button>
-          </div>
-        </form>
-      </div>
+      <template>
+        <div class="mobile-search-wrapper d-lg-none">
+          <form class="search-form" @submit.prevent="handleSearch">
+            <div class="input-group">
+              <input
+                type="text"
+                class="form-control search-input"
+                placeholder="Tìm kiếm sản phẩm..."
+                v-model="searchKeyword"
+              />
+              <button class="btn search-btn" type="submit">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </template>
     </nav>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white d-none d-lg-block">
@@ -281,7 +296,7 @@ watch(isLoggedIn, (newVal) => {
           <ul class="navbar-nav mx-auto fw-bold text-dark d-none d-lg-flex">
             <li class="nav-item"><a class="nav-link" href="/">Trang Chủ</a></li>
             <li class="nav-item"><a class="nav-link" href="/product">Sản Phẩm</a></li>
-            <li class="nav-item dropdown">
+            <!-- <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
                 href="#"
@@ -320,7 +335,7 @@ watch(isLoggedIn, (newVal) => {
                 <li><a class="dropdown-item" href="#">Jersey</a></li>
                 <li><a class="dropdown-item" href="#">Sơ Mi</a></li>
               </ul>
-            </li>
+            </li> -->
           </ul>
 
           <div class="d-none d-lg-flex align-items-center">
@@ -423,11 +438,18 @@ watch(isLoggedIn, (newVal) => {
             <a href="/user/cart" class="text-dark text-decoration-none mx-2">
               <i class="bi bi-cart fs-4"></i>
             </a>
-
-            <div class="search-box d-flex align-items-center ms-3">
+            <form
+              @submit.prevent="handleSearch"
+              class="search-box d-flex align-items-center ms-3"
+            >
               <i class="bi bi-search me-2"></i>
-              <input type="text" class="form-control" placeholder="Tìm kiếm" />
-            </div>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Tìm kiếm"
+                v-model="searchKeyword"
+              />
+            </form>
           </div>
         </div>
       </div>
