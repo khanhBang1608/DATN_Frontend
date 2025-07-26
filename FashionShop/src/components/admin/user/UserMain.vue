@@ -15,7 +15,7 @@
         id="userTable"
         class="table table-hover align-middle text-light custom-table"
       >
-        <thead class="table-dark">
+        <thead>
           <tr>
             <th>STT</th>
             <th>Ảnh</th>

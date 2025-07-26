@@ -237,8 +237,8 @@ onMounted(fetchCategories);
     </div>
 
     <div class="table-responsive">
-      <table class="table table-hover text-light custom-table w-100">
-        <thead class="table-dark">
+      <table class="table table-hover align-middle text-light custom-table">
+        <thead>
           <tr>
             <th style="width: 50px">STT</th>
             <th style="width: 40px" class="text-center">#</th>
@@ -340,7 +340,7 @@ onMounted(fetchCategories);
     <div class="modal-dialog">
       <form @submit.prevent="createCategory" class="modal-content">
         <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title">Thêm Danh mục</h5>
+          <h5 class="modal-title">Thêm Danh Mục</h5>
           <button
             type="button"
             class="btn-close btn-close-white"
@@ -389,7 +389,9 @@ onMounted(fetchCategories);
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Đóng
+          </button>
           <button class="btn btn-success">Thêm mới</button>
         </div>
       </form>
@@ -401,7 +403,7 @@ onMounted(fetchCategories);
     <div class="modal-dialog">
       <form @submit.prevent="updateCategory" class="modal-content">
         <div class="modal-header bg-warning text-white">
-          <h5 class="modal-title">✏️ Sửa Danh mục</h5>
+          <h5 class="modal-title">Sửa Danh mục</h5>
           <button
             type="button"
             class="btn-close btn-close-white"
@@ -449,8 +451,10 @@ onMounted(fetchCategories);
           </div>
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Đóng
+          </button>
           <button class="btn btn-success">Cập nhật</button>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
         </div>
       </form>
     </div>

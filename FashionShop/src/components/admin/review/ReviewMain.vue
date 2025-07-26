@@ -73,7 +73,7 @@
       <button @click="error = null" class="btn btn-sm btn-outline-danger">Đóng</button>
     </div>
     <div v-else class="table-responsive">
-      <table class="table table-hover align-middle custom-table">
+      <table class="table table-hover align-middle text-light custom-table">
         <thead>
           <tr>
             <th>Sản phẩm</th>
@@ -85,6 +85,12 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="paginatedReviews.length === 0">
+            <td colspan="6" class="text-center text-white fs-5 py-4">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+              Không có đánh giá nào được tìm thấy.
+            </td>
+          </tr>
           <tr v-for="review in paginatedReviews" :key="review.reviewId">
             <td>{{ review.productName || "Không xác định" }}</td>
             <td>{{ review.userFullName || "Không xác định" }}</td>
@@ -179,7 +185,7 @@ export default {
       this.error = null;
       try {
         this.reviews = await getAllReviews({
-            ratings: this.filters.rating ? [this.filters.rating] : null,
+          ratings: this.filters.rating ? [this.filters.rating] : null,
           startDate: this.filters.startDate || null,
           endDate: this.filters.endDate || null,
           userFullName: this.filters.userFullName.trim() || null,
@@ -240,19 +246,6 @@ export default {
 </script>
 
 <style scoped>
-.card {
-  background-color: #2c3e50;
-  color: #ecf0f1;
-}
-.custom-table {
-  background-color: #34495e;
-}
-.table thead {
-  background-color: #1a252f;
-}
-.table-hover tbody tr:hover {
-  background-color: #3e5c76;
-}
 .rating-stars {
   color: #ffc107;
 }

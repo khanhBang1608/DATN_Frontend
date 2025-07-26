@@ -20,7 +20,11 @@ const fetchSizes = async () => {
 
     sizes.value = res.data.sort((a, b) => a.sizeId - b.sizeId);
   } catch (err) {
-    iziToast.error({ title: "Lỗi", message: "Không thể tải kích thước.", position: "topRight" });
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không thể tải kích thước.",
+      position: "topRight",
+    });
   }
 };
 
@@ -41,7 +45,11 @@ const createSize = async () => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    iziToast.success({ title: "Thành công", message: "Tạo kích thước thành công", position: "topRight" });
+    iziToast.success({
+      title: "Thành công",
+      message: "Tạo kích thước thành công",
+      position: "topRight",
+    });
     await fetchSizes();
     document.getElementById("addSizeModalClose").click();
     newSize.value = { sizeName: "" };
@@ -69,7 +77,11 @@ const updateSize = async () => {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    iziToast.success({ title: "Thành công", message: "Cập nhật kích thước thành công", position: "topRight" });
+    iziToast.success({
+      title: "Thành công",
+      message: "Cập nhật kích thước thành công",
+      position: "topRight",
+    });
     await fetchSizes();
     document.getElementById("editSizeModalClose").click();
   } catch (err) {
@@ -137,7 +149,11 @@ onMounted(() => {
   <div class="card p-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2>📏 Danh sách Kích thước</h2>
-      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSizeModal">
+      <button
+        class="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#addSizeModal"
+      >
         + Thêm kích thước
       </button>
     </div>
@@ -189,14 +205,21 @@ onMounted(() => {
         </div>
         <div class="modal-body">
           <label class="form-label">Tên kích thước:</label>
-          <input v-model="newSize.sizeName" class="form-control mb-2" />
+          <input
+            v-model="newSize.sizeName"
+            @input="formErrors.name = ''"
+            class="form-control mb-2"
+          />
+
           <div v-if="formErrors.name" class="text-danger small mb-2">
             {{ formErrors.name }}
           </div>
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Đóng
+          </button>
           <button class="btn btn-success">Thêm mới</button>
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
         </div>
       </form>
     </div>
@@ -217,14 +240,21 @@ onMounted(() => {
         </div>
         <div class="modal-body">
           <label class="form-label">Tên kích thước:</label>
-          <input v-model="editSize.sizeName" class="form-control mb-2" />
+          <input
+            v-model="editSize.sizeName"
+            @input="formErrors.name = ''"
+            class="form-control mb-2"
+          />
+
           <div v-if="formErrors.name" class="text-danger small mb-2">
             {{ formErrors.name }}
           </div>
         </div>
         <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            Đóng
+          </button>
           <button class="btn btn-success">Cập nhật</button>
-          <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
         </div>
       </form>
     </div>
