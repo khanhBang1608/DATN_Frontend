@@ -80,6 +80,7 @@
             <th>Địa chỉ</th>
             <th>Số điện thoại</th>
             <th>Tổng tiền</th>
+            <th>Phương thức thanh toán</th>
             <th>Trạng thái</th>
             <th class="text-center">Hành động</th>
           </tr>
@@ -92,6 +93,7 @@
             <td>{{ order.address }}</td>
             <td>{{ order.phoneNumber || "Không xác định" }}</td>
             <td>{{ formatPrice(order.totalAmount) }}</td>
+            <td>{{ order.paymentMethod }}</td>
             <td
               :class="{
                 'text-warning': order.status === 0,

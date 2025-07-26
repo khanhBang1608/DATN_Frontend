@@ -1,205 +1,226 @@
 <script>
-import { createOrder } from '@/api/user/orderAPI'
-import { clearCart } from '@/api/user/cartAPI'
-import { useToast } from 'vue-toastification'
-import { getDiscount  } from '@/api/user/discountAPI'
-import axios from 'axios'
-import { getAddressList } from '@/api/user/addressAPI';
+import { createOrder } from "@/api/user/orderAPI";
+import { clearCart } from "@/api/user/cartAPI";
+import { useToast } from "vue-toastification";
+import { getDiscount } from "@/api/user/discountAPI";
+import axios from "axios";
 
-const toast = useToast()
+const toast = useToast();
 
 export default {
   data() {
     return {
+      // Địa chỉ hành chính
       provinces: [],
       districts: [],
       wards: [],
-      cartDetails: [],
+      addressList: [],
+      selectedAddressId: "",
+
+      // Form người dùng
       form: {
-        fullName: '',
-        phone: '',
-        address: '',
-        country: 'Vietnam',
-        city: '',
-        district: '',
-        ward: '',
+        fullName: "",
+        email: "",
+        phone: "",
+        address: "",
+        country: "Vietnam",
+        city: "",
+        district: "",
+        ward: "",
+        province: "",
       },
 
-      paymentMethod: 'COD',
+      cartDetails: [],
+      paymentMethod: "COD",
       shippingFee: 10000,
       isMobileOrderVisible: false,
       loading: false,
 
-      // Discount
+      // Giảm giá
       discountList: [],
       selectedDiscount: null,
-      discountCode: '',
+      discountCode: "",
       discountAmount: 0,
-      discountError: '',
-    }
+      discountError: "",
+    };
   },
+
   watch: {
-    selectedAddressId(newId) {
-      const selected = this.savedAddresses.find(addr => addr.addressId === newId)
-      if (selected) {
-        this.form.fullName = selected.customerName
-        this.form.phone = selected.phone
-        this.form.address = selected.address || ''
-        this.form.city = selected.provinceName || ''
-        this.form.district = selected.districtName || ''
-        this.form.ward = selected.wardName || ''
-        this.form.country = 'Vietnam' // mặc định
-      }
-    },
-    'form.city'(provinceName) {
-      const selectedProvince = this.provinces.find((p) => p.name === provinceName)
+    "form.province"(provinceName) {
+      const selectedProvince = this.provinces.find((p) => p.name === provinceName);
       if (selectedProvince) {
         axios
           .get(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
           .then((res) => {
-            this.districts = res.data.districts
-            // Nếu đang có districtName thì tự set lại
-            if (this.form.district) {
-              const matchedDistrict = res.data.districts.find(
-                d => d.name === this.form.district
-              )
-              if (!matchedDistrict) {
-                this.form.district = ''
-                this.form.ward = ''
-                this.wards = []
-              }
-            }
-          })
+            this.districts = res.data.districts;
+            this.form.district = "";
+            this.wards = [];
+            this.form.ward = "";
+          });
       }
     },
-    'form.district'(districtName) {
-      const selectedDistrict = this.districts.find((d) => d.name === districtName)
+    "form.district"(districtName) {
+      const selectedDistrict = this.districts.find((d) => d.name === districtName);
       if (selectedDistrict) {
         axios
           .get(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
           .then((res) => {
-            this.wards = res.data.wards
-            if (this.form.ward) {
-              const matchedWard = res.data.wards.find(w => w.name === this.form.ward)
-              if (!matchedWard) {
-                this.form.ward = ''
-              }
-            }
-          })
+            this.wards = res.data.wards;
+            this.form.ward = "";
+          });
       }
-    }
+    },
   },
+
   computed: {
     subtotal() {
-      return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0)
+      return this.cartDetails.reduce(
+        (total, item) => total + item.price * item.quantity,
+        0
+      );
     },
     total() {
-      return this.subtotal + this.shippingFee - this.discountAmount
+      return this.subtotal + this.shippingFee - this.discountAmount;
     },
     toggleIcon() {
-      return this.isMobileOrderVisible ? 'bi-chevron-up' : 'bi-chevron-down'
+      return this.isMobileOrderVisible ? "bi-chevron-up" : "bi-chevron-down";
     },
   },
+
   methods: {
     formatPrice(price) {
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-      }).format(price)
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(price);
     },
+
     toggleOrderCollapse() {
-      this.isMobileOrderVisible = !this.isMobileOrderVisible
+      this.isMobileOrderVisible = !this.isMobileOrderVisible;
     },
+
     applyDiscount() {
-      this.discountAmount = 0
-      this.discountCode = ''
-      this.discountError = ''
+      this.discountAmount = 0;
+      this.discountCode = "";
+      this.discountError = "";
 
-      const discount = this.selectedDiscount
-      if (!discount) return
+      const discount = this.selectedDiscount;
+      if (!discount) return;
 
-      // Kiểm tra đơn hàng có đủ điều kiện áp dụng
       if (this.subtotal < (discount.minOrderAmount || 0)) {
-        this.discountError = `Cần mua tối thiểu ${this.formatPrice(discount.minOrderAmount)} để dùng mã này.`
-        return
+        this.discountError = `Cần mua tối thiểu ${this.formatPrice(
+          discount.minOrderAmount
+        )} để dùng mã này.`;
+        return;
       }
 
-      // Tính phần trăm giảm
-      const percentDiscount = (this.subtotal * discount.discountPercent) / 100
-      const maxDiscount = discount.maxDiscountAmount || percentDiscount
-      this.discountAmount = Math.min(percentDiscount, maxDiscount)
+      const percentDiscount = (this.subtotal * discount.discountPercent) / 100;
+      const maxDiscount = discount.maxDiscountAmount || percentDiscount;
+      this.discountAmount = Math.min(percentDiscount, maxDiscount);
+      this.discountCode = discount.discountCode;
 
-      // Cập nhật mã giảm giá
-      this.discountCode = discount.discountCode
-
-      toast.success(`Áp dụng mã ${this.discountCode} thành công!`)
+      toast.success(`Áp dụng mã ${this.discountCode} thành công!`);
     },
+
     async placeOrder() {
       if (this.cartDetails.length === 0) {
-        toast.error('Giỏ hàng trống. Vui lòng thêm sản phẩm.')
-        return
+        toast.error("Giỏ hàng trống. Vui lòng thêm sản phẩm.");
+        return;
       }
-      this.loading = true
+      this.loading = true;
       try {
         const orderData = {
-          address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.city}, ${this.form.country}`,
+          address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`,
           paymentMethod: this.paymentMethod,
           discountCode: this.discountCode || null,
           discountAmount: this.discountAmount || 0,
           orderDetails: this.cartDetails.map((item) => ({
             productVariantId: item.productVariantId,
             quantity: item.quantity,
+            price: item.discountedPrice || item.price,
           })),
-        }
-        const response = await createOrder(orderData)
-        await clearCart()
-        toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`)
-        this.$router.push('/user/order-management')
+        };
+        const response = await createOrder(orderData);
+        await clearCart();
+        toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`);
+        this.$router.push("/user/order-management");
       } catch (error) {
-        toast.error(error || 'Đặt hàng thất bại. Vui lòng thử lại.')
+        toast.error(error || "Đặt hàng thất bại. Vui lòng thử lại.");
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
-  },
- mounted() {
-    axios.get('https://provinces.open-api.vn/api/p/').then((res) => {
-      this.provinces = res.data
-    })
 
-    getDiscount()
-  .then(res => {
-    this.discountList = res // KHÔNG cần `.data` nữa
-  })
-  .catch(() => {
-    this.discountError = 'Không thể tải mã giảm giá.'
-  })
+    async fetchAddresses() {
+      try {
+        const res = await axios.get("/api/user/address/list", {
+          headers: {
+            Authorization: "Bearer " + localStorage.getItem("token"),
+          },
+        });
+        this.addressList = res.data;
 
-    if (!localStorage.getItem('token')) {
-      toast.error('Vui lòng đăng nhập để tiếp tục.')
-      this.$router.push('/login')
-    } else {
-      const cartDetails = localStorage.getItem('cartDetails')
-      if (cartDetails) {
-        this.cartDetails = JSON.parse(cartDetails)
-      } else {
-        toast.error('Không tìm thấy thông tin giỏ hàng.')
-        this.$router.push('/user/cart')
+        // Nếu không có địa chỉ nào, chuyển đến trang thêm địa chỉ
+        if (this.addressList.length === 0) {
+          this.$toast.warning(
+            "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước."
+          );
+          this.$router.push("/user/address");
+        }
+      } catch (err) {
+        console.error("Lỗi khi lấy địa chỉ:", err);
       }
+    },
+    onSelectAddress() {
+      const selected = this.addressList.find(
+        (a) => a.addressId === this.selectedAddressId
+      );
+      if (!selected) return;
 
-      // Lấy danh sách địa chỉ
-      getAddressList()
-        .then((res) => {
-          this.savedAddresses = res
-        })
-        .catch((err) => {
-          toast.error('Không thể tải danh sách địa chỉ.')
-        })
+      // Fill vào form
+      this.form.fullName = selected.customerName;
+      this.form.phone = selected.phone;
+      this.form.address = selected.address;
+      this.form.province = selected.provinceName;
+      this.form.district = selected.districtName;
+      this.form.ward = selected.wardName;
+    },
+  },
+
+  mounted() {
+    // Load danh sách tỉnh
+    axios.get("https://provinces.open-api.vn/api/p/").then((res) => {
+      this.provinces = res.data;
+    });
+
+    // Load danh sách mã giảm giá
+    getDiscount()
+      .then((res) => {
+        this.discountList = res;
+      })
+      .catch(() => {
+        this.discountError = "Không thể tải mã giảm giá.";
+      });
+
+    // Load danh sách địa chỉ đã lưu
+    this.fetchAddresses();
+
+    // Kiểm tra đăng nhập và giỏ hàng
+    if (!localStorage.getItem("token")) {
+      toast.error("Vui lòng đăng nhập để tiếp tục.");
+      this.$router.push("/login");
+    } else {
+      const cartDetails = localStorage.getItem("cartDetails");
+      if (cartDetails) {
+        this.cartDetails = JSON.parse(cartDetails);
+      } else {
+        toast.error("Không tìm thấy thông tin giỏ hàng.");
+        this.$router.push("/user/cart");
+      }
     }
-  }
-}
+  },
+};
 </script>
-
 
 <template>
   <div class="checkout-container container">
@@ -258,7 +279,9 @@ export default {
                   {{ item.quantity }}</small
                 >
               </div>
-              <div class="ms-auto fw-bold">{{ formatPrice(item.price * item.quantity) }}</div>
+              <div class="ms-auto fw-bold">
+                {{ formatPrice(item.price * item.quantity) }}
+              </div>
             </div>
 
             <div class="checkout-subtotal d-flex justify-content-between mb-2">
@@ -285,11 +308,14 @@ export default {
         </div>
       </div>
 
-      <!-- Form điền thông tin -->
+      <!-- Form thông tin giao hàng -->
       <div class="col-md-7 border-end bg-white px-4 py-3">
         <div class="checkout-form-container">
           <nav class="checkout-breadcrumb mb-3">
-            <router-link to="/cart" class="text-muted text-decoration-none">Giỏ hàng</router-link> >
+            <router-link to="/cart" class="text-muted text-decoration-none"
+              >Giỏ hàng</router-link
+            >
+            >
             <span class="text-muted">Thông tin giao hàng</span>
           </nav>
 
@@ -299,88 +325,63 @@ export default {
           </div>
 
           <form class="checkout-form" @submit.prevent="placeOrder">
+            <!-- Dropdown địa chỉ -->
             <div class="mb-3">
+              <label class="form-label fw-semibold">Chọn địa chỉ giao hàng:</label>
+              <select
+                v-model="selectedAddressId"
+                @change="onSelectAddress"
+                class="form-select"
+              >
+                <option disabled value="">-- Chọn địa chỉ đã lưu --</option>
+                <option
+                  v-for="address in addressList"
+                  :key="address.addressId"
+                  :value="address.addressId"
+                >
+                  {{ address.customerName }} -
+                  {{ address.fullAddress || address.address }}
+                </option>
+              </select>
+
+              <!-- Nút thêm địa chỉ -->
+              <div class="mt-2">
+                <router-link to="/user/address" class="btn btn-outline-primary btn-sm">
+                  ➕ Thêm địa chỉ mới
+                </router-link>
+              </div>
+            </div>
+
+            <!-- Input tên, SĐT, địa chỉ -->
+            <div class="mb-3">
+              <h5>Họ tên người nhận :</h5>
               <input
                 type="text"
                 class="form-control"
-                placeholder="Họ và tên"
+                placeholder="Họ tên người nhận"
                 v-model="form.fullName"
                 required
               />
             </div>
-            <div class="row g-3 mb-3">
-
-              <div class="col-md-6">
-                <input
-                  type="text"
-                  class="form-control"
-                  placeholder="Số điện thoại"
-                  v-model="form.phone"
-                  required
-                />
-              </div>
-            </div>
             <div class="mb-3">
+              <h5>Họ tên người nhận :</h5>
               <input
                 type="text"
                 class="form-control"
-                placeholder="Địa chỉ"
-                v-model="form.address"
+                placeholder="Số điện thoại"
+                v-model="form.phone"
                 required
               />
             </div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <select class="form-select" v-model="form.country" required>
-                  <option value="Vietnam">Vietnam</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <select class="form-select" v-model="form.city" required>
-                  <option value="" disabled>Chọn tỉnh / thành</option>
-                  <option v-for="province in provinces" :key="province.code" :value="province.name">
-                    {{ province.name }}
-                  </option>
-                </select>
-              </div>
-            </div>
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <select
-                  class="form-select"
-                  v-model="form.district"
-                  :disabled="!districts.length"
-                  required
-                >
-                  <option value="" disabled>Chọn quận / huyện</option>
-                  <option v-for="district in districts" :key="district.code" :value="district.name">
-                    {{ district.name }}
-                  </option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <select class="form-select" v-model="form.ward" :disabled="!wards.length" required>
-                  <option value="" disabled>Chọn phường / xã</option>
-                  <option v-for="ward in wards" :key="ward.code" :value="ward.name">
-                    {{ ward.name }}
-                  </option>
-                </select>
-              </div>
-
-              <div class="mb-4">
-                <label class="font-semibold block mb-1">Chọn địa chỉ giao hàng</label>
-                <select v-model="selectedAddressId" class="form-select">
-                  <option value="">-- Chọn địa chỉ đã lưu --</option>
-                  <option
-                    v-for="addr in savedAddresses"
-                    :key="addr.addressId"
-                    :value="addr.addressId"
-                  >
-                    {{ addr.customerName }} - {{ addr.phone }} - {{ addr.address }},
-                    {{ addr.wardName }}, {{ addr.districtName }}, {{ addr.provinceName }}
-                  </option>
-                </select>
-              </div>
+            <div class="mb-3">
+              <h5>Địa chỉ chi tiết :</h5>
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Địa chỉ chi tiết"
+                v-model="form.address"
+                required
+              />
             </div>
 
             <!-- Phương thức vận chuyển -->
@@ -393,48 +394,45 @@ export default {
             <!-- Phương thức thanh toán -->
             <div class="checkout-section-title">Phương thức thanh toán</div>
             <div class="checkout-payment-methods my-4">
-              <div class="card border-0 shadow-none bg-transparent">
-                <div class="card-body p-0">
-                  <div class="list-group list-group-flush">
-                    <label class="list-group-item border-0 d-flex align-items-center gap-3">
-                      <input
-                        class="form-check-input mt-0"
-                        type="radio"
-                        name="payment"
-                        value="COD"
-                        v-model="paymentMethod"
-                      />
-                      <img
-                        src="https://cdn-icons-png.flaticon.com/128/484/484167.png"
-                        alt="COD"
-                        width="24"
-                      />
-                      <span class="fw-medium">Thanh toán khi giao hàng (COD)</span>
-                    </label>
-                    <label class="list-group-item border-0 d-flex align-items-center gap-3">
-                      <input
-                        class="form-check-input mt-0"
-                        type="radio"
-                        name="payment"
-                        value="VNPAY"
-                        v-model="paymentMethod"
-                      />
-                      <img
-                        src="https://cdn-icons-png.flaticon.com/128/196/196565.png"
-                        alt="VNPay"
-                        width="24"
-                      />
-                      <span class="fw-medium">Ví VNPay</span>
-                    </label>
-                  </div>
-                </div>
+              <div class="list-group">
+                <label class="list-group-item d-flex align-items-center gap-3">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    value="COD"
+                    v-model="paymentMethod"
+                  />
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/128/484/484167.png"
+                    alt="COD"
+                    width="24"
+                  />
+                  <span>Thanh toán khi giao hàng (COD)</span>
+                </label>
+                <label class="list-group-item d-flex align-items-center gap-3">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    value="VNPAY"
+                    v-model="paymentMethod"
+                  />
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/128/196/196565.png"
+                    alt="VNPAY"
+                    width="24"
+                  />
+                  <span>Ví VNPAY</span>
+                </label>
               </div>
             </div>
 
-            <div class="checkout-actions d-flex justify-content-between align-items-center gap-3">
+            <!-- Nút hoàn tất -->
+            <div
+              class="checkout-actions d-flex justify-content-between align-items-center gap-3"
+            >
               <router-link to="/cart" class="link-cart text-center">Giỏ hàng</router-link>
               <button type="submit" class="btn btn-complete" :disabled="loading">
-                {{ loading ? 'Đang xử lý...' : 'Hoàn tất đơn hàng' }}
+                {{ loading ? "Đang xử lý..." : "Hoàn tất đơn hàng" }}
               </button>
             </div>
           </form>
@@ -469,21 +467,32 @@ export default {
                   {{ item.quantity }}</small
                 >
               </div>
-              <div class="ms-auto fw-bold">{{ formatPrice(item.price * item.quantity) }}</div>
+              <div class="ms-auto fw-bold">
+                {{ formatPrice(item.price * item.quantity) }}
+              </div>
             </div>
 
             <div class="mb-3">
-  <label class="form-label fw-bold">Mã giảm giá:</label>
-  <select class="form-select" v-model="selectedDiscount" @change="applyDiscount">
-    <option disabled value="">-- Chọn mã --</option>
-    <option v-for="d in discountList" :key="d.discountId" :value="d">
-      {{ d.discountCode }} - Giảm {{ d.discountPercent }}%
-      (Tối đa {{ formatPrice(d.maxDiscountAmount || 0) }})
-    </option>
-  </select>
-  <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
-</div>
+              <label class="form-label fw-bold">Mã giảm giá:</label>
+              <select
+                class="form-select"
+                v-model="selectedDiscount"
+                @change="applyDiscount"
+              >
+                <option
+                  v-for="d in discountList"
+                  :key="d.discountId"
+                  :value="d"
+                  :disabled="d.quantityLimit === 0"
+                >
+                  {{ d.discountCode }} - Giảm {{ d.discountPercent }}% (Tối đa
+                  {{ formatPrice(d.maxDiscountAmount || 0) }}) - Số lượng:
+                  {{ d.quantityLimit === 0 ? "0" : d.quantityLimit }}
+                </option>
+              </select>
 
+              <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
+            </div>
 
             <div class="checkout-subtotal d-flex justify-content-between mb-2">
               <span>Tạm tính</span>

@@ -16,7 +16,6 @@
             <th>Số lượng</th>
             <th>Hiệu lực</th>
             <th>Trạng thái</th>
-            <th>Mô tả</th>
             <th class="text-center">Hành động</th>
           </tr>
         </thead>
@@ -45,7 +44,6 @@
                 {{ discount.status ? "Đang hoạt động" : "Ngừng hoạt động" }}
               </span>
             </td>
-            <td>{{ discount.description }}</td>
             <td class="text-center">
               <button
                 class="btn btn-sm btn-warning m-1"
@@ -157,14 +155,6 @@
                 <input v-model="form.endDate" type="date" @input="clearError('endDate')" class="form-control" />
                 <div v-if="errors.endDate" class="text-danger">{{ errors.endDate }}</div>
               </div>
-
-              <div class="col-12">
-                <label class="form-label fw-semibold">Mô tả</label>
-                <textarea v-model="form.description" @input="clearError('description')" class="form-control"  rows="3"  placeholder="Mô tả mã giảm giá (tùy chọn)"/>
-                <div v-if="errors.description" class="text-danger">
-                  {{ errors.description }}
-                </div>
-              </div>
             </div>
 
             <div class="modal-footer">
@@ -198,7 +188,6 @@ const currentEditId = ref(null);
 
 const form = ref({
   discountCode: "",
-  description: "",
   discountPercent: null,
   minOrderAmount: null,
   maxDiscountAmount: null,
@@ -237,7 +226,6 @@ const openModal = async (id = null) => {
   } else {
     form.value = {
       discountCode: "",
-      description: "",
       discountPercent: null,
       minOrderAmount: null,
       maxDiscountAmount: null,
