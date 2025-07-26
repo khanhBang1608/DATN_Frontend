@@ -159,11 +159,18 @@ export default {
           },
         });
         this.addressList = res.data;
+
+        // Nếu không có địa chỉ nào, chuyển đến trang thêm địa chỉ
+        if (this.addressList.length === 0) {
+          this.$toast.warning(
+            "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước."
+          );
+          this.$router.push("/user/address");
+        }
       } catch (err) {
         console.error("Lỗi khi lấy địa chỉ:", err);
       }
     },
-
     onSelectAddress() {
       const selected = this.addressList.find(
         (a) => a.addressId === this.selectedAddressId
@@ -320,6 +327,7 @@ export default {
           <form class="checkout-form" @submit.prevent="placeOrder">
             <!-- Dropdown địa chỉ -->
             <div class="mb-3">
+              <label class="form-label fw-semibold">Chọn địa chỉ giao hàng:</label>
               <select
                 v-model="selectedAddressId"
                 @change="onSelectAddress"
@@ -335,6 +343,13 @@ export default {
                   {{ address.fullAddress || address.address }}
                 </option>
               </select>
+
+              <!-- Nút thêm địa chỉ -->
+              <div class="mt-2">
+                <router-link to="/user/address" class="btn btn-outline-primary btn-sm">
+                  ➕ Thêm địa chỉ mới
+                </router-link>
+              </div>
             </div>
 
             <!-- Input tên, SĐT, địa chỉ -->
