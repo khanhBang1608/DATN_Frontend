@@ -27,9 +27,7 @@
             <td>{{ formatCurrency(promo.discountAmount) }}</td>
             <td>{{ formatDate(promo.startDate) }} - {{ formatDate(promo.endDate) }}</td>
             <td>
-              <span
-                :class="['badge text-light', promo.status ? 'bg-success' : 'bg-danger']"
-              >
+              <span :class="['badge text-light', promo.status ? 'bg-success' : 'bg-danger']">
                 {{ promo.status ? "Đang hoạt động" : "Ngừng hoạt động" }}
               </span>
             </td>
@@ -37,16 +35,10 @@
               <button class="btn btn-sm btn-warning m-1" @click="openModal(promo.id)">
                 ✏️ Sửa
               </button>
-              <button
-                class="btn btn-sm btn-danger m-1"
-                @click="deletePromotion(promo.id)"
-              >
+              <button class="btn btn-sm btn-danger m-1" @click="deletePromotion(promo.id)">
                 🗑️ Xoá
               </button>
-              <button
-                class="btn btn-outline-info me-2"
-                @click="goToPromotionProducts(promo.id)"
-              >
+              <button class="btn btn-outline-info me-2" @click="goToPromotionProducts(promo.id)">
                 🎁 Sản phẩm khuyến mãi
               </button>
             </td>
@@ -56,11 +48,7 @@
     </div>
 
     <!-- Modal -->
-    <div
-      v-if="showModal"
-      class="modal fade show d-block"
-      style="background: rgba(0, 0, 0, 0.5)"
-    >
+    <div v-if="showModal" class="modal fade show d-block" style="background: rgba(0, 0, 0, 0.5)">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <form @submit.prevent="savePromotion">
@@ -71,61 +59,32 @@
             <div class="modal-body row g-3">
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Mã khuyến mãi</label>
-                <input
-                  v-model="form.code"
-                  @input="clearError('code')"
-                  class="form-control"
-                />
+                <input v-model="form.code" @input="clearError('code')" class="form-control" />
                 <div class="text-danger" v-if="errors.code">{{ errors.code }}</div>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Giảm giá (VNĐ)</label>
-                <input
-                  v-model="form.discountAmount"
-                  type="number"
-                  @input="clearError('discountAmount')"
-                  class="form-control"
-                />
-                <div class="text-danger" v-if="errors.discountAmount">
-                  {{ errors.discountAmount }}
-                </div>
+                <input v-model="form.discountAmount" type="number" @input="clearError('discountAmount')" class="form-control" />
+                <div class="text-danger" v-if="errors.discountAmount">{{ errors.discountAmount }}</div>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Ngày bắt đầu</label>
-                <input
-                  v-model="form.startDate"
-                  type="date"
-                  @input="clearError('startDate')"
-                  class="form-control"
-                />
-                <div class="text-danger" v-if="errors.startDate">
-                  {{ errors.startDate }}
-                </div>
+                <input v-model="form.startDate" type="date" @input="clearError('startDate')" class="form-control" />
+                <div class="text-danger" v-if="errors.startDate">{{ errors.startDate }}</div>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Ngày kết thúc</label>
-                <input
-                  v-model="form.endDate"
-                  type="date"
-                  @input="clearError('endDate')"
-                  class="form-control"
-                />
+                <input v-model="form.endDate" type="date" @input="clearError('endDate')" class="form-control" />
                 <div class="text-danger" v-if="errors.endDate">{{ errors.endDate }}</div>
               </div>
 
               <div class="col-12">
                 <label class="form-label fw-semibold">Mô tả</label>
-                <textarea
-                  v-model="form.description"
-                  class="form-control"
-                  rows="3"
-                ></textarea>
-                <div class="text-danger" v-if="errors.description">
-                  {{ errors.description }}
-                </div>
+                <textarea v-model="form.description" class="form-control" rows="3"></textarea>
+                <div class="text-danger" v-if="errors.description">{{ errors.description }}</div>
               </div>
 
               <div class="col-md-6">
@@ -138,12 +97,8 @@
             </div>
 
             <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeModal()">
-                Đóng
-              </button>
-              <button type="submit" class="btn btn-success">
-                {{ isEdit ? "Cập nhật" : "Thêm mới" }}
-              </button>
+              <button type="button" class="btn btn-secondary" @click="closeModal()">Đóng</button>
+              <button type="submit" class="btn btn-success">{{ isEdit ? "Cập nhật" : "Thêm mới" }}</button>
             </div>
           </form>
         </div>
@@ -155,16 +110,16 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
-import { useRouter } from "vue-router";
 import Swal from "sweetalert2";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const promotions = ref([]);
 const showModal = ref(false);
 const isEdit = ref(false);
 const currentId = ref(null);
-const router = useRouter();
 const token = localStorage.getItem("token");
 
 const form = ref({
@@ -240,18 +195,10 @@ const savePromotion = async () => {
         form.value,
         config
       );
-      iziToast.success({
-        title: "Thành công",
-        message: "Cập nhật thành công!",
-        position: "topRight",
-      });
+      iziToast.success({ title: "Thành công", message: "Cập nhật thành công!", position: "topRight" });
     } else {
       await axios.post("http://localhost:8080/api/admin/promotions", form.value, config);
-      iziToast.success({
-        title: "Thành công",
-        message: "Thêm mới thành công!",
-        position: "topRight",
-      });
+      iziToast.success({ title: "Thành công", message: "Thêm mới thành công!", position: "topRight" });
     }
 
     closeModal();
@@ -311,6 +258,7 @@ const formatDate = (d) =>
     month: "2-digit",
     year: "numeric",
   });
+
 const clearError = (field) => (errors.value[field] = null);
 
 onMounted(fetchPromotions);
@@ -323,5 +271,17 @@ onMounted(fetchPromotions);
 }
 .text-danger {
   font-size: 0.9rem;
+}
+.custom-table thead {
+  background-color: #1f1f1f;
+}
+.custom-table th,
+.custom-table td {
+  color: #fff;
+  vertical-align: middle;
+}
+.badge {
+  font-size: 0.9rem;
+  padding: 0.5em 0.75em;
 }
 </style>

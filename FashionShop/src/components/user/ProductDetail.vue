@@ -12,9 +12,9 @@ import {
   removeCartItem,
   clearCart,
   getRelatedProducts,
-} from '@/api/user/cartAPI'
+} from "@/api/user/cartAPI";
 
-const router = useRouter()
+const router = useRouter();
 const isFavorite = ref(false);
 const handleToggleFavorite = async () => {
   try {
@@ -31,7 +31,8 @@ const selectedColorId = ref(null);
 const selectedSizeId = ref(null);
 
 const displayedPrice = computed(() => {
-  if (!product.value.variants || product.value.variants.length === 0) return { price: 0, originalPrice: 0 };
+  if (!product.value.variants || product.value.variants.length === 0)
+    return { price: 0, originalPrice: 0 };
 
   // Nếu đã chọn cả màu và size
   if (selectedColorId.value && selectedSizeId.value) {
@@ -65,9 +66,7 @@ const displayedPrice = computed(() => {
 
 const selectedVariant = computed(() => {
   return product.value.variants.find(
-    (v) =>
-      v.colorId === selectedColorId.value &&
-      v.sizeId === selectedSizeId.value
+    (v) => v.colorId === selectedColorId.value && v.sizeId === selectedSizeId.value
   );
 });
 
@@ -77,7 +76,7 @@ const handleAddToCart = async () => {
   if (!token) {
     alert("⚠️ Bạn cần đăng nhập để thêm vào giỏ hàng.");
 
-    router.push('/login')
+    router.push("/login");
     return;
   }
 
@@ -123,14 +122,23 @@ onMounted(async () => {
     data.variants = data.variants.map((v) => {
       const promo = promotionMap.get(v.productVariantId);
       if (promo) {
-        const discount = promo.discountAmount || 0;
+        const discountPercent = promo.discountAmount || 0;
+        const originalPrice = v.price;
+        const discountedPrice = originalPrice * (1 - discountPercent / 100);
+
         return {
           ...v,
-          originalPrice: v.price,
-          discountedPrice: v.price - discount
+          originalPrice: originalPrice,
+          discountedPrice: Math.round(discountedPrice),
+          discountPercent: discountPercent,
         };
       }
-      return v;
+      return {
+        ...v,
+        originalPrice: v.price,
+        discountedPrice: v.price,
+        discountPercent: 0,
+      };
     });
 
     product.value = data;
@@ -143,7 +151,6 @@ onMounted(async () => {
 const uniqueColors = computed(() => {
   const seen = new Set();
   return product.value.variants.filter((v) => {
-    if (selectedSizeId.value && v.sizeId !== selectedSizeId.value) return false;
     if (!seen.has(v.colorId)) {
       seen.add(v.colorId);
       return true;
@@ -151,6 +158,7 @@ const uniqueColors = computed(() => {
     return false;
   });
 });
+
 
 // Kích thước khả dụng theo màu đang chọn
 const uniqueSizes = computed(() => {
@@ -192,7 +200,6 @@ const displayedStock = computed(() => {
 function getImageUrl(imageName) {
   return imageName ? `http://localhost:8080/images/${imageName}` : "/default.jpg";
 }
-
 </script>
 <template>
   <div class="custom-breadcrumb-wrapper">
@@ -247,9 +254,7 @@ function getImageUrl(imageName) {
           <span class="text-muted"> {{ product.name }}</span>
         </h4>
         <div class="price fs-4 fw-bold mb-4">
-          <span class="text-danger">
-            {{ displayedPrice.price.toLocaleString() }}₫
-          </span>
+          <span class="text-danger"> {{ displayedPrice.price.toLocaleString() }}₫ </span>
           <span
             class="text-muted text-decoration-line-through ms-2"
             v-if="displayedPrice.originalPrice > displayedPrice.price"
@@ -269,13 +274,17 @@ function getImageUrl(imageName) {
               :key="index"
               class="product-detail-color"
               :title="color.colorName"
-              :style="{ backgroundColor: getColorHex(color.colorName), border: selectedColorId === color.colorId ? '2px solid #000' : '' }"
-             @click="selectedColorId = selectedColorId === color.colorId ? null : color.colorId"
+              :style="{
+                backgroundColor: getColorHex(color.colorName),
+                border: selectedColorId === color.colorId ? '2px solid #000' : '',
+              }"
+              @click="
+                selectedColorId = selectedColorId === color.colorId ? null : color.colorId
+              "
             ></div>
           </div>
           <hr class="product-detail-divider" />
         </div>
-
 
         <!-- Kích thước -->
         <div class="mb-4">
@@ -286,7 +295,9 @@ function getImageUrl(imageName) {
               :key="index"
               class="product-detail-size"
               :class="{ active: selectedSizeId === size.sizeId }"
-              @click="selectedSizeId = selectedSizeId === size.sizeId ? null : size.sizeId"
+              @click="
+                selectedSizeId = selectedSizeId === size.sizeId ? null : size.sizeId
+              "
             >
               {{ size.sizeName }}
             </div>
@@ -299,9 +310,7 @@ function getImageUrl(imageName) {
           <span v-if="selectedVariant">
             {{ displayedStock }} sản phẩm (biến thể đã chọn)
           </span>
-          <span v-else>
-            {{ displayedStock }} sản phẩm (tổng toàn bộ biến thể)
-          </span>
+          <span v-else> {{ displayedStock }} sản phẩm (tổng toàn bộ biến thể) </span>
         </div>
 
         <!-- Thêm vào giỏ -->
@@ -315,11 +324,11 @@ function getImageUrl(imageName) {
         <!-- Yêu thích & Tìm -->
         <div class="mb-2">
           <div class="d-flex justify-content-between text-muted small">
-            <div @click="handleToggleFavorite" style="cursor: pointer;">
+            <div @click="handleToggleFavorite" style="cursor: pointer">
               <i
                 :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
               ></i>
-              {{ isFavorite ? 'Đã yêu thích' : 'Thêm vào Danh sách yêu thích' }}
+              {{ isFavorite ? "Đã yêu thích" : "Thêm vào Danh sách yêu thích" }}
             </div>
             <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
           </div>
@@ -377,8 +386,7 @@ function getImageUrl(imageName) {
     </div>
 
     <!-- ĐÁNH GIÁ KHÁCH HÀNG -->
-<ReviewComponent :productId="product.productId" />
-
+    <ReviewComponent :productId="product.productId" />
   </div>
 
   <div class="container mb-3">
