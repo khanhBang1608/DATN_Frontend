@@ -1,4 +1,15 @@
 <template>
+  <div class="custom-breadcrumb-wrapper">
+    <nav class="custom-breadcrumb container">
+      <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
+      <span class="custom-breadcrumb-separator">/</span>
+      <a href="/user/account" class="custom-breadcrumb-link custom-breadcrumb-current"
+        >Tổng quan tài khoản</a
+      >
+      <span class="custom-breadcrumb-separator">/</span>
+      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Sổ địa chỉ</a>
+    </nav>
+  </div>
   <div class="container p-4 size-body">
     <div class="row">
       <!-- SIDEBAR -->
@@ -12,33 +23,60 @@
         <a href="#">Danh sách yêu thích</a>
       </div>
 
-      <div class="col-md-10">
+      <div class="address-container col-md-10">
         <div class="text-center mb-3">
-          <h2>Danh sách địa chỉ</h2>
+          <h3 class="text-center profile-title">Sổ Địa Chỉ</h3>
           <p class="text-muted">Quản lý địa chỉ nhận hàng của bạn</p>
         </div>
-        <div class="mb-3 text-end">
-          <a href="/user/address" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Thêm địa chỉ mới
-          </a>
+        <div class="mb-3 text-start">
+          <a href="/user/address" class="btn custom-address-btn"> Thêm mới </a>
         </div>
-        <div v-if="addresses.length === 0" class="text-muted">
+        <div v-if="addresses.length === 0" class="text-muted text-center">
           Bạn chưa có địa chỉ nào. Hãy thêm địa chỉ để sử dụng khi đặt hàng.
         </div>
-        <div v-for="address in addresses" :key="address.addressId" class="address-card">
-          <h5>
-            {{ address.customerName }}
-            <span v-if="address.defaultAddress" class="default-label">☆ Mặc định</span>
-          </h5>
-          <p class="mb-1">{{ address.phone }}</p>
-          <p><i class="bi bi-geo-alt"></i> {{ fullAddress(address) }}</p>
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-primary btn-sm" @click="editAddress(address)">
-              <i class="bi bi-pencil"></i> Chỉnh sửa
-            </button>
-            <button class="btn btn-outline-danger btn-sm" @click="deleteAddress(address.addressId)">
-              <i class="bi bi-trash"></i> Xóa
-            </button>
+        <div class="row g-3">
+          <div class="col-md-6" v-for="address in addresses" :key="address.addressId">
+            <div class="address-card h-100 position-relative">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <div class="d-flex py-2">
+                  <!-- <div class="form-check me-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      :checked="address.defaultAddress"
+                      disabled
+                    />
+                  </div> -->
+                  <div>
+                    <strong>{{ address.customerName }}</strong
+                    ><br />
+                    {{ fullAddress(address) }}<br />
+                    <span>{{ address.phone }}</span>
+                  </div>
+                </div>
+
+                <div class="d-flex flex-column align-items-end gap-1">
+                  <a
+                    href="#"
+                    class="text-muted small"
+                    @click.prevent="editAddress(address)"
+                  >
+                    Chỉnh sửa
+                  </a>
+                  <i
+                    class="bi bi-trash text-danger"
+                    style="cursor: pointer"
+                    @click="deleteAddress(address.addressId)"
+                  ></i>
+                </div>
+              </div>
+
+              <label class="custom-checkbox">
+                <input type="checkbox" checked />
+                <span class="checkmark"></span>
+                Sử dụng địa chỉ này làm địa chỉ thanh toán mặc định của tôi
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -47,118 +85,194 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import Swal from "sweetalert2";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
-const addresses = ref([])
-const token = localStorage.getItem("token")
-const router = useRouter()
+const addresses = ref([]);
+const token = localStorage.getItem("token");
+const router = useRouter();
 
 async function loadAddresses() {
   try {
     const res = await fetch("http://localhost:8080/api/user/address/list", {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    if (!res.ok) throw new Error("Không thể tải danh sách địa chỉ")
-    const data = await res.json()
-    addresses.value = data
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    if (!res.ok) throw new Error("Không thể tải danh sách địa chỉ");
+    const data = await res.json();
+    addresses.value = data;
   } catch (err) {
-    alert("Lỗi khi tải địa chỉ.")
-    console.error(err)
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không thể tải danh sách địa chỉ",
+      position: "topRight",
+    });
+    console.error(err);
   }
 }
 
 async function deleteAddress(id) {
   if (!id) {
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không có ID địa chỉ để xoá",
+      position: "topRight",
+    });
     console.error("❌ Không có ID truyền vào deleteAddress");
-    alert("Lỗi: Không tìm thấy ID địa chỉ để xoá");
     return;
   }
 
-  if (!confirm("Bạn có chắc muốn xóa địa chỉ này?")) return;
+  const result = await Swal.fire({
+    title: "Xác nhận xoá?",
+    text: "Bạn có chắc muốn xoá địa chỉ này không?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Xoá",
+    cancelButtonText: "Huỷ",
+  });
+
+  if (!result.isConfirmed) return;
 
   const url = `http://localhost:8080/api/user/address/delete/${id}`;
-  const token = localStorage.getItem("token");
-
-  console.log("✅ Gửi yêu cầu xóa địa chỉ ID:", id);
-  console.log("🛡️ Token:", token);
 
   try {
     const res = await fetch(url, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
-
-    console.log("📦 Response status:", res.status);
 
     if (!res.ok) {
       const errorText = await res.text();
-      console.error("❌ Server trả về lỗi:", errorText);
-      alert("Xoá địa chỉ thất bại: " + errorText);
+      iziToast.error({
+        title: "Xoá thất bại",
+        message: errorText,
+        position: "topRight",
+      });
       return;
     }
 
-    alert("Đã xoá địa chỉ thành công");
-    await loadAddresses(); // reload lại danh sách
+    iziToast.success({
+      title: "Thành công",
+      message: "Đã xoá địa chỉ thành công",
+      position: "topRight",
+    });
+    await loadAddresses(); // Reload danh sách
   } catch (err) {
+    iziToast.error({
+      title: "Lỗi",
+      message: "Có lỗi xảy ra khi xoá địa chỉ",
+      position: "topRight",
+    });
     console.error("❌ Lỗi khi gọi API xoá:", err);
-    alert("Có lỗi xảy ra khi xoá địa chỉ");
   }
 }
 
-
-
 function addAddress() {
-  router.push("/user/address")
+  router.push("/user/address");
 }
 
 function editAddress(address) {
   localStorage.setItem("editAddress", JSON.stringify(address));
-  router.push(`/user/editaddress/${address.addressId}`); // ✅ thêm id vào URL
+  router.push(`/user/editaddress/${address.addressId}`);
 }
-
-
-
 
 function fullAddress(addr) {
-  return `${addr.address}, ${addr.wardName}, ${addr.districtName}, ${addr.provinceName}`
+  return `${addr.address}, ${addr.wardName}, ${addr.districtName}, ${addr.provinceName}`;
 }
 
-onMounted(loadAddresses)
+onMounted(loadAddresses);
 </script>
 
 <style scoped>
 .address-card {
-  background-color: #f5f9ff;
-  border: 1px solid #d0e2ff;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  /* border-radius: 6px; */
+  padding: 15px;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
-.default-label {
-  color: #888;
-  font-weight: 600;
-  margin-left: 8px;
+
+.address-card:hover {
+  border-color: #999;
 }
-.size-body {
-  max-width: 1200px;
-  margin: 0 auto;
+
+.form-check-label {
+  font-size: 14px;
 }
-.account-sidebar a {
-  display: inline-block;
-  padding: 4px 0;
-  font-size: 15px;
-  color: #000;
-  text-decoration: none;
+
+.bi-trash {
+  font-size: 16px;
 }
-.account-sidebar a:hover {
+
+.text-muted.small {
+  font-size: 13px;
   text-decoration: underline;
+  cursor: pointer;
 }
-.account-sidebar a.active {
-  font-weight: 600;
+
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+  color: #000;
+  gap: 8px;
+}
+
+/* Ẩn checkbox mặc định */
+.custom-checkbox input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Tạo checkbox tùy chỉnh */
+.custom-checkbox .checkmark {
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border: 1px solid black;
+  display: inline-block;
+  position: relative;
+}
+
+/* Hiển thị dấu check khi được chọn */
+.custom-checkbox input:checked + .checkmark::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.custom-checkbox input:checked + .checkmark {
+  background-color: black;
+}
+
+.custom-address-btn {
+  background-color: #fff;
+  border: 1px solid #000;
+  color: #000;
+  transition: all 0.3s ease;
+}
+
+.custom-address-btn:hover {
+  background-color: #000;
+  border: 1px solid #fff;
+  color: #fff;
 }
 </style>

@@ -7,11 +7,14 @@
         >Tổng quan tài khoản</a
       >
       <span class="custom-breadcrumb-separator">/</span>
+      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Sổ địa chỉ</a>
+      <span class="custom-breadcrumb-separator">/</span>
       <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Địa chỉ đặt hàng</a
+        >Thêm địa chỉ mới</a
       >
     </nav>
   </div>
+
   <div class="container account-summary-container my-5">
     <div class="row">
       <div class="col-md-2 account-sidebar d-none d-md-block">
@@ -23,6 +26,7 @@
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
         <a href="#">Danh sách yêu thích</a>
       </div>
+
       <div class="address-form-container col-md-10">
         <div class="mb-4">
           <h3 class="text-center fw-bold mb-3">Địa Chỉ Đặt Hàng</h3>
@@ -38,65 +42,97 @@
 
         <form @submit.prevent="submitForm" class="mt-4">
           <div class="row g-2 mb-3">
-            <div class="col-sm-12 col-md-6">
-              <label for="recipientName" class="form-label address-form-label"
+            <div class="col-sm-12 col-md-6 mb-2">
+              <label for="customerName" class="form-label address-form-label"
                 >Họ tên người nhận *</label
               >
               <input
                 type="text"
-                v-model="form.recipientName"
+                v-model="form.customerName"
                 class="form-control address-form-input"
-                id="recipientName"
+                id="customerName"
+                @input="clearFieldError('customerName')"
               />
+
+              <small v-if="errors.customerName" class="text-danger">{{
+                errors.customerName
+              }}</small>
             </div>
-            <div class="col-sm-12 col-md-6">
-              <label for="phoneNumber" class="form-label address-form-label"
+
+            <div class="col-sm-12 col-md-6 mb-2">
+              <label for="phone" class="form-label address-form-label"
                 >Số điện thoại *</label
               >
               <input
                 type="text"
-                v-model="form.phoneNumber"
+                v-model="form.phone"
                 class="form-control address-form-input"
-                id="phoneNumber"
+                id="phone"
+                @input="clearFieldError('phone')"
               />
+
+              <small v-if="errors.phone" class="text-danger">{{ errors.phone }}</small>
             </div>
           </div>
 
           <div class="row g-2 mb-3">
-            <div class="col-sm-12 col-md-4">
+            <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Tỉnh/Thành phố *</label>
               <select
                 class="form-select address-form-select"
                 v-model="form.provinceId"
-                @change="loadDistricts"
+                @change="
+                  () => {
+                    loadDistricts();
+                    clearFieldError('provinceId');
+                  }
+                "
               >
                 <option value="">Tỉnh/Thành</option>
                 <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
                   {{ p.ProvinceName }}
                 </option>
               </select>
+              <small v-if="errors.provinceId" class="text-danger">{{
+                errors.provinceId
+              }}</small>
             </div>
-            <div class="col-sm-12 col-md-4">
+
+            <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Quận/Huyện *</label>
               <select
                 class="form-select address-form-select"
                 v-model="form.districtId"
-                @change="loadWards"
+                @change="
+                  () => {
+                    loadWards();
+                    clearFieldError('districtId');
+                  }
+                "
               >
                 <option value="">Quận/Huyện</option>
                 <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">
                   {{ d.DistrictName }}
                 </option>
               </select>
+              <small v-if="errors.districtId" class="text-danger">{{
+                errors.districtId
+              }}</small>
             </div>
-            <div class="col-sm-12 col-md-4">
+
+            <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Phường/Xã *</label>
-              <select class="form-select address-form-select" v-model="form.wardCode">
+              <select
+                class="form-select address-form-select"
+                v-model="form.wardId"
+                @change="clearFieldError('wardId')"
+              >
                 <option value="">Phường/Xã</option>
                 <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">
                   {{ w.WardName }}
                 </option>
               </select>
+              <small v-if="errors.wardId" class="text-danger">{{ errors.wardId }}</small>
             </div>
           </div>
 
@@ -104,12 +140,27 @@
             <label class="form-label address-form-label">Địa chỉ cụ thể *</label>
             <input
               type="text"
-              v-model="form.specificAddress"
+              v-model="form.address"
               class="form-control address-form-input"
+              @input="clearFieldError('address')"
             />
+            <small v-if="errors.address" class="text-danger">{{ errors.address }}</small>
           </div>
-
-          <button type="submit" class="btn address-form-btn">Lưu địa chỉ</button>
+          <div class="mb-3 form-check">
+            <input
+              type="checkbox"
+              class="form-check-input address-form-checkbox"
+              id="defaultAddress"
+              v-model="form.defaultAddress"
+            />
+            <label class="form-check-label" for="defaultAddress"
+              >Đặt làm địa chỉ mặc định</label
+            >
+          </div>
+          <button type="submit" class="btn address-form-btn" :disabled="isLoading">
+            <span v-if="isLoading">Đang lưu...</span>
+            <span v-else>Lưu địa chỉ</span>
+          </button>
         </form>
       </div>
     </div>
@@ -117,23 +168,85 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, reactive, onMounted } from "vue";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
 const ghnToken = "b1128a4b-3c99-11f0-b2d1-fa768adb59a3";
 
 const provinces = ref([]);
 const districts = ref([]);
 const wards = ref([]);
-const form = ref({
-  recipientName: "",
-  phoneNumber: "",
+const isLoading = ref(false);
+
+function clearFieldError(field) {
+  errors[field] = "";
+}
+
+const form = reactive({
+  customerName: "",
+  phone: "",
   provinceId: "",
   districtId: "",
-  wardCode: "",
-  specificAddress: "",
-  note: "",
-  defaultAddress: true,
+  wardId: "",
+  address: "",
 });
+
+const errors = reactive({
+  customerName: "",
+  phone: "",
+  provinceId: "",
+  districtId: "",
+  wardId: "",
+  address: "",
+});
+
+function clearErrors() {
+  Object.keys(errors).forEach((key) => (errors[key] = ""));
+}
+
+function validateForm() {
+  clearErrors();
+  let valid = true;
+
+  if (!form.customerName.trim()) {
+    errors.customerName = "Tên người nhận không được để trống";
+    valid = false;
+  } else if (form.customerName.length > 100) {
+    errors.customerName = "Tên người nhận không được vượt quá 100 ký tự";
+    valid = false;
+  }
+
+  if (!form.phone.trim()) {
+    errors.phone = "Số điện thoại không được để trống";
+    valid = false;
+  } else if (!/^[0-9]{10,11}$/.test(form.phone)) {
+    errors.phone = "Số điện thoại không hợp lệ";
+    valid = false;
+  }
+
+  if (!form.provinceId) {
+    errors.provinceId = "Tỉnh/Thành phố không được để trống";
+    valid = false;
+  }
+
+  if (!form.districtId) {
+    errors.districtId = "Quận/Huyện không được để trống";
+    valid = false;
+  }
+
+  if (!form.wardId) {
+    errors.wardId = "Phường/Xã không được để trống";
+    valid = false;
+  }
+
+  if (!form.address.trim()) {
+    errors.address = "Địa chỉ chi tiết không được để trống";
+    valid = false;
+  }
+
+  return valid;
+}
 
 async function loadProvinces() {
   const res = await fetch(
@@ -148,17 +261,14 @@ async function loadProvinces() {
 
 async function loadDistricts() {
   wards.value = [];
-  form.value.districtId = "";
-  form.value.wardCode = "";
+  form.districtId = "";
+  form.wardId = "";
   const res = await fetch(
     "https://online-gateway.ghn.vn/shiip/public-api/master-data/district",
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Token: ghnToken,
-      },
-      body: JSON.stringify({ province_id: Number(form.value.provinceId) }),
+      headers: { "Content-Type": "application/json", Token: ghnToken },
+      body: JSON.stringify({ province_id: Number(form.provinceId) }),
     }
   );
   const data = await res.json();
@@ -167,7 +277,7 @@ async function loadDistricts() {
 
 async function loadWards() {
   const res = await fetch(
-    `https://online-gateway.ghn.vn/shiip/public-api/master-data/ward?district_id=${form.value.districtId}`,
+    `https://online-gateway.ghn.vn/shiip/public-api/master-data/ward?district_id=${form.districtId}`,
     { headers: { Token: ghnToken } }
   );
   const data = await res.json();
@@ -175,26 +285,33 @@ async function loadWards() {
 }
 
 async function submitForm() {
+  if (!validateForm()) return;
+
   const Token = localStorage.getItem("token");
   if (!Token) {
-    alert("⚠️ Bạn chưa đăng nhập! Token rỗng.");
+    iziToast.error({
+      title: "Lỗi",
+      message: "Bạn chưa đăng nhập!",
+      position: "topRight",
+    });
     return;
   }
 
+  isLoading.value = true;
+
   const payload = {
-    customerName: form.value.recipientName,
-    phone: form.value.phoneNumber,
-    address: form.value.specificAddress,
-    provinceId: Number(form.value.provinceId),
+    customerName: form.customerName,
+    phone: form.phone,
+    address: form.address,
+    provinceId: Number(form.provinceId),
     provinceName:
-      provinces.value.find((p) => p.ProvinceID == form.value.provinceId)?.ProvinceName ||
-      "",
-    districtId: Number(form.value.districtId),
+      provinces.value.find((p) => p.ProvinceID == form.provinceId)?.ProvinceName || "",
+    districtId: Number(form.districtId),
     districtName:
-      districts.value.find((d) => d.DistrictID == form.value.districtId)?.DistrictName ||
-      "",
-    wardId: Number(form.value.wardCode),
-    wardName: wards.value.find((w) => w.WardCode == form.value.wardCode)?.WardName || "",
+      districts.value.find((d) => d.DistrictID == form.districtId)?.DistrictName || "",
+    wardId: Number(form.wardId),
+    wardName: wards.value.find((w) => w.WardCode == form.wardId)?.WardName || "",
+    defaultAddress: form.defaultAddress || false,
   };
 
   try {
@@ -209,26 +326,24 @@ async function submitForm() {
 
     if (!res.ok) throw new Error("Lỗi khi gửi dữ liệu");
 
-    const data = await res.json();
-    alert("✅ Địa chỉ đã được lưu!");
-    console.log(data);
+    iziToast.success({
+      title: "Thành công",
+      message: "Địa chỉ đã được lưu!",
+      position: "topRight",
+    });
 
-    // RESET FORM
-    form.value = {
-      recipientName: "",
-      phoneNumber: "",
-      provinceId: "",
-      districtId: "",
-      wardCode: "",
-      specificAddress: "",
-      note: "",
-      defaultAddress: true,
-    };
-    districts.value = [];
-    wards.value = [];
-  } catch (error) {
-    console.error("❌ Lỗi gửi form:", error);
-    alert("❌ Lỗi lưu địa chỉ.");
+    // ⏳ Giữ loading và chuyển trang sau 500ms
+    setTimeout(() => {
+      window.location.href = "/user/listaddress";
+    }, 1000);
+  } catch (err) {
+    iziToast.error({
+      title: "Lỗi",
+      message: "Lỗi khi lưu địa chỉ.",
+      position: "topRight",
+    });
+    console.error(err);
+    isLoading.value = false; // Chỉ tắt khi có lỗi
   }
 }
 
@@ -238,6 +353,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.text-danger {
+  color: red;
+  font-size: 13px;
+}
 /* --- giữ nguyên style cũ đã tối ưu --- */
 .address-form-container {
   width: 90%;
@@ -263,14 +382,14 @@ onMounted(() => {
   color: #fff;
   font-weight: 600;
   padding: 10px 20px;
-  border: 1px solid #000;
+  border: 1px solid #000 !important;
   transition: 0.3s ease;
 }
 
 .address-form-btn:hover {
   background-color: #fff;
   color: #000;
-  border: 1px solid #000;
+  border: 1px solid #000 !important;
 }
 
 .address-form-input:focus,
@@ -327,5 +446,9 @@ onMounted(() => {
     width: 16px;
     height: 16px;
   }
+}
+.address-form-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
