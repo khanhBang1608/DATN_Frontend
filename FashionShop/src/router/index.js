@@ -35,6 +35,7 @@ import ProductPromotionForm from '@/components/admin/promotions/ProductPromotion
 import ProductPromotionForm2 from '@/components/admin/promotions/ProductPromotionForm2.vue'
 import ListAddressView from '@/views/ListAddressView.vue'
 import EditAddressView from '@/views/EditAddressView.vue'
+import FavoriteView from '@/views/FavoriteView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -127,6 +128,12 @@ const router = createRouter({
       path: '/user/editaddress/:id',
       name: 'editaddress',
       component: EditAddressView,
+      props: true
+    },
+    {
+      path: '/user/listfavorite',
+      name: 'listfavorite',
+      component: FavoriteView,
       props: true
     },
     {
