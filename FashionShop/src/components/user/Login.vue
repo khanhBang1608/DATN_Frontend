@@ -78,14 +78,31 @@ const forgotTitle = computed(() => {
 
 const handleGoogleLogin = async () => {
   try {
-    const user = await loginWithGoogle()
-    alert(`Xin chào ${user.displayName}`)
-    // Ghi thông tin user vào localStorage hoặc chuyển trang
-  } catch (err) {
-    alert("Lỗi đăng nhập: " + err.message)
-  }
-}
+    const googleUser = await loginWithGoogle();
+    const idToken = await googleUser.getIdToken();
 
+    const response = await axios.post("http://localhost:8080/api/public/oauth/google", {
+      idToken: idToken,
+    });
+
+    const { token, user: userData } = response.data;
+
+    // ✅ Lưu token và role vào localStorage
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", userData.role);
+
+    // ✅ Điều hướng theo quyền
+    if (userData.role === 0) {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/");
+    }
+
+  } catch (err) {
+    alert("Lỗi đăng nhập: " + err.message);
+    console.error(err);
+  }
+};
 </script>
 
 <template>
@@ -140,8 +157,8 @@ const handleGoogleLogin = async () => {
                 class="social-icon me-2"
               />
               Tiếp tục với Google
-            
-              
+
+
             </button>
           </div>
 
