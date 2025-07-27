@@ -82,7 +82,7 @@ onMounted(() => {
               <i class="fa fa-envelope fa-fw bg-primary"></i>
               <div class="info">
                 <h3>{{ stats.totalReviews }}</h3>
-                <span>Đánh giá</span>
+                <span> Đánh giá</span>
                 <p>Tổng đánh giá sản phẩm</p>
               </div>
             </div>
@@ -94,7 +94,7 @@ onMounted(() => {
               <i class="fa fa-file fa-fw danger"></i>
               <div class="info">
                 <h3>{{ stats.totalCategories }}</h3>
-                <span>Danh mục</span>
+                <span> Danh mục</span>
                 <p>Các loại sản phẩm</p>
               </div>
             </div>
@@ -106,7 +106,7 @@ onMounted(() => {
               <i class="fa fa-users fa-fw success"></i>
               <div class="info">
                 <h3>{{ stats.totalUsers }}</h3>
-                <span>Người dùng</span>
+                <span> Người dùng</span>
                 <p>Chạy chiến dịch</p>
               </div>
             </div>

@@ -133,23 +133,6 @@ async function handleSubmit() {
             />
             <div class="invalid-feedback">Mật khẩu không khớp</div>
           </div>
-
-          <!-- Đồng ý điều khoản -->
-          <div class="form-check mb-4">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              v-model="form.agree"
-              id="agree"
-              required
-            />
-            <label class="form-check-label" for="agree">
-              Tôi đồng ý với <a href="#">Điều khoản</a> &
-              <a href="#">Chính sách bảo mật</a> của L'HEX
-            </label>
-            <div class="invalid-feedback">Bạn phải đồng ý để tiếp tục</div>
-          </div>
-
           <!-- Nút submit -->
           <button type="submit" class="btn-register">Tạo Tài Khoản</button>
         </form>
