@@ -3,23 +3,26 @@ import { onMounted, ref, nextTick, watch } from "vue";
 import { setupFilterSidebar } from "@/assets/js/product";
 import { getAllProducts, searchProductsByName } from "@/api/ProductClient";
 import promotionApi from "@/api/PromotionClien";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
 
 const route = useRoute();
+const router = useRouter(); // Thêm useRouter để điều hướng
 const searchKeyword = ref(route.query.keyword || "");
 const products = ref([]);
+const isSidebarOpen = ref(false); // Để quản lý trạng thái sidebar (nếu cần)
 
 onMounted(async () => {
   if (searchKeyword.value) {
-    await handleSearch(); // nếu có keyword trong URL thì tìm kiếm
+    await handleSearch(); // Nếu có keyword trong URL thì tìm kiếm
   } else {
-    await fetchProducts(); // không có keyword thì load toàn bộ
+    await fetchProducts(); // Không có keyword thì load toàn bộ
   }
   await nextTick();
   setupFilterSidebar();
 });
 
-// ✅ Theo dõi thay đổi URL keyword
+// Theo dõi thay đổi URL keyword
 watch(
   () => route.query.keyword,
   async (newKeyword) => {
@@ -32,6 +35,33 @@ watch(
   }
 );
 
+// Hàm xử lý khi click vào sản phẩm
+const handleProductClick = async (productId) => {
+  try {
+    // Gọi API để ghi nhận lượt xem
+    const token = localStorage.getItem("token");
+    if (token) {
+      await axios.post(
+        "/api/user/product-views/record",
+        null,
+        {
+          params: { productId },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    }
+    // Chuyển hướng đến trang chi tiết sản phẩm
+    router.push(`/product-detail/${productId}`);
+  } catch (error) {
+    console.error("Lỗi khi ghi nhận lượt xem:", error);
+    // Vẫn chuyển hướng dù có lỗi
+    router.push(`/product-detail/${productId}`);
+  }
+};
+
+// Hàm lấy tất cả sản phẩm
 const fetchProducts = async () => {
   try {
     const res = await getAllProducts();
@@ -81,6 +111,7 @@ const fetchProducts = async () => {
   }
 };
 
+// Hàm tìm kiếm sản phẩm
 const handleSearch = async () => {
   try {
     const response = await searchProductsByName(searchKeyword.value);
@@ -296,7 +327,6 @@ const handleSearch = async () => {
                           id="priceMax"
                         />
                       </div>
-
                       <div class="d-flex justify-content-between">
                         <div class="form-group me-2">
                           <label class="form-label small">Từ</label>
@@ -539,7 +569,6 @@ const handleSearch = async () => {
           <li><a class="dropdown-item" href="#">Tên: Z-A</a></li>
           <li><a class="dropdown-item" href="#">Cũ nhất</a></li>
           <li><a class="dropdown-item" href="#">Mới nhất</a></li>
-          <!-- mục có sẵn background -->
           <li><a class="dropdown-item" href="#">Bán chạy nhất</a></li>
           <li><a class="dropdown-item" href="#">Tồn kho: Giảm dần</a></li>
         </ul>
@@ -554,14 +583,15 @@ const handleSearch = async () => {
               v-if="product.variants && product.variants.length > 0"
               class="col-6 col-sm-6 col-md-4 col-lg-3"
             >
-              <a :href="`product-detail/${product.productId}`" class="product-link">
+              <a
+                href="#"
+                class="product-link"
+                @click.prevent="handleProductClick(product.productId)"
+              >
                 <div class="product-item">
-                  <!-- Nếu có biến thể và có discount -->
                   <span class="discount-badge" v-if="product.discount">
                     -{{ product.discount }}%
                   </span>
-
-                  <!-- Ảnh mặc định -->
                   <img
                     :src="
                       product.variants[0]?.imageName
@@ -581,11 +611,7 @@ const handleSearch = async () => {
                     :alt="`${product.name} Hover`"
                   />
                 </div>
-
-                <!-- Tên sản phẩm -->
                 <div class="product-name">{{ product.name }}</div>
-
-                <!-- Giá -->
                 <div>
                   <span class="discounted-price">
                     {{
@@ -594,8 +620,6 @@ const handleSearch = async () => {
                         : "0"
                     }}₫
                   </span>
-
-                  <!-- Giá gạch nếu có originalPrice -->
                   <span
                     class="original-price"
                     v-if="
@@ -610,8 +634,7 @@ const handleSearch = async () => {
             </div>
           </template>
         </div>
-
-        <!-- phân trang giả lập -->
+        <!-- Phân trang giả lập -->
         <ul class="pagination mt-3">
           <li class="pagination-item pagination-active">1</li>
           <li class="pagination-item">2</li>
