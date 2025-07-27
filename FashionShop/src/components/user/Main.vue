@@ -22,40 +22,40 @@
     </div>
 
     <!-- Sản phẩm mới -->
-    <div class="container my-5">
-    <h3 class="text-center mb-4 fw-bold">TOP 10 SẢN PHẨM MỚI NHẤT</h3>
-    <div class="swiper top-newest-products-swiper">
-      <div class="swiper-wrapper">
-        <div
-          class="swiper-slide"
-          v-for="(product, index) in topNewestProducts"
-          :key="index"
-        >
-          <a
-            href="#"
-            class="product-link"
-            @click.prevent="handleProductClick(product.productId)"
+    <div class="container my-5" v-if="topNewestProducts.length > 0">
+      <h3 class="text-center mb-4 fw-bold">TOP 10 SẢN PHẨM MỚI NHẤT</h3>
+      <div class="swiper top-newest-products-swiper">
+        <div class="swiper-wrapper">
+          <div
+            class="swiper-slide"
+            v-for="(product, index) in topNewestProducts"
+            :key="index"
           >
-            <div class="product-item">
-              <img
-                :src="getProductImage(product)"
-                class="img-fluid img-default"
-                alt="Hình sản phẩm"
-                onerror="this.onerror=null;this.src='https://via.placeholder.com/200x200?text=No+Image';"
-              />
-            </div>
-            <div class="product-name">{{ product.name }}</div>
-            <div>
-              <span class="discounted-price">
-                {{ formatPrice(product.variants[0]?.price) }}₫
-              </span>
-            </div>
-          </a>
+            <a
+              href="#"
+              class="product-link"
+              @click.prevent="handleProductClick(product.productId)"
+            >
+              <div class="product-item">
+                <img
+                  :src="getProductImage(product)"
+                  class="img-fluid img-default"
+                  alt="Hình sản phẩm"
+                  onerror="this.onerror=null;this.src='https://via.placeholder.com/200x200?text=No+Image';"
+                />
+              </div>
+              <div class="product-name">{{ product.name }}</div>
+              <div>
+                <span class="discounted-price">
+                  {{ formatPrice(product.variants[0]?.price) }}₫
+                </span>
+              </div>
+            </a>
+          </div>
         </div>
+        <div class="top-newest-swiper-pagination mt-5"></div>
       </div>
-      <div class="top-newest-swiper-pagination mt-5"></div>
     </div>
-  </div>
 
     <!-- Bộ sưu tập -->
     <section class="dreams-section">
@@ -150,6 +150,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import axios from "axios";
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
@@ -211,7 +212,9 @@ const handleProductClick = async (productId) => {
 const fetchTopNewestProducts = async () => {
   try {
     const response = await axios.get("/api/public/products/top10");
-    topNewestProducts.value = response.data;
+    topNewestProducts.value = response.data.filter((product) =>
+      product.variants && product.variants.length > 0 && product.variants[0]?.price !== undefined
+    );
   } catch (error) {
     console.error("Lỗi khi lấy sản phẩm mới nhất:", error);
   }
@@ -232,14 +235,14 @@ const fetchRecentViews = async () => {
       response.data.forEach((item) => {
         const product = item.product?.[0];
         const variant = product?.variants?.[0];
-        if (product?.productId && !seen.has(product.productId)) {
+        if (product?.productId && !seen.has(product.productId) && product.variants && product.variants.length > 0 && variant?.price !== undefined) {
           const image = variant?.imageName || "";
           seen.set(product.productId, {
             productId: product.productId,
             name: product.name,
             price: variant?.price || 0,
             image,
-            viewCount: product.viewCount || 0, // Lấy viewCount từ ProductDTO
+            viewCount: product.viewCount || 0,
           });
         }
       });

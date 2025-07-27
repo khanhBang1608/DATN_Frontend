@@ -70,6 +70,12 @@ onMounted(async () => {
 });
 
 const handleSubmit = async () => {
+  // Kiểm tra nếu màu hoặc size bị trống
+  if (!variant.value.colorId || !variant.value.sizeId) {
+    errorMessage.value = "❌ Vui lòng chọn cả màu sắc và size!";
+    return;
+  }
+
   try {
     const formData = new FormData();
     formData.append("productId", productId);

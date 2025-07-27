@@ -8,7 +8,6 @@ import { toggleFavorite } from "@/api/user/FavoriteAPI";
 import { checkFavorite } from "@/api/user/FavoriteAPI";
 import { addToCart } from "@/api/user/cartAPI";
 
-
 const router = useRouter();
 const isFavorite = ref(false);
 
@@ -32,7 +31,6 @@ const displayedPrice = computed(() => {
   if (!product.value.variants || product.value.variants.length === 0)
     return { price: 0, originalPrice: 0 };
 
-  // Nếu đã chọn cả màu và size
   if (selectedColorId.value && selectedSizeId.value) {
     const match = product.value.variants.find(
       (v) => v.colorId === selectedColorId.value && v.sizeId === selectedSizeId.value
@@ -44,7 +42,6 @@ const displayedPrice = computed(() => {
     }
   }
 
-  // Nếu chưa chọn → tìm biến thể có giá thấp nhất (ưu tiên giá đã giảm nếu có)
   let minVariant = product.value.variants[0];
   let minPrice = minVariant.discountedPrice ?? minVariant.price;
 
@@ -69,31 +66,26 @@ const selectedVariant = computed(() => {
 });
 
 const handleAddToCart = async () => {
-  // Kiểm tra đăng nhập
   const token = localStorage.getItem("token");
   if (!token) {
     alert("⚠️ Bạn cần đăng nhập để thêm vào giỏ hàng.");
-
     router.push("/login");
     return;
   }
 
-  // Kiểm tra chọn màu và size
   if (!selectedColorId.value || !selectedSizeId.value) {
     alert("⚠️ Vui lòng chọn đầy đủ màu sắc và kích thước.");
     return;
   }
 
-  // Tìm biến thể phù hợp
   const variant = selectedVariant.value;
   if (!variant) {
     alert("❌ Không tìm thấy biến thể phù hợp.");
     return;
   }
 
-  // Gửi request
   try {
-    await addToCart(variant.productVariantId, 1); // quantity mặc định = 1
+    await addToCart(variant.productVariantId, 1);
     alert("✅ Sản phẩm đã được thêm vào giỏ hàng!");
   } catch (error) {
     alert("❌ Thêm vào giỏ hàng thất bại: " + (error.message || "Lỗi không xác định"));
@@ -107,7 +99,6 @@ onMounted(async () => {
     const res = await getProductDetail(id);
     const data = res.data;
 
-    // Gọi khuyến mãi
     const promos = await promotionApi.getActivePromotions();
     const promotionMap = new Map();
     promos.forEach((promo) => {
@@ -116,7 +107,6 @@ onMounted(async () => {
       });
     });
 
-    // Áp dụng khuyến mãi cho từng biến thể
     data.variants = data.variants.map((v) => {
       const promo = promotionMap.get(v.productVariantId);
       if (promo) {
@@ -137,7 +127,6 @@ onMounted(async () => {
         discountedPrice: v.price,
         discountPercent: 0,
       };
-      
     });
 
     product.value = data;
@@ -151,42 +140,39 @@ onMounted(async () => {
         console.error("Lỗi khi kiểm tra yêu thích:", err);
       }
     }
-    // Gọi API lấy sản phẩm liên quan
-    // Gọi API lấy sản phẩm liên quan
-try {
-  const resRelated = await getRelatedProducts(id, data.categoryId);
-  const related = resRelated.data;
 
-  // Áp dụng khuyến mãi cho từng biến thể sản phẩm liên quan
-  related.forEach((prod) => {
-    prod.variants = prod.variants.map((v) => {
-      const promo = promotionMap.get(v.productVariantId);
-      if (promo) {
-        const discountPercent = promo.discountAmount || 0;
-        const originalPrice = v.price;
-        const discountedPrice = originalPrice * (1 - discountPercent / 100);
+    try {
+      const resRelated = await getRelatedProducts(id, data.categoryId);
+      const related = resRelated.data;
 
-        return {
-          ...v,
-          originalPrice: originalPrice,
-          discountedPrice: Math.round(discountedPrice),
-          discountPercent: discountPercent,
-        };
-      }
-      return {
-        ...v,
-        originalPrice: v.price,
-        discountedPrice: v.price,
-        discountPercent: 0,
-      };
-    });
-  });
+      related.forEach((prod) => {
+        prod.variants = prod.variants.map((v) => {
+          const promo = promotionMap.get(v.productVariantId);
+          if (promo) {
+            const discountPercent = promo.discountAmount || 0;
+            const originalPrice = v.price;
+            const discountedPrice = originalPrice * (1 - discountPercent / 100);
 
-  relatedProducts.value = related;
-} catch (err) {
-  console.error("Lỗi khi tải sản phẩm liên quan:", err);
-}
+            return {
+              ...v,
+              originalPrice: originalPrice,
+              discountedPrice: Math.round(discountedPrice),
+              discountPercent: discountPercent,
+            };
+          }
+          return {
+            ...v,
+            originalPrice: v.price,
+            discountedPrice: v.price,
+            discountPercent: 0,
+          };
+        });
+      });
 
+      relatedProducts.value = related;
+    } catch (err) {
+      console.error("Lỗi khi tải sản phẩm liên quan:", err);
+    }
   } catch (error) {
     console.error("Lỗi khi tải sản phẩm:", error);
   }
@@ -217,34 +203,18 @@ const uniqueSizes = computed(() => {
   });
 });
 
-// Hàm chuyển tên màu thành mã màu (tùy chỉnh theo màu của bạn)
-function getColorHex(colorName) {
-  const map = {
-    Đen: "#000000",
-    Trắng: "#ffffff",
-    Đỏ: "#ff0000",
-    Vàng: "#ffff00",
-    Xanh: "#008000",
-    // Thêm nếu cần
-  };
-  return map[colorName] || "#cccccc";
-}
-
 const displayedStock = computed(() => {
-  // Nếu đã chọn biến thể → trả về tồn kho của biến thể
   if (selectedVariant.value) {
     return selectedVariant.value.stock;
   }
-
-  // Nếu chưa chọn → tính tổng tồn kho tất cả biến thể
   return product.value.variants.reduce((sum, v) => sum + v.stock, 0);
 });
 
-// Lấy đường dẫn ảnh
 function getImageUrl(imageName) {
   return imageName ? `http://localhost:8080/images/${imageName}` : "/default.jpg";
 }
 </script>
+
 <template>
   <div class="custom-breadcrumb-wrapper">
     <nav class="custom-breadcrumb container">
@@ -311,24 +281,24 @@ function getImageUrl(imageName) {
 
         <!-- Màu sắc -->
         <div class="mb-4">
-          <div class="fw-semibold mb-1">Màu sắc:</div>
-          <div class="d-flex gap-2 flex-wrap">
-            <div
-              v-for="(color, index) in uniqueColors"
-              :key="index"
-              class="product-detail-color"
-              :title="color.colorName"
-              :style="{
-                backgroundColor: getColorHex(color.colorName),
-                border: selectedColorId === color.colorId ? '2px solid #000' : '',
-              }"
-              @click="
-                selectedColorId = selectedColorId === color.colorId ? null : color.colorId
-              "
-            ></div>
-          </div>
-          <hr class="product-detail-divider" />
+  <div class="mb-1">
+    <div class="fw-semibold">Màu sắc:</div>
+    <div class="color-options-wrapper">
+      <div class="d-flex gap-2 flex-wrap" style="margin-left: 0;">
+        <div
+          v-for="(color, index) in uniqueColors"
+          :key="index"
+          class="color-option"
+          :class="{ 'selected': selectedColorId === color.colorId }"
+          @click="selectedColorId = selectedColorId === color.colorId ? null : color.colorId"
+        >
+          <span class="color-name">{{ color.colorName }}</span>
+          <span v-if="selectedColorId === color.colorId" class="check-mark">✓</span>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
 
         <!-- Kích thước -->
         <div class="mb-4">
@@ -339,9 +309,7 @@ function getImageUrl(imageName) {
               :key="index"
               class="product-detail-size"
               :class="{ active: selectedSizeId === size.sizeId }"
-              @click="
-                selectedSizeId = selectedSizeId === size.sizeId ? null : size.sizeId
-              "
+              @click="selectedSizeId = selectedSizeId === size.sizeId ? null : size.sizeId"
             >
               {{ size.sizeName }}
             </div>
@@ -381,7 +349,6 @@ function getImageUrl(imageName) {
 
         <!-- Mô tả sản phẩm -->
         <div class="mb-4">
-          <!-- Không còn bị ẩn trên desktop -->
           <ul class="nav nav-tabs mb-3" id="productTab" role="tablist">
             <li class="nav-item" role="presentation">
               <button
@@ -463,9 +430,7 @@ function getImageUrl(imageName) {
               {{ item.variants?.[0]?.discountedPrice?.toLocaleString() }}₫
             </span>
             <span
-              v-if="
-                item.variants?.[0]?.discountedPrice < item.variants?.[0]?.originalPrice
-              "
+              v-if="item.variants?.[0]?.discountedPrice < item.variants?.[0]?.originalPrice"
               class="original-price text-muted text-decoration-line-through ms-2"
             >
               {{ item.variants?.[0]?.originalPrice?.toLocaleString() }}₫
@@ -489,4 +454,47 @@ function getImageUrl(imageName) {
     </div>
   </div>
 </template>
+
+<style>
+.color-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 40px;
+  border: 0.5px solid #ddd; /* Viền mỏng hơn */
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  padding: 5px;
+}
+
+.color-option:hover {
+  transform: scale(1.05);
+  border-color: #007bff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.color-option.selected {
+  border-color: #007bff;
+  background-color: #e7f0ff;
+}
+
+.color-name {
+  margin-right: 5px;
+}
+
+.check-mark {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.color-options-wrapper {
+  margin-left: 0; /* Đảm bảo các ô màu bắt đầu từ cùng vị trí với chữ "Màu sắc:" */
+}
+</style>
+
 <style src="@/assets/css/product-detail.css"></style>
