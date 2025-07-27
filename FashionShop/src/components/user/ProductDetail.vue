@@ -5,10 +5,13 @@ import { getProductDetail, getRelatedProducts } from "@/api/ProductClient";
 import ReviewComponent from "@/components/user/Review.vue";
 import promotionApi from "@/api/PromotionClien";
 import { toggleFavorite } from "@/api/user/FavoriteAPI";
+import { checkFavorite } from "@/api/user/FavoriteAPI";
 import { addToCart } from "@/api/user/cartAPI";
+
 
 const router = useRouter();
 const isFavorite = ref(false);
+
 const handleToggleFavorite = async () => {
   try {
     await toggleFavorite(product.value.productId);
@@ -134,9 +137,20 @@ onMounted(async () => {
         discountedPrice: v.price,
         discountPercent: 0,
       };
+      
     });
 
     product.value = data;
+
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const checkRes = await checkFavorite(product.value.productId);
+        isFavorite.value = checkRes === true;
+      } catch (err) {
+        console.error("Lỗi khi kiểm tra yêu thích:", err);
+      }
+    }
     // Gọi API lấy sản phẩm liên quan
     // Gọi API lấy sản phẩm liên quan
 try {
