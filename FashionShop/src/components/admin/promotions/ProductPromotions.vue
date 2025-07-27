@@ -1,29 +1,87 @@
 <!-- src/views/admin/ProductPromotions.vue -->
 <script setup>
-import { ref, onMounted } from "vue";
-import axios from "axios";
+import { ref, reactive, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import axios from "axios";
+import Swal from "sweetalert2";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
+// Router & token
 const route = useRoute();
 const router = useRouter();
-const variantMap = ref({}); // { variantId: variantObject }
-const errorMessage = ref("");
 const promotionId = route.params.promotionId;
-
-const promotions = ref([]);
 const token = localStorage.getItem("token");
 
-const fetchPromotions = async () => {
+// List
+const promotions = ref([]);
+const variantMap = ref({});
+const showModal = ref(false);
+const showAddModal = ref(false);
+
+// ======================== EDIT ========================
+const selectedPromotion = ref({ id: null, productVariantId: "", quantityLimit: 1 });
+const errors = ref({});
+
+const openEditModal = (item) => {
+  selectedPromotion.value = { ...item };
+  errors.value = {};
+  showModal.value = true;
+};
+
+const closeModal = () => (showModal.value = false);
+
+const saveUpdatedQuantity = async () => {
+  errors.value = {};
+  const variant = variantMap.value[selectedPromotion.value.productVariantId];
+  const maxStock = variant?.stock || 0;
+  const quantity = selectedPromotion.value.quantityLimit;
+
+  if (!Number.isInteger(quantity))
+    errors.value.quantityLimit = "Số lượng sản phẩm khuyến mãi phải là số nguyên!";
+  else if (quantity <= 0)
+    errors.value.quantityLimit = "Số lượng sản phẩm khuyến mãi phải lớn hơn > 0";
+  else if (quantity > maxStock)
+    errors.value.quantityLimit = `Số lượng sản phẩm khuyến mãi phải <= ${maxStock}`;
+
+  if (Object.keys(errors.value).length) return;
+
   try {
-    const res = await axios.get(
-      `http://localhost:8080/api/admin/product-promotions/promotion/${promotionId}`,
+    await axios.put(
+      `http://localhost:8080/api/admin/product-promotions/${selectedPromotion.value.id}`,
+      selectedPromotion.value,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
+
+    const index = promotions.value.findIndex((p) => p.id === selectedPromotion.value.id);
+    if (index !== -1) promotions.value[index] = { ...selectedPromotion.value };
+    closeModal();
+    iziToast.success({
+      title: "Thành công",
+      message: "Cập nhật thành công!",
+      position: "topRight",
+    });
+  } catch (err) {
+    iziToast.error({ title: "Lỗi", message: "Lỗi cập nhật", position: "topRight" });
+  }
+};
+
+// ======================== LIST + VARIANT ========================
+const fetchPromotions = async () => {
+  try {
+    const res = await axios.get(
+      `http://localhost:8080/api/admin/product-promotions/promotion/${promotionId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     promotions.value = res.data;
   } catch (err) {
-    console.error("Lỗi khi lấy danh sách sản phẩm khuyến mãi:", err);
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không thể tải danh sách",
+      position: "topRight",
+    });
   }
 };
 
@@ -37,94 +95,167 @@ const fetchVariantDetails = async () => {
         }
       );
       variantMap.value[item.productVariantId] = res.data;
-    } catch (err) {
-      console.error(`Lỗi lấy biến thể cho ID ${item.productVariantId}:`, err);
-    }
+    } catch {}
   });
   await Promise.all(promises);
 };
 
 const deletePromotion = async (id) => {
-  if (!confirm("Bạn có chắc chắn muốn xóa liên kết này?")) return;
-  try {
-    await axios.delete(`http://localhost:8080/api/admin/product-promotions/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    promotions.value = promotions.value.filter((p) => p.id !== id);
-  } catch (err) {
-    console.error("Lỗi xoá:", err);
+  const confirm = await Swal.fire({
+    title: "Bạn có chắc chắn?",
+    text: "Sản phẩm khuyến mãi bị xoá vĩnh viễn!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Xoá",
+    cancelButtonText: "Huỷ",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+  });
+
+  if (confirm.isConfirmed) {
+    try {
+      await axios.delete(`http://localhost:8080/api/admin/product-promotions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      promotions.value = promotions.value.filter((p) => p.id !== id);
+      iziToast.success({
+        title: "Thành công",
+        message: "Đã xóa sản phẩm khuyến mãi",
+        position: "topRight",
+      });
+    } catch {
+      iziToast.error({ title: "Lỗi", message: "Xóa thất bại!", position: "topRight" });
+    }
   }
 };
 
-const goToAddForm = () => {
-  router.push(`/admin/ProductPromotionForm/${promotionId}`);
+// ======================== ADD ========================
+const showAdd = () => {
+  showAddModal.value = true;
+  errorsAdd.products = "";
+  selectedProductId.value = "";
+  selectedVariants.value = {};
+};
+
+const allProducts = ref([]);
+const selectedProductId = ref("");
+const allVariantsMap = ref({});
+const selectedVariants = ref({});
+const errorsAdd = reactive({ products: "", variants: {}, global: "" });
+
+const fetchAllProducts = async () => {
+  const res = await axios.get("http://localhost:8080/api/admin/products", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  allProducts.value = res.data;
+};
+
+const fetchVariantsByProductId = async (productId) => {
+  const res = await axios.get(
+    "http://localhost:8080/api/admin/product-promotions/productVariants",
+    {
+      params: { productId },
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  allVariantsMap.value[productId] = res.data;
+
+  res.data.forEach((variant) => {
+    if (!selectedVariants.value[variant.productVariantId]) {
+      selectedVariants.value[variant.productVariantId] = {
+        checked: false,
+        promotionQuantity: 0,
+      };
+    }
+  });
+};
+
+const saveAddPromotion = async () => {
+  errorsAdd.products = "";
+  errorsAdd.variants = {};
+  errorsAdd.global = "";
+
+  if (!selectedProductId.value) {
+    errorsAdd.products = "Vui lòng chọn sản phẩm";
+    return;
+  }
+
+  const selectedList = [];
+  for (const [variantId, val] of Object.entries(selectedVariants.value)) {
+    if (val.checked) {
+      if (!val.promotionQuantity || val.promotionQuantity <= 0) {
+        errorsAdd.variants[variantId] = "Số lượng sản phẩm khuyến mãi phải lớn hơn 0";
+        continue;
+      }
+
+      const variant = allVariantsMap.value[selectedProductId.value].find(
+        (v) => v.productVariantId == variantId
+      );
+      if (variant && val.promotionQuantity > variant.stock) {
+        errorsAdd.variants[variantId] = `Tối đa ${variant.stock}`;
+        continue;
+      }
+
+      selectedList.push({
+        productVariantId: parseInt(variantId),
+        promotionId: parseInt(promotionId),
+        quantityLimit: val.promotionQuantity,
+      });
+    }
+  }
+
+  if (selectedList.length === 0) {
+    const anyChecked = Object.values(selectedVariants.value).some((v) => v.checked);
+    if (anyChecked) {
+      errorsAdd.global = "Vui lòng nhập số lượng hợp lệ cho các biến thể đã chọn";
+    } else {
+      errorsAdd.global = "Vui lòng chọn ít nhất 1 biến thể";
+    }
+    return;
+  }
+
+  try {
+    await axios.post(`http://localhost:8080/api/admin/product-promotions`, selectedList, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    await fetchPromotions();
+    await fetchVariantDetails();
+    showAddModal.value = false;
+    iziToast.success({
+      title: "Thành công",
+      message: "Thêm mới thành công!",
+      position: "topRight",
+    });
+  } catch {
+    iziToast.error({ title: "Lỗi", message: "Thêm thất bại", position: "topRight" });
+  }
+};
+
+const closeAddModal = () => {
+  showAddModal.value = false;
 };
 
 onMounted(async () => {
   await fetchPromotions();
   await fetchVariantDetails();
+  await fetchAllProducts();
 });
-
-const showModal = ref(false);
-const selectedPromotion = ref({ id: null, productVariantId: "", quantityLimit: 1 });
-
-const openEditModal = (item) => {
-  selectedPromotion.value = { ...item };
-  showModal.value = true;
-};
-
-const closeModal = () => {
-  showModal.value = false;
-};
-
-const saveUpdatedQuantity = async () => {
-  const variant = variantMap.value[selectedPromotion.value.productVariantId];
-  const maxStock = variant?.stock || 0;
-  const quantity = selectedPromotion.value.quantityLimit;
-
-  // Kiểm tra ràng buộc
-  if (!Number.isInteger(quantity)) {
-    errorMessage.value = "⚠️ Số lượng phải là số nguyên.";
-    return;
-  }
-  if (quantity <= 0) {
-    errorMessage.value = "⚠️ Số lượng phải lớn hơn 0.";
-    return;
-  }
-  if (quantity > maxStock) {
-    errorMessage.value = `⚠️ Số lượng không được vượt quá số lượng tồn kho: ${maxStock}.`;
-    return;
-  }
-
-  try {
-    await axios.put(
-      `http://localhost:8080/api/admin/product-promotions/${selectedPromotion.value.id}`,
-      selectedPromotion.value,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    // Cập nhật lại trong danh sách
-    const index = promotions.value.findIndex((p) => p.id === selectedPromotion.value.id);
-    if (index !== -1) promotions.value[index] = { ...selectedPromotion.value };
-
-    closeModal();
-    errorMessage.value = "";
-  } catch (err) {
-    console.error("Lỗi cập nhật số lượng:", err);
-    errorMessage.value = "❌ Có lỗi khi cập nhật. Vui lòng thử lại.";
-  }
+const getProductName = (productId) => {
+  const product = allProducts.value.find((p) => p.productId == productId);
+  return product ? product.name : "Không rõ";
 };
 </script>
+
 <template>
   <div class="container py-5">
     <div class="card p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">🎁 Danh sách Sản phẩm Khuyến Mãi</h2>
-        <button class="btn btn-primary" @click="goToAddForm">
+        <button class="btn btn-primary" @click="showAdd">
           + Thêm sản phẩm khuyến mãi
         </button>
       </div>
+
       <div class="table-responsive">
         <table class="table table-hover align-middle text-light custom-table">
           <thead>
@@ -141,17 +272,21 @@ const saveUpdatedQuantity = async () => {
               <td>{{ item.productVariantId }}</td>
               <td>{{ item.quantityLimit }}</td>
               <td class="text-center">
-                <button class="btn btn-sm btn-warning me-1" @click="openEditModal(item)">
+                <button class="btn btn-sm btn-warning m-1" @click="openEditModal(item)">
                   ✏️ Sửa
                 </button>
-                <button class="btn btn-sm btn-danger" @click="deletePromotion(item.id)">
+                <button
+                  class="btn btn-sm btn-danger m-1"
+                  @click="deletePromotion(item.id)"
+                >
                   🗑️ Xoá
                 </button>
               </td>
             </tr>
             <tr v-if="promotions.length === 0">
-              <td colspan="4" class="text-center text-muted">
-                Không có sản phẩm khuyến mãi nào.
+              <td colspan="4" class="text-center text-white fs-5 py-4">
+                <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                Không có sản phẩm khuyến mãi nào được tìm thấy.
               </td>
             </tr>
           </tbody>
@@ -159,6 +294,109 @@ const saveUpdatedQuantity = async () => {
       </div>
     </div>
   </div>
+
+  <!-- Modal thêm -->
+  <div
+    v-if="showAddModal"
+    class="modal fade show d-block"
+    tabindex="-1"
+    style="background: rgba(0, 0, 0, 0.5)"
+  >
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Thêm sản phẩm khuyến mãi</h5>
+          <button type="button" class="btn-close" @click="closeAddModal"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Select product -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Chọn sản phẩm</label>
+            <select
+              v-model="selectedProductId"
+              class="form-control"
+              @change="
+                () => {
+                  errorsAdd.products = '';
+                  errorsAdd.global = '';
+                  fetchVariantsByProductId(selectedProductId);
+                }
+              "
+            >
+              <option disabled value="">-- Chọn sản phẩm --</option>
+              <option v-for="p in allProducts" :key="p.productId" :value="p.productId">
+                {{ p.name }}
+              </option>
+            </select>
+            <div class="text-danger mt-1" v-if="errorsAdd.products">
+              {{ errorsAdd.products }}
+            </div>
+          </div>
+
+          <!-- Variants -->
+          <div v-if="selectedProductId">
+            <label class="form-label fw-semibold">
+              Biến thể của sản phẩm: {{ getProductName(selectedProductId) }}
+            </label>
+
+            <div
+              v-if="allVariantsMap[selectedProductId]?.length"
+              v-for="variant in allVariantsMap[selectedProductId]"
+              :key="variant.productVariantId"
+              class="border rounded p-2 mb-2"
+            >
+              <div>
+                <input
+                  type="checkbox"
+                  v-model="selectedVariants[variant.productVariantId].checked"
+                  @change="
+                    errorsAdd.variants[variant.productVariantId] = '';
+                    errorsAdd.global = '';
+                  "
+                />
+                {{ variant.colorName }} - {{ variant.sizeName }} - Tồn kho:
+                {{ variant.stock }}
+              </div>
+
+              <div v-if="selectedVariants[variant.productVariantId].checked">
+                <label class="form-label fw-semibold mt-2">Số lượng</label>
+                <input
+                  type="number"
+                  min="1"
+                  class="form-control"
+                  v-model.number="
+                    selectedVariants[variant.productVariantId].promotionQuantity
+                  "
+                  @input="errorsAdd.variants[variant.productVariantId] = ''"
+                />
+                <div
+                  class="text-danger mt-1"
+                  v-if="errorsAdd.variants[variant.productVariantId]"
+                >
+                  {{ errorsAdd.variants[variant.productVariantId] }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Nếu không có biến thể -->
+            <div v-else class="alert text-danger">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+              Không có biến thể nào cho sản phẩm này.
+            </div>
+
+            <div class="text-danger mt-2" v-if="errorsAdd.global">
+              {{ errorsAdd.global }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="closeAddModal">Đóng</button>
+          <button class="btn btn-success" @click="saveAddPromotion">Thêm mới</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal sửa số lượng -->
   <div
     v-if="showModal"
@@ -169,7 +407,7 @@ const saveUpdatedQuantity = async () => {
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">✏️ Sửa số lượng</h5>
+          <h5 class="modal-title">Sửa số lượng</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
         <div class="modal-body">
@@ -185,11 +423,9 @@ const saveUpdatedQuantity = async () => {
               min="1"
               :max="variantMap[selectedPromotion.productVariantId]?.stock || 1"
             />
-          </div>
-
-          <!-- Thông báo lỗi -->
-          <div v-if="errorMessage" class="alert alert-danger py-2 px-3">
-            {{ errorMessage }}
+            <div class="text-danger mt-1" v-if="errors.quantityLimit">
+              {{ errors.quantityLimit }}
+            </div>
           </div>
 
           <!-- Gợi ý thêm -->
@@ -203,9 +439,7 @@ const saveUpdatedQuantity = async () => {
 
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="closeModal">Đóng</button>
-          <button class="btn btn-primary" @click="saveUpdatedQuantity">
-            💾 Lưu thay đổi
-          </button>
+          <button class="btn btn-success" @click="saveUpdatedQuantity">Cập nhật</button>
         </div>
       </div>
     </div>

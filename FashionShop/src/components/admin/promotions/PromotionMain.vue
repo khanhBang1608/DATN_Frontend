@@ -19,7 +19,10 @@
         </thead>
         <tbody>
           <tr v-if="promotions.length === 0">
-            <td colspan="6" class="text-center text-muted">Không có khuyến mãi nào.</td>
+            <td colspan="6" class="text-center text-white fs-5 py-4">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Không có
+              mã khuyến mãi nào được tìm thấy.
+            </td>
           </tr>
           <tr v-for="promo in promotions" :key="promo.id">
             <td>{{ promo.code }}</td>
@@ -280,6 +283,8 @@ const deletePromotion = async (id) => {
     showCancelButton: true,
     confirmButtonText: "Xoá",
     cancelButtonText: "Huỷ",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
   });
 
   if (result.isConfirmed) {
