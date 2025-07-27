@@ -23,35 +23,39 @@
 
     <!-- Sản phẩm mới -->
     <div class="container my-5">
-      <h3 class="text-center mb-4 fw-bold">TOP 10 SẢN PHẨM MỚI NHẤT</h3>
-      <div class="swiper top-newest-products-swiper">
-        <div class="swiper-wrapper">
-          <div
-            class="swiper-slide"
-            v-for="(product, index) in topNewestProducts"
-            :key="index"
+    <h3 class="text-center mb-4 fw-bold">TOP 10 SẢN PHẨM MỚI NHẤT</h3>
+    <div class="swiper top-newest-products-swiper">
+      <div class="swiper-wrapper">
+        <div
+          class="swiper-slide"
+          v-for="(product, index) in topNewestProducts"
+          :key="index"
+        >
+          <a
+            href="#"
+            class="product-link"
+            @click.prevent="handleProductClick(product.productId)"
           >
-            <a :href="`/product/${product.productId}`" class="product-link">
-              <div class="product-item">
-                <img
-                  :src="getProductImage(product)"
-                  class="img-fluid img-default"
-                  alt="Hình sản phẩm"
-                  onerror="this.onerror=null;this.src='https://via.placeholder.com/200x200?text=No+Image';"
-                />
-              </div>
-              <div class="product-name">{{ product.name }}</div>
-              <div>
-                <span class="discounted-price">
-                  {{ formatPrice(product.variants[0]?.price) }}₫
-                </span>
-              </div>
-            </a>
-          </div>
+            <div class="product-item">
+              <img
+                :src="getProductImage(product)"
+                class="img-fluid img-default"
+                alt="Hình sản phẩm"
+                onerror="this.onerror=null;this.src='https://via.placeholder.com/200x200?text=No+Image';"
+              />
+            </div>
+            <div class="product-name">{{ product.name }}</div>
+            <div>
+              <span class="discounted-price">
+                {{ formatPrice(product.variants[0]?.price) }}₫
+              </span>
+            </div>
+          </a>
         </div>
-        <div class="top-newest-swiper-pagination mt-5"></div>
       </div>
+      <div class="top-newest-swiper-pagination mt-5"></div>
     </div>
+  </div>
 
     <!-- Bộ sưu tập -->
     <section class="dreams-section">
@@ -116,10 +120,18 @@
           v-for="(item, index) in recentViewedProducts"
           :key="index"
         >
-          <a :href="`/product/${item.productId}`" class="product-link">
+          <a
+            href="#"
+            class="product-link"
+            @click.prevent="handleProductClick(item.productId)"
+          >
             <div class="product-item">
               <img
-                :src="item.image ? `http://localhost:8080/images/${item.image}` : 'https://via.placeholder.com/60'"
+                :src="
+                  item.image
+                    ? `http://localhost:8080/images/${item.image}`
+                    : 'https://via.placeholder.com/60'
+                "
                 alt="Ảnh sản phẩm"
                 width="60"
                 class="img-fluid"
@@ -138,10 +150,10 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import axios from "axios";
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { useRouter } from "vue-router";
 import { categories, useScrollCategory } from "@/assets/js/scrollcategory.js";
 import {
   bestSellerProducts,
@@ -150,26 +162,52 @@ import {
   destroyBestsellerSwiper,
 } from "@/assets/js/bestsellerproductcarousel.js";
 
+// Khởi tạo các ref
 const scrollContent = ref(null);
 const { pauseScroll, resumeScroll } = useScrollCategory(scrollContent);
-
 const bestProductList = ref(bestSellerProducts);
-let resizeBestsellerHandler;
-
 const topNewestProducts = ref([]);
 const recentViewedProducts = ref([]);
+let resizeBestsellerHandler;
+let resizeTopNewestHandler;
 
+// Hàm lấy ảnh sản phẩm
 const getProductImage = (product) => {
   return product.variants?.[0]?.imageName
     ? `http://localhost:8080/images/${product.variants[0].imageName}`
     : "https://via.placeholder.com/200x200?text=No+Image";
 };
 
+// Hàm định dạng giá
 const formatPrice = (value) => {
   if (!value) return "0";
   return value.toLocaleString("vi-VN");
 };
 
+// Hàm xử lý khi click vào sản phẩm
+const router = useRouter();
+const handleProductClick = async (productId) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (token) {
+      await axios.post(
+        "/api/user/product-views/record",
+        null,
+        {
+          params: { productId },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      await fetchRecentViews(); // Cập nhật danh sách đã xem
+    }
+    router.push(`/product-detail/${productId}`);
+  } catch (error) {
+    console.error("Lỗi khi ghi nhận lượt xem:", error);
+    router.push(`/product-detail/${productId}`);
+  }
+};
+
+// Hàm lấy sản phẩm mới nhất
 const fetchTopNewestProducts = async () => {
   try {
     const response = await axios.get("/api/public/products/top10");
@@ -179,15 +217,14 @@ const fetchTopNewestProducts = async () => {
   }
 };
 
+// Hàm lấy sản phẩm đã xem gần đây
 const fetchRecentViews = async () => {
   try {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const response = await axios.get(`/api/user/product-views/recent`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const response = await axios.get("/api/user/product-views/recent", {
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     if (Array.isArray(response.data)) {
@@ -202,11 +239,8 @@ const fetchRecentViews = async () => {
             name: product.name,
             price: variant?.price || 0,
             image,
-            viewCount: 1,
+            viewCount: product.viewCount || 0, // Lấy viewCount từ ProductDTO
           });
-        } else if (product?.productId) {
-          const existing = seen.get(product.productId);
-          existing.viewCount++;
         }
       });
       recentViewedProducts.value = Array.from(seen.values());
@@ -216,6 +250,7 @@ const fetchRecentViews = async () => {
   }
 };
 
+// Khởi tạo Swiper cho sản phẩm mới nhất
 const initializeTopNewestSwiper = () => {
   new Swiper(".top-newest-products-swiper", {
     slidesPerView: 2,
@@ -233,28 +268,24 @@ const initializeTopNewestSwiper = () => {
   });
 };
 
-let resizeTopNewestHandler;
-
+// onMounted hook
 onMounted(async () => {
   await fetchTopNewestProducts();
+  await fetchRecentViews();
   await nextTick();
   initializeTopNewestSwiper();
-  resizeTopNewestHandler = () => initializeTopNewestSwiper();
-  window.addEventListener("resize", resizeTopNewestHandler);
-});
-
-onMounted(async () => {
-  fetchRecentViews();
-  await nextTick();
   initializeBestsellerSwiper();
+  resizeTopNewestHandler = () => initializeTopNewestSwiper();
   resizeBestsellerHandler = () => handleResizeBestsellerSwiper();
+  window.addEventListener("resize", resizeTopNewestHandler);
   window.addEventListener("resize", resizeBestsellerHandler);
 });
 
+// onBeforeUnmount hook
 onBeforeUnmount(() => {
   window.removeEventListener("resize", resizeBestsellerHandler);
-  destroyBestsellerSwiper();
   window.removeEventListener("resize", resizeTopNewestHandler);
+  destroyBestsellerSwiper();
 });
 </script>
 
