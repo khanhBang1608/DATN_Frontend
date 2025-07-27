@@ -1,3 +1,4 @@
+```vue
 <script setup>
 import { onMounted, ref, nextTick, watch } from "vue";
 import { setupFilterSidebar } from "@/assets/js/product";
@@ -7,16 +8,17 @@ import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 
 const route = useRoute();
-const router = useRouter(); // Thêm useRouter để điều hướng
+const router = useRouter();
 const searchKeyword = ref(route.query.keyword || "");
 const products = ref([]);
-const isSidebarOpen = ref(false); // Để quản lý trạng thái sidebar (nếu cần)
+const isSidebarOpen = ref(false);
+const sortOption = ref("Mới nhất"); // Biến theo dõi tiêu chí sắp xếp
 
 onMounted(async () => {
   if (searchKeyword.value) {
-    await handleSearch(); // Nếu có keyword trong URL thì tìm kiếm
+    await handleSearch();
   } else {
-    await fetchProducts(); // Không có keyword thì load toàn bộ
+    await fetchProducts();
   }
   await nextTick();
   setupFilterSidebar();
@@ -38,7 +40,6 @@ watch(
 // Hàm xử lý khi click vào sản phẩm
 const handleProductClick = async (productId) => {
   try {
-    // Gọi API để ghi nhận lượt xem
     const token = localStorage.getItem("token");
     if (token) {
       await axios.post(
@@ -52,11 +53,9 @@ const handleProductClick = async (productId) => {
         }
       );
     }
-    // Chuyển hướng đến trang chi tiết sản phẩm
     router.push(`/product-detail/${productId}`);
   } catch (error) {
     console.error("Lỗi khi ghi nhận lượt xem:", error);
-    // Vẫn chuyển hướng dù có lỗi
     router.push(`/product-detail/${productId}`);
   }
 };
@@ -95,7 +94,6 @@ const fetchProducts = async () => {
           ...minVariant,
           price: Math.round(discountedPrice),
         };
-
         product.discount = discountPercent;
       }
 
@@ -106,6 +104,7 @@ const fetchProducts = async () => {
     });
 
     products.value = res.data;
+    handleSort(sortOption.value); // Áp dụng sắp xếp mặc định
   } catch (err) {
     console.error("Lỗi khi tải sản phẩm:", err);
   }
@@ -115,17 +114,42 @@ const fetchProducts = async () => {
 const handleSearch = async () => {
   try {
     const response = await searchProductsByName(searchKeyword.value);
-    const result = response.data;
-
-    if (result.length > 0) {
-      products.value = result;
-    } else {
-      products.value = [];
+    products.value = response.data.length > 0 ? response.data : [];
+    if (!response.data.length) {
       console.log("Không tìm thấy sản phẩm phù hợp.");
     }
+    handleSort(sortOption.value); // Áp dụng sắp xếp sau khi tìm kiếm
   } catch (error) {
     console.error("Lỗi khi tìm kiếm sản phẩm:", error);
   }
+};
+
+// Hàm xử lý sắp xếp
+const handleSort = (option) => {
+  sortOption.value = option;
+  let sortedProducts = [...products.value];
+
+  switch (option) {
+    case "Giá: Tăng dần":
+      sortedProducts.sort((a, b) => (a.variants[0]?.price || 0) - (b.variants[0]?.price || 0));
+      break;
+    case "Giá: Giảm dần":
+      sortedProducts.sort((a, b) => (b.variants[0]?.price || 0) - (a.variants[0]?.price || 0));
+      break;
+    case "Tên: A-Z":
+      sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "Tên: Z-A":
+      sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+      break;
+    case "Tồn kho: Giảm dần":
+      sortedProducts.sort((a, b) => (b.variants[0]?.stock || 0) - (a.variants[0]?.stock || 0));
+      break;
+    default:
+      break;
+  }
+
+  products.value = sortedProducts;
 };
 </script>
 
@@ -163,7 +187,6 @@ const handleSearch = async () => {
           <div class="offcanvas-body">
             <div id="mobileFilterContent">
               <div class="accordion product-accordion" id="filterAccordion">
-                <!-- Accordion Item: MÀU SẮC -->
                 <div class="product-accordion-item">
                   <h2 class="accordion-header" id="headingColor">
                     <button
@@ -237,7 +260,6 @@ const handleSearch = async () => {
                   </div>
                 </div>
 
-                <!-- Accordion Item: KÍCH THƯỚC -->
                 <div class="product-accordion-item">
                   <h2 class="accordion-header" id="headingSize">
                     <button
@@ -288,7 +310,6 @@ const handleSearch = async () => {
                   </div>
                 </div>
 
-                <!-- Accordion Item: GIÁ -->
                 <div class="product-accordion-item">
                   <h2 class="accordion-header" id="headingPrice">
                     <button
@@ -357,7 +378,6 @@ const handleSearch = async () => {
 
         <div class="product-sidebar" id="desktopFilterContent">
           <div class="accordion" id="filterAccordion">
-            <!-- Accordion Item: MÀU SẮC -->
             <div class="product-accordion-item">
               <h2 class="accordion-header" id="headingColor">
                 <button
@@ -430,7 +450,6 @@ const handleSearch = async () => {
               </div>
             </div>
 
-            <!-- Accordion Item: KÍCH THƯỚC -->
             <div class="product-accordion-item">
               <h2 class="accordion-header" id="headingSize">
                 <button
@@ -481,7 +500,6 @@ const handleSearch = async () => {
               </div>
             </div>
 
-            <!-- Accordion Item: GIÁ -->
             <div class="product-accordion-item">
               <h2 class="accordion-header" id="headingPrice">
                 <button
@@ -560,17 +578,14 @@ const handleSearch = async () => {
           type="button"
           data-bs-toggle="dropdown"
         >
-          <i class="bi bi-sort-alpha-down ms-2"></i> Mới nhất
+          <i class="bi bi-chevron-down ms-2"></i> {{ sortOption }}
         </button>
-        <ul class="dropdown-menu product-dropdown-menu">
-          <li><a class="dropdown-item" href="#">Giá: Tăng dần</a></li>
-          <li><a class="dropdown-item" href="#">Giá: Giảm dần</a></li>
-          <li><a class="dropdown-item" href="#">Tên: A-Z</a></li>
-          <li><a class="dropdown-item" href="#">Tên: Z-A</a></li>
-          <li><a class="dropdown-item" href="#">Cũ nhất</a></li>
-          <li><a class="dropdown-item" href="#">Mới nhất</a></li>
-          <li><a class="dropdown-item" href="#">Bán chạy nhất</a></li>
-          <li><a class="dropdown-item" href="#">Tồn kho: Giảm dần</a></li>
+        <ul class="dropdown-menu product-dropdown-box">
+          <li><a class="dropdown-item" @click="handleSort('Giá: Tăng dần')">Giá: Tăng dần</a></li>
+          <li><a class="dropdown-item" @click="handleSort('Giá: Giảm dần')">Giá: Giảm dần</a></li>
+          <li><a class="dropdown-item" @click="handleSort('Tên: A-Z')">Tên: A-Z</a></li>
+          <li><a class="dropdown-item" @click="handleSort('Tên: Z-A')">Tên: Z-A</a></li>
+          <li><a class="dropdown-item" @click="handleSort('Tồn kho: Giảm dần')">Tồn kho: Giảm dần</a></li>
         </ul>
       </div>
     </div>
@@ -634,7 +649,6 @@ const handleSearch = async () => {
             </div>
           </template>
         </div>
-        <!-- Phân trang giả lập -->
         <ul class="pagination mt-3">
           <li class="pagination-item pagination-active">1</li>
           <li class="pagination-item">2</li>
@@ -647,4 +661,6 @@ const handleSearch = async () => {
     </div>
   </main>
 </template>
+
 <style src="./src/assets/css/product.css"></style>
+```
