@@ -1,213 +1,246 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import axios from 'axios'
+import { ref, watch, onMounted, reactive } from "vue";
+import { useRoute } from "vue-router";
+import axios from "axios";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
-const route = useRoute()
-const token = localStorage.getItem("token")
-const promotionId = route.params.promotionId
-const id = route.params.id // lấy id nếu đang sửa
+const route = useRoute();
+const token = localStorage.getItem("token");
+const promotionId = route.params.promotionId;
+const id = route.params.id;
 
-const allProducts = ref([])
-const selectedProductIds = ref([])
-const allVariantsMap = ref({})
-const selectedVariants = ref({})
+const allProducts = ref([]);
+const selectedProductId = ref(""); // Chỉ chọn 1 sản phẩm
+const allVariantsMap = ref({});
+const selectedVariants = ref({});
+const errors = reactive({
+  products: "",
+  variants: {},
+  variantsGlobal: "",
+});
 
-// 1. Lấy tất cả sản phẩm
+// ===== Thông báo hệ thống =====
+const showSuccess = (message) => {
+  iziToast.success({
+    title: "Thành công",
+    message,
+    position: "topRight",
+  });
+};
+
+const showError = (message) => {
+  iziToast.error({
+    title: "Lỗi",
+    message,
+    position: "topRight",
+  });
+};
+
+const showWarning = (message) => {
+  iziToast.warning({
+    title: "Cảnh báo",
+    message,
+    position: "topRight",
+  });
+};
+
 const fetchAllProducts = async () => {
   try {
-    const res = await axios.get('http://localhost:8080/api/admin/products', {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    allProducts.value = res.data
+    const res = await axios.get("http://localhost:8080/api/admin/products", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    allProducts.value = res.data;
   } catch (err) {
-    console.error('Lỗi khi tải danh sách sản phẩm:', err)
-    alert('Không thể tải danh sách sản phẩm. Vui lòng thử lại.')
+    console.error("Lỗi khi tải danh sách sản phẩm:", err);
+    showError("Không thể tải danh sách sản phẩm. Vui lòng thử lại.");
   }
-}
+};
 
-// 2. Lấy biến thể cho từng sản phẩm
 const fetchVariantsByProductId = async (productId) => {
   try {
-    const res = await axios.get('http://localhost:8080/api/admin/product-promotions/productVariants', {
-      params: { productId },
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const res = await axios.get(
+      "http://localhost:8080/api/admin/product-promotions/productVariants",
+      {
+        params: { productId },
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
-    allVariantsMap.value[productId] = res.data
+    allVariantsMap.value[productId] = res.data;
 
-    res.data.forEach(variant => {
+    res.data.forEach((variant) => {
       if (!selectedVariants.value[variant.productVariantId]) {
         selectedVariants.value[variant.productVariantId] = {
           checked: false,
-          promotionQuantity: 0
-        }
+          promotionQuantity: 0,
+        };
       }
-    })
+    });
   } catch (err) {
-    console.error(`Lỗi khi tải biến thể cho sản phẩm ${productId}:`, err)
-    alert(`Không thể tải biến thể cho sản phẩm ${productId}.`)
+    console.error(`Lỗi khi tải biến thể cho sản phẩm ${productId}:`, err);
+    showError(`Không thể tải biến thể cho sản phẩm ${productId}.`);
   }
-}
+};
 
-// 3. Load dữ liệu khi sửa
 const loadEditData = async () => {
-  if (!id) return
+  if (!id) return;
 
   try {
-    const res = await axios.get(`http://localhost:8080/api/admin/product-promotions/${id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-    const data = res.data
+    const res = await axios.get(
+      `http://localhost:8080/api/admin/product-promotions/${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    const data = res.data;
 
-    // Gán biến thể được chọn & số lượng
-    selectedProductIds.value = []
     selectedVariants.value[data.productVariantId] = {
       checked: true,
-      promotionQuantity: data.quantityLimit
-    }
+      promotionQuantity: data.quantityLimit,
+    };
 
-    // Lấy thông tin biến thể từ variantId → để biết productId
-    const variantRes = await axios.get(`http://localhost:8080/api/admin/product-variants/${data.productVariantId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    const variantRes = await axios.get(
+      `http://localhost:8080/api/admin/product-variants/${data.productVariantId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
-    const variant = variantRes.data
-    const productId = variant.productId
+    const variant = variantRes.data;
+    const productId = variant.productId;
 
-    selectedProductIds.value.push(productId)
-    await fetchVariantsByProductId(productId)
+    selectedProductId.value = productId;
+    await fetchVariantsByProductId(productId);
   } catch (err) {
-    console.error("Lỗi khi load dữ liệu sửa:", err)
-    alert('Không thể tải dữ liệu khuyến mãi. Vui lòng thử lại.')
+    console.error("Lỗi khi load dữ liệu sửa:", err);
+    showError("Không thể tải dữ liệu khuyến mãi. Vui lòng thử lại.");
   }
-}
+};
 
-// 4. Theo dõi sản phẩm được chọn → lấy biến thể
-watch(selectedProductIds, (newIds) => {
-  newIds.forEach(productId => {
-    if (!allVariantsMap.value[productId]) {
-      fetchVariantsByProductId(productId)
-    }
-  })
-})
+watch(selectedProductId, async (newId) => {
+  errors.products = "";
+  if (newId && !allVariantsMap.value[newId]) {
+    await fetchVariantsByProductId(newId);
+  }
+});
 
 onMounted(() => {
-  fetchAllProducts()
-  loadEditData()
-})
+  fetchAllProducts();
+  loadEditData();
+});
 
-// 5. Gửi danh sách biến thể + số lượng về backend
 const submitPromotionVariants = async () => {
-  const selectedList = []
+  errors.products = "";
+  errors.variants = {};
+  errors.variantsGlobal = "";
 
-  // Thu thập các biến thể được chọn
+  if (!selectedProductId.value) {
+    errors.products = "Vui lòng chọn sản phẩm.";
+    return;
+  }
+
+  const selectedList = [];
+
   for (const [variantId, value] of Object.entries(selectedVariants.value)) {
-    if (value.checked && value.promotionQuantity > 0) {
+    if (value.checked) {
+      if (!value.promotionQuantity || value.promotionQuantity <= 0) {
+        errors.variants[variantId] = "Số lượng phải lớn hơn 0.";
+        continue;
+      }
+
+      const variant = Object.values(allVariantsMap.value)
+        .flat()
+        .find((v) => v.productVariantId === parseInt(variantId));
+      if (variant && value.promotionQuantity > variant.stock) {
+        errors.variants[variantId] = `Số lượng vượt tồn kho (${variant.stock})`;
+        continue;
+      }
+
       selectedList.push({
         productVariantId: parseInt(variantId),
         promotionId: parseInt(promotionId),
-        quantityLimit: value.promotionQuantity
-      })
+        quantityLimit: value.promotionQuantity,
+      });
     }
   }
 
-  if (selectedList.length === 0) {
-    alert('Vui lòng chọn ít nhất 1 biến thể với số lượng khuyến mãi lớn hơn 0.')
-    return
-  }
+  const hasChecked = Object.values(selectedVariants.value).some((v) => v.checked);
 
-  // Kiểm tra số lượng khuyến mãi không vượt quá tồn kho
-  const invalidVariants = []
-  for (const item of selectedList) {
-    const variant = Object.values(allVariantsMap.value)
-      .flat()
-      .find(v => v.productVariantId === item.productVariantId)
-    if (variant && item.quantityLimit > variant.stock) {
-      invalidVariants.push({
-        id: item.productVariantId,
-        color: variant.colorName || 'Không có',
-        size: variant.sizeName || 'Không có',
-        stock: variant.stock,
-        quantity: item.quantityLimit
-      })
+  if (Object.keys(errors.variants).length > 0 || selectedList.length === 0) {
+    if (!hasChecked) {
+      errors.variantsGlobal = "Vui lòng chọn ít nhất 1 biến thể.";
     }
-  }
-
-  if (invalidVariants.length > 0) {
-    const errorMessage = invalidVariants
-      .map(v => `Biến thể ${v.id} (Màu: ${v.color}, Size: ${v.size}): Số lượng khuyến mãi (${v.quantity}) vượt quá tồn kho (${v.stock}).`)
-      .join('\n')
-    alert(`Lỗi: Số lượng khuyến mãi không hợp lệ:\n${errorMessage}`)
-    return
+    return;
   }
 
   try {
     if (id) {
-      // Chỉ update 1 item
-      const item = selectedList[0]
-      const response = await axios.put(`http://localhost:8080/api/admin/product-promotions/${id}`, item, {
-        headers: { Authorization: `Bearer ${token}` },
-        'Content-Type': 'application/json'
-      })
+      const item = selectedList[0];
+      const response = await axios.put(
+        `http://localhost:8080/api/admin/product-promotions/${id}`,
+        item,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          "Content-Type": "application/json",
+        }
+      );
       if (!response.data) {
-        alert(`Không thể cập nhật: Biến thể ${item.productVariantId} đã có khuyến mãi trùng thời gian.`)
-        return
+        errors.variants[item.productVariantId] = "Đã có khuyến mãi trùng thời gian.";
+        return;
       }
-      alert("Cập nhật khuyến mãi thành công!")
     } else {
-      // Gửi danh sách biến thể
-      const response = await axios.post(`http://localhost:8080/api/admin/product-promotions`, selectedList, {
-        headers: { Authorization: `Bearer ${token}` },
-        'Content-Type': 'application/json'
-      })
+      const response = await axios.post(
+        `http://localhost:8080/api/admin/product-promotions`,
+        selectedList,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          "Content-Type": "application/json",
+        }
+      );
 
-      const savedVariants = response.data
-      const savedVariantIds = savedVariants.map(item => item.productVariantId)
-      const failedVariants = selectedList.filter(item => !savedVariantIds.includes(item.productVariantId))
+      const savedVariants = response.data;
+      const savedVariantIds = savedVariants.map((item) => item.productVariantId);
+      const failedVariants = selectedList.filter(
+        (item) => !savedVariantIds.includes(item.productVariantId)
+      );
 
-      if (savedVariants.length === 0) {
-        alert('Không thể lưu: Tất cả biến thể đã có khuyến mãi trùng thời gian.')
-        return
-      }
-
-      let message = savedVariants.length > 0 ? `Đã lưu thành công ${savedVariants.length} biến thể.\n` : ''
-      if (failedVariants.length > 0) {
-        const failedDetails = failedVariants.map(item => {
-          const variant = Object.values(allVariantsMap.value)
-            .flat()
-            .find(v => v.productVariantId === item.productVariantId)
-          return `Biến thể ${item.productVariantId} (Màu: ${variant?.colorName || 'Không có'}, Size: ${variant?.sizeName || 'Không có'})`
-        }).join(', ')
-        message += `Các biến thể sau không được lưu do trùng thời gian khuyến mãi: ${failedDetails}.`
-      }
-      alert(message)
+      failedVariants.forEach((item) => {
+        errors.variants[item.productVariantId] =
+          "Không thể lưu do trùng thời gian khuyến mãi.";
+      });
     }
   } catch (err) {
-    console.error("Lỗi khi lưu khuyến mãi:", err)
-    if (err.response?.status === 400) {
-      alert('Không thể lưu: Một hoặc nhiều biến thể đã có khuyến mãi trùng thời gian.')
-    } else {
-      alert('Lỗi khi lưu khuyến mãi. Vui lòng thử lại.')
-    }
+    console.error("Lỗi khi lưu khuyến mãi:", err);
+    errors.products = "Đã xảy ra lỗi khi lưu khuyến mãi. Vui lòng thử lại.";
   }
-}
+};
 
-// Tiện ích: lấy tên sản phẩm từ productId
 const getProductName = (productId) => {
-  const product = allProducts.value.find(p => p.productId == productId)
-  return product ? product.name : 'Không rõ'
-}
+  const product = allProducts.value.find((p) => p.productId == productId);
+  return product ? product.name : "Không rõ";
+};
+const deleteError = (variantId) => {
+  if (errors.variants[variantId]) {
+    delete errors.variants[variantId];
+  }
+
+  // Nếu không còn lỗi nào trong variants => xóa lỗi tổng quát
+  if (Object.keys(errors.variants).length === 0) {
+    errors.variantsGlobal = "";
+  }
+};
 </script>
 
 <template>
   <div class="container mt-4">
     <h3>Chọn sản phẩm và biến thể để áp dụng khuyến mãi</h3>
 
-    <!-- Chọn nhiều sản phẩm -->
+    <!-- Dropdown chọn 1 sản phẩm -->
     <div class="form-group mb-3">
-      <label>Chọn sản phẩm</label>
-      <select v-model="selectedProductIds" class="form-control" multiple>
+      <label class="form-label fw-semibold">Chọn sản phẩm</label>
+      <select v-model="selectedProductId" class="form-control">
+        <option disabled value="">-- Chọn sản phẩm --</option>
         <option
           v-for="product in allProducts"
           :key="product.productId"
@@ -216,19 +249,16 @@ const getProductName = (productId) => {
           {{ product.name }}
         </option>
       </select>
+      <div v-if="errors.products" class="text-danger mt-1">{{ errors.products }}</div>
     </div>
 
-    <!-- Hiển thị biến thể cho từng sản phẩm -->
-    <div
-      v-for="productId in selectedProductIds"
-      :key="productId"
-      class="mt-4"
-    >
-      <h5>Biến thể của sản phẩm: {{ getProductName(productId) }}</h5>
+    <!-- Hiển thị biến thể -->
+    <div v-if="selectedProductId" class="mt-4">
+      <h5>Biến thể của sản phẩm: {{ getProductName(selectedProductId) }}</h5>
 
-      <div v-if="allVariantsMap[productId]?.length">
+      <div v-if="allVariantsMap[selectedProductId]?.length">
         <div
-          v-for="variant in allVariantsMap[productId]"
+          v-for="variant in allVariantsMap[selectedProductId]"
           :key="variant.productVariantId"
           class="variant-box mb-3 p-3 border rounded shadow-sm"
         >
@@ -238,12 +268,14 @@ const getProductName = (productId) => {
               type="checkbox"
               :id="'variant-' + variant.productVariantId"
               v-model="selectedVariants[variant.productVariantId].checked"
+              @change="deleteError(variant.productVariantId)"
             />
+
             <label class="form-check-label" :for="'variant-' + variant.productVariantId">
-              <strong>Màu:</strong> {{ variant.colorName || 'Không có' }} -
-              <strong>Size:</strong> {{ variant.sizeName || 'Không có' }} -
-              <strong>Giá:</strong> {{ variant.price }} -
-              <strong>Tồn kho:</strong> {{ variant.stock }}
+              <strong>Màu:</strong> {{ variant.colorName || "Không có" }} -
+              <strong>Size:</strong> {{ variant.sizeName || "Không có" }} -
+              <strong>Giá:</strong> {{ variant.price }} - <strong>Tồn kho:</strong>
+              {{ variant.stock }}
             </label>
           </div>
 
@@ -257,12 +289,26 @@ const getProductName = (productId) => {
               min="0"
               :max="variant.stock"
               class="form-control"
-              v-model.number="selectedVariants[variant.productVariantId].promotionQuantity"
+              v-model.number="
+                selectedVariants[variant.productVariantId].promotionQuantity
+              "
+              @input="deleteError(variant.productVariantId)"
             />
+
+            <div
+              v-if="errors.variants[variant.productVariantId]"
+              class="text-danger mt-1"
+            >
+              {{ errors.variants[variant.productVariantId] }}
+            </div>
           </div>
         </div>
+        <div v-if="errors.variantsGlobal" class="text-danger mt-2">
+          {{ errors.variantsGlobal }}
+        </div>
       </div>
-      <div v-else class="alert alert-warning">
+      <div v-else class="alert text-danger">
+        <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
         Không có biến thể nào cho sản phẩm này.
       </div>
     </div>
@@ -274,13 +320,11 @@ const getProductName = (productId) => {
 </template>
 
 <style scoped>
-.container {
-  max-width: 900px;
+.modal {
+  display: block;
+  z-index: 1050;
 }
-.variant-box {
-  background: #f8f9fa;
-}
-select[multiple] {
-  height: 150px;
+.text-danger {
+  font-size: 0.9rem;
 }
 </style>

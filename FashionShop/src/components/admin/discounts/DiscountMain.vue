@@ -21,7 +21,10 @@
         </thead>
         <tbody>
           <tr v-if="discounts.length === 0">
-            <td colspan="8" class="text-center text-muted">Không có mã giảm giá nào.</td>
+            <td colspan="8" class="text-center text-white fs-5 py-4">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Không có
+              mã giảm giá nào được tìm thấy.
+            </td>
           </tr>
           <tr v-for="discount in discounts" :key="discount.discountId">
             <td>
@@ -119,7 +122,12 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Giảm tối đa</label>
-                <input v-model="form.maxDiscountAmount" type="number" @input="clearError('maxDiscountAmount')" class="form-control" />
+                <input
+                  v-model="form.maxDiscountAmount"
+                  type="number"
+                  @input="clearError('maxDiscountAmount')"
+                  class="form-control"
+                />
                 <div v-if="errors.maxDiscountAmount" class="text-danger">
                   {{ errors.maxDiscountAmount }}
                 </div>
@@ -127,7 +135,12 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Số lượng giới hạn</label>
-                <input v-model="form.quantityLimit" type="number" @input="clearError('quantityLimit')" class="form-control" />
+                <input
+                  v-model="form.quantityLimit"
+                  type="number"
+                  @input="clearError('quantityLimit')"
+                  class="form-control"
+                />
                 <div v-if="errors.quantityLimit" class="text-danger">
                   {{ errors.quantityLimit }}
                 </div>
@@ -144,7 +157,12 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Ngày bắt đầu</label>
-                <input v-model="form.startDate" type="date" @input="clearError('startDate')" class="form-control" />
+                <input
+                  v-model="form.startDate"
+                  type="date"
+                  @input="clearError('startDate')"
+                  class="form-control"
+                />
                 <div v-if="errors.startDate" class="text-danger">
                   {{ errors.startDate }}
                 </div>
@@ -152,7 +170,12 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Ngày kết thúc</label>
-                <input v-model="form.endDate" type="date" @input="clearError('endDate')" class="form-control" />
+                <input
+                  v-model="form.endDate"
+                  type="date"
+                  @input="clearError('endDate')"
+                  class="form-control"
+                />
                 <div v-if="errors.endDate" class="text-danger">{{ errors.endDate }}</div>
               </div>
             </div>
