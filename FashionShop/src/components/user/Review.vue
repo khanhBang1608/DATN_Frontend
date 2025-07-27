@@ -69,6 +69,15 @@ async function fetchReviews() {
 watch(() => props.productId, (newVal) => {
   if (newVal) fetchReviews()
 }, { immediate: true })
+
+const BASE_URL = 'http://localhost:8080/images/' // hoặc 'http://loco808'
+
+const resolveMediaUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return `${BASE_URL}${url}`
+}
+
 </script>
 
 <template>
@@ -136,20 +145,21 @@ watch(() => props.productId, (newVal) => {
         </div>
         <p class="mb-1">{{ review.comment }}</p>
         <div v-if="review.media?.length" class="d-flex gap-2">
-          <div v-for="media in review.media" :key="media.mediaId">
-            <img
-              v-if="media.reviewType === 'image'"
-              :src="media.reviewUrl"
-              style="width: 80px; height: 80px; object-fit: cover"
-            />
-            <video
-              v-else
-              controls
-              :src="media.reviewUrl"
-              style="width: 80px; height: 80px; object-fit: cover"
-            ></video>
-          </div>
-        </div>
+  <div v-for="media in review.media" :key="media.mediaId">
+    <img
+      v-if="media.reviewType === 'image'"
+      :src="resolveMediaUrl(media.reviewUrl)"
+      style="width: 80px; height: 80px; object-fit: cover"
+    />
+    <video
+      v-else
+      controls
+      :src="resolveMediaUrl(media.reviewUrl)"
+      style="width: 80px; height: 80px; object-fit: cover"
+    ></video>
+  </div>
+</div>
+
       </div>
     </div>
   </div>
