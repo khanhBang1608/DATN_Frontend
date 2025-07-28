@@ -127,25 +127,60 @@ export default {
         toast.error("Giỏ hàng trống. Vui lòng thêm sản phẩm.");
         return;
       }
+
       this.loading = true;
+
       try {
-        const orderData = {
-          address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`,
-          paymentMethod: this.paymentMethod,
-          discountCode: this.discountCode || null,
-          discountAmount: this.discountAmount || 0,
-          orderDetails: this.cartDetails.map((item) => ({
-            productVariantId: item.productVariantId,
-            quantity: item.quantity,
-            price: item.discountedPrice || item.price,
-          })),
-        };
-        const response = await createOrder(orderData);
-        await clearCart();
-        toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`);
-        this.$router.push("/user/order-management");
+        if (this.paymentMethod === "COD") {
+          // Đặt hàng bình thường
+          const orderData = {
+            address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`,
+            paymentMethod: this.paymentMethod,
+            discountCode: this.discountCode || null,
+            discountAmount: this.discountAmount || 0,
+            orderDetails: this.cartDetails.map((item) => ({
+              productVariantId: item.productVariantId,
+              quantity: item.quantity,
+              price: item.discountedPrice || item.price,
+            })),
+          };
+
+          const response = await createOrder(orderData);
+          await clearCart();
+
+          toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`);
+          this.$router.push("/user/order-management");
+        } else if (this.paymentMethod === "VNPAY") {
+          // Tính tổng tiền (bao gồm ship & trừ giảm giá)
+          const total = this.total;
+
+          const res = await axios.get("/api/user/payment/create", {
+            params: { total },
+            headers: {
+              Authorization: "Bearer " + localStorage.getItem("token"),
+            },
+          });
+
+          // Lưu order tạm vào localStorage để xử lý sau khi thanh toán
+          const tempOrderData = {
+            address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`,
+            paymentMethod: this.paymentMethod,
+            discountCode: this.discountCode || null,
+            discountAmount: this.discountAmount || 0,
+            orderDetails: this.cartDetails.map((item) => ({
+              productVariantId: item.productVariantId,
+              quantity: item.quantity,
+              price: item.discountedPrice || item.price,
+            })),
+          };
+          localStorage.setItem("pendingOrder", JSON.stringify(tempOrderData));
+
+          // Redirect sang VNPAY
+          window.location.href = res.data.paymentUrl;
+        }
       } catch (error) {
-        toast.error(error || "Đặt hàng thất bại. Vui lòng thử lại.");
+        console.error(error);
+        toast.error("Có lỗi xảy ra khi đặt hàng.");
       } finally {
         this.loading = false;
       }

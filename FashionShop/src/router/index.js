@@ -35,6 +35,7 @@ import ProductPromotionForm2 from '@/components/admin/promotions/ProductPromotio
 import ListAddressView from '@/views/ListAddressView.vue'
 import EditAddressView from '@/views/EditAddressView.vue'
 import FavoriteView from '@/views/FavoriteView.vue'
+import PaymentSuccess from '@/views/PaymentResult.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -87,6 +88,11 @@ const router = createRouter({
       path: '/user/checkout',
       name: 'checkout',
       component: CheckOutView,
+    },
+    {
+      path: '/payment-success',
+      name: 'PaymentSuccess',
+      component: PaymentSuccess,
     },
     {
       path: '/contact-us',
