@@ -8,13 +8,13 @@ const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 
-const status = route.query.status;
+const vnpStatus = route.query.vnp_TransactionStatus;
 
-if (status === "success") {
+if (vnpStatus === "00") {
   const orderData = JSON.parse(localStorage.getItem("pendingOrder"));
   if (orderData) {
     createOrder(orderData)
-      .then(async (res) => {
+      .then(async () => {
         await clearCart();
         localStorage.removeItem("pendingOrder");
         toast.success("Thanh toán & đặt hàng thành công!");

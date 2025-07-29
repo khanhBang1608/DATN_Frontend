@@ -132,6 +132,7 @@ export default {
 
       try {
         if (this.paymentMethod === "COD") {
+
           // Đặt hàng bình thường
           const orderData = {
             address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`,
