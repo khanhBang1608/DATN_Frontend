@@ -54,3 +54,27 @@ export const downloadInvoicePDF = async (orderId) => {
   });
   return res.data;
 };
+export const approveReturnRequest = async (orderId) => {
+  try {
+    const response = await axios.put(`${API_URL}/${orderId}/approve-return`, null, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error approving return request:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Failed to approve return request';
+  }
+};
+
+export const rejectReturnRequest = async (orderId) => {
+  try {
+    const response = await axios.put(`${API_URL}/${orderId}/reject-return`, null, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error rejecting return request:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Failed to reject return request';
+  }
+};
+

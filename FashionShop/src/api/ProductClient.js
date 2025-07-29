@@ -31,3 +31,6 @@ export const searchProductsByName = (keyword) =>
   axios.get(`${API_BASE}/products/search`, {
     params: { keyword }
   });
+
+export const fetchAverageRating = (productId) =>
+  axios.get(`${API_BASE}/products/${productId}/average-rating`);

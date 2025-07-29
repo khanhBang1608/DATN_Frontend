@@ -1,140 +1,140 @@
 ```vue
 <script setup>
-import { onMounted, ref, nextTick, watch } from "vue";
-import { setupFilterSidebar } from "@/assets/js/product";
-import { getAllProducts, searchProductsByName } from "@/api/ProductClient";
-import promotionApi from "@/api/PromotionClien";
-import { useRoute, useRouter } from "vue-router";
-import axios from "axios";
+import { onMounted, ref, nextTick, watch } from 'vue'
+import { setupFilterSidebar } from '@/assets/js/product'
+import { getAllProducts, searchProductsByName, fetchAverageRating } from '@/api/ProductClient'
+import promotionApi from '@/api/PromotionClien'
+import { useRoute, useRouter } from 'vue-router'
+import axios from 'axios'
 
-const route = useRoute();
-const router = useRouter();
-const searchKeyword = ref(route.query.keyword || "");
-const products = ref([]);
-const isSidebarOpen = ref(false);
-const sortOption = ref("Mới nhất"); // Biến theo dõi tiêu chí sắp xếp
+const route = useRoute()
+const router = useRouter()
+const searchKeyword = ref(route.query.keyword || '')
+const products = ref([])
+const isSidebarOpen = ref(false)
+const sortOption = ref('Mới nhất') // Biến theo dõi tiêu chí sắp xếp
 
 onMounted(async () => {
   if (searchKeyword.value) {
-    await handleSearch();
+    await handleSearch()
   } else {
-    await fetchProducts();
+    await fetchProducts()
   }
-  await nextTick();
-  setupFilterSidebar();
-});
+  await nextTick()
+  setupFilterSidebar()
+})
 
 // Theo dõi thay đổi URL keyword
 watch(
   () => route.query.keyword,
   async (newKeyword) => {
-    searchKeyword.value = newKeyword || "";
+    searchKeyword.value = newKeyword || ''
     if (searchKeyword.value) {
-      await handleSearch();
+      await handleSearch()
     } else {
-      await fetchProducts();
+      await fetchProducts()
     }
-  }
-);
+  },
+)
 
 // Hàm xử lý khi click vào sản phẩm
 const handleProductClick = async (productId) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token')
     if (token) {
-      await axios.post("/api/user/product-views/record", null, {
-        params: { productId },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.post(
+        "/api/user/product-views/record",
+        null,
+        {
+          params: { productId },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
     }
-    router.push(`/product-detail/${productId}`);
+    router.push(`/product-detail/${productId}`)
   } catch (error) {
-    console.error("Lỗi khi ghi nhận lượt xem:", error);
-    router.push(`/product-detail/${productId}`);
+    console.error('Lỗi khi ghi nhận lượt xem:', error)
+    router.push(`/product-detail/${productId}`)
   }
-};
+}
 
 // Hàm lấy tất cả sản phẩm
 const fetchProducts = async () => {
   try {
-    const res = await getAllProducts();
-    const activePromotions = await promotionApi.getActivePromotions();
+    const res = await getAllProducts()
+    const activePromotions = await promotionApi.getActivePromotions()
 
-    const promotionMap = new Map();
+    const promotionMap = new Map()
     activePromotions.forEach((promo) => {
       promo.productPromotions.forEach((pp) => {
-        promotionMap.set(pp.productVariantId, promo);
-      });
-    });
+        promotionMap.set(pp.productVariantId, promo)
+      })
+    })
+    await Promise.all(
+      res.data.map(async (product) => {
+        if (!product.variants || product.variants.length === 0) return
 
-    res.data.forEach((product) => {
-      if (!product.variants || product.variants.length === 0) return;
+        let minVariant = product.variants[0]
+        product.variants.forEach((v) => {
+          if (v.price < minVariant.price) {
+            minVariant = v
+          }
+        })
 
-      let minVariant = product.variants[0];
-      product.variants.forEach((v) => {
-        if (v.price < minVariant.price) {
-          minVariant = v;
+        const promo = promotionMap.get(minVariant.productVariantId)
+        if (promo) {
+          const discountPercent = promo.discountAmount || 0
+          const originalPrice = minVariant.price
+          const discountedPrice = originalPrice * (1 - discountPercent / 100)
+          product.originalPrice = originalPrice
+          minVariant = {
+            ...minVariant,
+            price: Math.round(discountedPrice),
+          }
+          product.discount = discountPercent
         }
-      });
 
-      const promo = promotionMap.get(minVariant.productVariantId);
-      if (promo) {
-        const discountPercent = promo.discountAmount || 0;
-        const originalPrice = minVariant.price;
-        const discountedPrice = originalPrice * (1 - discountPercent / 100);
+        const rating = await fetchAverageRating(product.productId)
+        product.averageRating = rating.data
 
-        product.originalPrice = originalPrice;
-        minVariant = {
-          ...minVariant,
-          price: Math.round(discountedPrice),
-        };
-        product.discount = discountPercent;
-      }
+        product.variants = [minVariant, ...product.variants.filter((v) => v !== minVariant)]
+      }),
+    )
 
-      product.variants = [
-        minVariant,
-        ...product.variants.filter((v) => v !== minVariant),
-      ];
-    });
-
-    products.value = res.data;
-    handleSort(sortOption.value); // Áp dụng sắp xếp mặc định
+    products.value = res.data
+    handleSort(sortOption.value)
   } catch (err) {
-    console.error("Lỗi khi tải sản phẩm:", err);
+    console.error('Lỗi khi tải sản phẩm:', err)
   }
-};
+}
 
 // Hàm tìm kiếm sản phẩm
 const handleSearch = async () => {
   try {
-    const response = await searchProductsByName(searchKeyword.value);
-    products.value = response.data.length > 0 ? response.data : [];
+    const response = await searchProductsByName(searchKeyword.value)
+    products.value = response.data.length > 0 ? response.data : []
     if (!response.data.length) {
-      console.log("Không tìm thấy sản phẩm phù hợp.");
+      console.log('Không tìm thấy sản phẩm phù hợp.')
     }
-    handleSort(sortOption.value); // Áp dụng sắp xếp sau khi tìm kiếm
+    handleSort(sortOption.value) // Áp dụng sắp xếp sau khi tìm kiếm
   } catch (error) {
-    console.error("Lỗi khi tìm kiếm sản phẩm:", error);
+    console.error('Lỗi khi tìm kiếm sản phẩm:', error)
   }
-};
+}
 
 // Hàm xử lý sắp xếp
 const handleSort = (option) => {
-  sortOption.value = option;
-  let sortedProducts = [...products.value];
+  sortOption.value = option
+  let sortedProducts = [...products.value]
 
   switch (option) {
     case "Giá: Tăng dần":
-      sortedProducts.sort(
-        (a, b) => (a.variants[0]?.price || 0) - (b.variants[0]?.price || 0)
-      );
+      sortedProducts.sort((a, b) => (a.variants[0]?.price || 0) - (b.variants[0]?.price || 0));
       break;
     case "Giá: Giảm dần":
-      sortedProducts.sort(
-        (a, b) => (b.variants[0]?.price || 0) - (a.variants[0]?.price || 0)
-      );
+      sortedProducts.sort((a, b) => (b.variants[0]?.price || 0) - (a.variants[0]?.price || 0));
       break;
     case "Tên: A-Z":
       sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
@@ -143,16 +143,14 @@ const handleSort = (option) => {
       sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
       break;
     case "Tồn kho: Giảm dần":
-      sortedProducts.sort(
-        (a, b) => (b.variants[0]?.stock || 0) - (a.variants[0]?.stock || 0)
-      );
+      sortedProducts.sort((a, b) => (b.variants[0]?.stock || 0) - (a.variants[0]?.stock || 0));
       break;
     default:
-      break;
+      break
   }
 
-  products.value = sortedProducts;
-};
+  products.value = sortedProducts
+}
 </script>
 
 <template>
@@ -162,9 +160,7 @@ const handleSort = (option) => {
         <nav class="custom-breadcrumb container">
           <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
           <span class="custom-breadcrumb-separator">/</span>
-          <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
-            >Sản phẩm</a
-          >
+          <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Sản phẩm</a>
         </nav>
       </div>
 
@@ -210,10 +206,7 @@ const handleSort = (option) => {
                       <ul class="list-unstyled mb-2">
                         <li class="d-flex align-items-center mb-2">
                           <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: black"
-                          ></span>
+                          <span class="color-dot me-2" style="background-color: black"></span>
                           <span>Đen <span class="text-muted">(52)</span></span>
                         </li>
                         <li class="d-flex align-items-center mb-2">
@@ -226,34 +219,22 @@ const handleSort = (option) => {
                         </li>
                         <li class="d-flex align-items-center mb-2">
                           <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: #8b4513"
-                          ></span>
+                          <span class="color-dot me-2" style="background-color: #8b4513"></span>
                           <span>Nâu <span class="text-muted">(9)</span></span>
                         </li>
                         <li class="d-flex align-items-center mb-2">
                           <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: #f5f5f5"
-                          ></span>
+                          <span class="color-dot me-2" style="background-color: #f5f5f5"></span>
                           <span>Trắng Xám <span class="text-muted">(9)</span></span>
                         </li>
                         <li class="d-flex align-items-center mb-2">
                           <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: silver"
-                          ></span>
+                          <span class="color-dot me-2" style="background-color: silver"></span>
                           <span>Bạc <span class="text-muted">(5)</span></span>
                         </li>
                         <li class="d-flex align-items-center mb-2">
                           <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: #6a5acd"
-                          ></span>
+                          <span class="color-dot me-2" style="background-color: #6a5acd"></span>
                           <span>Xanh Dương <span class="text-muted">(4)</span></span>
                         </li>
                       </ul>
@@ -362,12 +343,7 @@ const handleSort = (option) => {
                         </div>
                         <div class="form-group">
                           <label class="form-label small">Đến</label>
-                          <input
-                            type="text"
-                            class="form-control"
-                            id="priceTo"
-                            value="4,190,000"
-                          />
+                          <input type="text" class="form-control" id="priceTo" value="4,190,000" />
                         </div>
                       </div>
                     </div>
@@ -416,34 +392,22 @@ const handleSort = (option) => {
                     </li>
                     <li class="d-flex align-items-center mb-2">
                       <input type="checkbox" class="form-check-input me-2" />
-                      <span
-                        class="color-dot me-2"
-                        style="background-color: #8b4513"
-                      ></span>
+                      <span class="color-dot me-2" style="background-color: #8b4513"></span>
                       <span>Nâu <span class="text-muted">(9)</span></span>
                     </li>
                     <li class="d-flex align-items-center mb-2">
                       <input type="checkbox" class="form-check-input me-2" />
-                      <span
-                        class="color-dot me-2"
-                        style="background-color: #f5f5f5"
-                      ></span>
+                      <span class="color-dot me-2" style="background-color: #f5f5f5"></span>
                       <span>Trắng Xám <span class="text-muted">(9)</span></span>
                     </li>
                     <li class="d-flex align-items-center mb-2">
                       <input type="checkbox" class="form-check-input me-2" />
-                      <span
-                        class="color-dot me-2"
-                        style="background-color: silver"
-                      ></span>
+                      <span class="color-dot me-2" style="background-color: silver"></span>
                       <span>Bạc <span class="text-muted">(5)</span></span>
                     </li>
                     <li class="d-flex align-items-center mb-2">
                       <input type="checkbox" class="form-check-input me-2" />
-                      <span
-                        class="color-dot me-2"
-                        style="background-color: #6a5acd"
-                      ></span>
+                      <span class="color-dot me-2" style="background-color: #6a5acd"></span>
                       <span>Xanh Dương <span class="text-muted">(4)</span></span>
                     </li>
                   </ul>
@@ -475,27 +439,19 @@ const handleSort = (option) => {
                   <ul class="list-unstyled mb-0">
                     <li class="mb-2">
                       <input type="checkbox" class="form-check-input me-2" />
-                      <label class="form-check-label"
-                        >S <span class="text-muted">(58)</span></label
-                      >
+                      <label class="form-check-label">S <span class="text-muted">(58)</span></label>
                     </li>
                     <li class="mb-2">
                       <input type="checkbox" class="form-check-input me-2" />
-                      <label class="form-check-label"
-                        >M <span class="text-muted">(51)</span></label
-                      >
+                      <label class="form-check-label">M <span class="text-muted">(51)</span></label>
                     </li>
                     <li class="mb-2">
                       <input type="checkbox" class="form-check-input me-2" />
-                      <label class="form-check-label"
-                        >L <span class="text-muted">(16)</span></label
-                      >
+                      <label class="form-check-label">L <span class="text-muted">(16)</span></label>
                     </li>
                     <li class="mb-2">
                       <input type="checkbox" class="form-check-input me-2" />
-                      <label class="form-check-label"
-                        >XL <span class="text-muted">(2)</span></label
-                      >
+                      <label class="form-check-label">XL <span class="text-muted">(2)</span></label>
                     </li>
                   </ul>
                 </div>
@@ -580,27 +536,14 @@ const handleSort = (option) => {
           type="button"
           data-bs-toggle="dropdown"
         >
-          <i class="bi bi-sort-alpha-down ms-2"></i>
-          {{ sortOption }}
+          <i class="bi bi-chevron-down ms-2"></i> {{ sortOption }}
         </button>
         <ul class="dropdown-menu product-dropdown-box">
-          <li>
-            <a class="dropdown-item" @click="handleSort('Giá: Tăng dần')"
-              >Giá: Tăng dần</a
-            >
-          </li>
-          <li>
-            <a class="dropdown-item" @click="handleSort('Giá: Giảm dần')"
-              >Giá: Giảm dần</a
-            >
-          </li>
+          <li><a class="dropdown-item" @click="handleSort('Giá: Tăng dần')">Giá: Tăng dần</a></li>
+          <li><a class="dropdown-item" @click="handleSort('Giá: Giảm dần')">Giá: Giảm dần</a></li>
           <li><a class="dropdown-item" @click="handleSort('Tên: A-Z')">Tên: A-Z</a></li>
           <li><a class="dropdown-item" @click="handleSort('Tên: Z-A')">Tên: Z-A</a></li>
-          <li>
-            <a class="dropdown-item" @click="handleSort('Tồn kho: Giảm dần')"
-              >Tồn kho: Giảm dần</a
-            >
-          </li>
+          <li><a class="dropdown-item" @click="handleSort('Tồn kho: Giảm dần')">Tồn kho: Giảm dần</a></li>
         </ul>
       </div>
     </div>
@@ -645,20 +588,32 @@ const handleSort = (option) => {
                 <div>
                   <span class="discounted-price">
                     {{
-                      product.variants[0]?.price
-                        ? product.variants[0].price.toLocaleString()
-                        : "0"
+                      product.variants[0]?.price ? product.variants[0].price.toLocaleString() : '0'
                     }}₫
                   </span>
                   <span
                     class="original-price"
                     v-if="
-                      product.originalPrice &&
-                      product.originalPrice > product.variants[0]?.price
+                      product.originalPrice && product.originalPrice > product.variants[0]?.price
                     "
                   >
                     {{ product.originalPrice.toLocaleString() }}₫
                   </span>
+                </div>
+                <div class="product-rating">
+                  <span v-for="i in 5" :key="i">
+                    <i
+                      class="bi"
+                      :class="
+                        i <= Math.round(product.averageRating || 0)
+                          ? 'bi-star-fill text-warning'
+                          : 'bi-star text-muted'
+                      "
+                    ></i>
+                  </span>
+                  <span class="ms-1 text-muted"
+                    >({{ product.averageRating?.toFixed(1) || '0.0' }})</span
+                  >
                 </div>
               </a>
             </div>

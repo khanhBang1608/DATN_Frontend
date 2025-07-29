@@ -463,3 +463,324 @@
     margin-bottom: 12px;
   }
 }
+
+.order-management-action-btn.buy-again {
+  background-color: #757575;
+  color: #fff;
+  margin-top: 5px;
+  text-decoration: none;
+}
+.order-management-action-btn.buy-again:hover {
+  background-color: #757575;
+}
+
+
+.status-return-requested {
+  background-color: #fef9c3; /* vàng nhạt hơn status-pending */
+  color: #a16207; /* vàng đậm hơn */
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-refunded {
+  background-color: #ede9fe; /* tím nhạt */
+  color: #5b21b6; /* tím đậm */
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-rejected {
+  background-color: #f8d7da; /* đỏ nhạt kiểu từ chối */
+  color: #842029; /* đỏ đậm */
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+/* ========== MODAL (Product Detail) ========== */
+.product-detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); /* Tăng độ mờ nền cho nổi bật */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out; /* Hiệu ứng mở modal */
+}
+
+/* Hiệu ứng fadeIn */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.product-detail-modal-content {
+  background-color: #ffffff;
+  border-radius: 16px; /* Bo góc mềm mại hơn */
+  padding: 32px;
+  width: 100%;
+  max-width: 900px; /* Tăng kích thước modal */
+  max-height: 90vh; /* Giới hạn chiều cao */
+  overflow-y: auto; /* Cho phép cuộn nếu nội dung dài */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); /* Bóng đổ lớn hơn, tinh tế hơn */
+  animation: slideUp 0.3s ease-in-out; /* Hiệu ứng trượt lên khi mở */
+}
+
+/* Hiệu ứng slideUp */
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Modal header */
+.product-detail-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #e5e7eb; /* Đường viền phân cách */
+  padding-bottom: 16px;
+}
+
+.product-detail-modal-header h3 {
+  font-size: 1.75rem; /* Tăng kích thước tiêu đề */
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.product-detail-modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem; /* Tăng kích thước nút đóng */
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.product-detail-modal-close-btn:hover {
+  color: #111827;
+  transform: scale(1.1); /* Hiệu ứng phóng to nhẹ khi hover */
+}
+
+/* Modal body */
+.product-detail-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* Tăng khoảng cách giữa các section */
+}
+
+/* Section title */
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+  border-left: 4px solid #000; /* Đường viền trái để nhấn mạnh */
+  padding-left: 12px;
+}
+
+/* Order info section */
+.order-info-section {
+  background-color: #f9fafb; /* Nền nhạt để phân biệt */
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.order-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Lưới responsive */
+  gap: 16px;
+}
+
+.order-info-grid p {
+  font-size: 0.95rem;
+  color: #4b5563;
+  margin: 0;
+}
+
+.order-info-grid p strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+.order-info-grid .status {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+/* Order items section */
+.order-items-section {
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Bóng nhẹ để tạo chiều sâu */
+}
+
+.order-item-card {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  transition: box-shadow 0.2s;
+}
+
+.order-item-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Hiệu ứng hover */
+}
+
+.order-item-image {
+  width: 100px; /* Tăng kích thước ảnh */
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.order-item-details p {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+
+.order-item-details p.fw-bold {
+  font-size: 1rem;
+  color: #111827;
+}
+
+.order-item-actions {
+  text-align: right;
+}
+
+.order-item-actions .order-management-action-btn {
+  display: block;
+  width: 120px; /* Chuẩn hóa kích thước nút */
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* Review form */
+.review-form {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background-color: #f9fafb;
+}
+
+.review-form h5 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 8px;
+}
+
+.form-group textarea,
+.form-group select,
+.form-group input[type='file'] {
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  padding: 12px;
+  font-size: 0.9rem;
+}
+
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #1f2937;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(31, 41, 55, 0.1);
+}
+
+.review-stars {
+  display: flex;
+  gap: 8px;
+}
+
+.review-star {
+  font-size: 1.5rem;
+  color: #d1d5db;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.review-star.filled {
+  color: #facc15; /* Màu vàng cho sao được chọn */
+}
+
+.file-preview img,
+.file-preview video {
+  max-width: 250px; /* Tăng kích thước preview */
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.btn.btn-primary {
+  background-color: #000;
+  border: 2px solid #000;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn.btn-primary:hover {
+  background-color: #fff;
+  color: #000;
+  border-color: #000;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .product-detail-modal-content {
+    max-width: 95%;
+    padding: 20px;
+    margin: 16px;
+  }
+
+  .product-detail-modal-header h3 {
+    font-size: 1.5rem;
+  }
+
+  .order-info-grid {
+    grid-template-columns: 1fr; /* Chuyển sang 1 cột trên mobile */
+  }
+
+  .order-item-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .order-item-actions {
+    text-align: center;
+  }
+
+  .order-item-actions .order-management-action-btn {
+    width: 100%;
+  }
+
+  .file-preview img,
+  .file-preview video {
+    max-width: 100%;
+  }
+}
