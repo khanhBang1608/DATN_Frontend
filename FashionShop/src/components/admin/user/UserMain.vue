@@ -15,7 +15,7 @@
         id="userTable"
         class="table table-hover align-middle text-light custom-table"
       >
-        <thead class="table-dark">
+        <thead>
           <tr>
             <th>STT</th>
             <th>Ảnh</th>
@@ -27,6 +27,12 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="users.length === 0">
+            <td colspan="7" class="text-center text-white fs-5 py-4">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+              Không có người dùng nào được tìm thấy.
+            </td>
+          </tr>
           <tr v-for="(user, index) in users" :key="user.id">
             <td>{{ index + 1 }}</td>
             <td>
@@ -86,7 +92,8 @@ const fetchUsers = async () => {
     });
     users.value = res.data;
   } catch (err) {
-    const message = "Không thể tải danh sách người dùng: " + (err.response?.data || err.message);
+    const message =
+      "Không thể tải danh sách người dùng: " + (err.response?.data || err.message);
     errorMessage.value = message;
 
     iziToast.error({
@@ -118,7 +125,6 @@ const updateUserStatus = async (user) => {
     });
 
     await fetchUsers();
-
   } catch (err) {
     iziToast.error({
       title: "Lỗi",
@@ -142,4 +148,3 @@ const formatDate = (dateStr) => {
 
 onMounted(fetchUsers);
 </script>
-

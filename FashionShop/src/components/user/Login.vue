@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { forgotPasswordAPI } from "@/api/user/forgotPasswordAPI";
+import { loginWithGoogle } from './GoogleLogin.js'
 
 const email = ref("");
 const password = ref("");
@@ -74,6 +75,34 @@ const forgotTitle = computed(() => {
   if (step.value === 2) return "Nhập mã OTP";
   return "Đặt lại mật khẩu";
 });
+
+const handleGoogleLogin = async () => {
+  try {
+    const googleUser = await loginWithGoogle();
+    const idToken = await googleUser.getIdToken();
+
+    const response = await axios.post("http://localhost:8080/api/public/oauth/google", {
+      idToken: idToken,
+    });
+
+    const { token, user: userData } = response.data;
+
+    // ✅ Lưu token và role vào localStorage
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", userData.role);
+
+    // ✅ Điều hướng theo quyền
+    if (userData.role === 0) {
+      router.push("/admin/dashboard");
+    } else {
+      router.push("/");
+    }
+
+  } catch (err) {
+    alert("Lỗi đăng nhập: " + err.message);
+    console.error(err);
+  }
+};
 </script>
 
 <template>
@@ -121,18 +150,18 @@ const forgotTitle = computed(() => {
           </div>
 
           <div class="d-grid gap-2 mt-3">
-            <a
-              href="http://localhost:8080/oauth2/authorization/google"
-              class="btn social-btn google-btn"
-            >
+            <button class="btn social-btn google-btn" @click="handleGoogleLogin">
               <img
                 src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
                 alt="Google"
                 class="social-icon me-2"
               />
               Tiếp tục với Google
-            </a>
+
+
+            </button>
           </div>
+
         </div>
       </div>
       <!-- Modal Quên Mật Khẩu -->

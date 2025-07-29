@@ -13,7 +13,9 @@
       <!-- Tiêu đề -->
       <div class="text-center">
         <div class="cart-title">Giỏ Hàng Của Bạn</div>
-        <div class="cart-subtitle">Có {{ cart.details.length }} sản phẩm trong giỏ hàng</div>
+        <div class="cart-subtitle">
+          Có {{ cart.details.length }} sản phẩm trong giỏ hàng
+        </div>
         <div class="cart-divider"></div>
       </div>
 
@@ -23,16 +25,44 @@
           <div v-if="cart.details.length === 0" class="text-center">
             <p>Giỏ hàng trống</p>
           </div>
-          <div v-for="item in cart.details" :key="item.cartDetailId" class="d-flex p-3 cart-item">
+          <div
+            v-for="item in cart.details"
+            :key="item.cartDetailId"
+            class="d-flex p-3 cart-item"
+          >
+            <!-- Checkbox -->
+            <div class="me-5 d-flex align-items-center">
+              <input
+                type="checkbox"
+                :value="item.cartDetailId"
+                v-model="selectedItems"
+                style="transform: scale(1.5); width: 15px; height: 15px"
+              />
+            </div>
+
             <!-- Ảnh -->
-            <input type="checkbox" :value="item.cartDetailId" v-model="selectedItems" />
-
-            <img :src="item.imageUrl" :alt="item.productName" class="me-3 cart-item-img" />
-
+            <img
+              :src="`http://localhost:8080/images/${item.imageUrl}`"
+              :alt="item.productName"
+              class="me-3 cart-item-img"
+            />
             <!-- Thông tin -->
             <div class="flex-grow-1">
               <h5 class="mb-1">{{ item.productName }}</h5>
-              <p class="mb-1">{{ formatPrice(item.price) }}</p>
+              <div class="mb-1">
+                <span class="text-danger">{{
+                  formatPrice(item.discountedPrice || item.price)
+                }}</span>
+                <span
+                  v-if="item.originalPrice > item.discountedPrice"
+                  class="text-muted text-decoration-line-through ms-2"
+                >
+                  {{ formatPrice(item.originalPrice) }}
+                </span>
+                <span v-if="item.discountPercent" class="badge bg-danger ms-2">
+                  -{{ item.discountPercent }}%
+                </span>
+              </div>
               <p class="mb-1">Size: {{ item.size }}</p>
               <p class="mb-2">Màu: {{ item.color }}</p>
 
@@ -63,32 +93,27 @@
             </div>
 
             <!-- Nút xóa -->
-            <span class="cart-remove-btn" @click="removeItem(item.cartDetailId)"> × </span>
+            <span class="cart-remove-btn" @click="removeItem(item.cartDetailId)">
+              ×
+            </span>
           </div>
 
           <!-- Nút xóa toàn bộ giỏ hàng -->
-          <button v-if="cart.details.length > 0" class="btn btn-danger mt-3" @click="clearCart">
+          <button
+            v-if="cart.details.length > 0"
+            class="btn btn-danger mt-3"
+            @click="clearCart"
+          >
             Xóa toàn bộ giỏ hàng
           </button>
-
-          <!-- Ghi chú -->
-          <div class="mt-4 cart-note">
-            <label for="note" class="form-label fw-bold">Ghi chú đơn hàng</label>
-            <textarea
-              class="form-control"
-              id="note"
-              rows="4"
-              placeholder="Ghi chú"
-              v-model="orderNote"
-            ></textarea>
-          </div>
-
           <!-- Chính sách -->
           <div class="mt-4 cart-policy">
             <h5 class="fw-bold">RETURN POLICY</h5>
             <ul class="list-unstyled">
               <li>→ HỖ TRỢ ĐỔI SIZE VÀ SẢN PHẨM LỖI TRONG 7 NGÀY</li>
-              <li>→ LIÊN HỆ TRỰC TIẾP HOTLINE HOẶC FANPAGE ĐỂ ĐƯỢC HỖ TRỢ SHIP HỎA TỐC</li>
+              <li>
+                → LIÊN HỆ TRỰC TIẾP HOTLINE HOẶC FANPAGE ĐỂ ĐƯỢC HỖ TRỢ SHIP HỎA TỐC
+              </li>
             </ul>
           </div>
         </div>
@@ -108,7 +133,7 @@
             <button
               class="btn cart-checkout-btn w-100 py-2"
               @click="proceedToCheckout"
-              :disabled="cart.details.length === 0"
+              :disabled="selectedItems.length === 0"
             >
               <span>THANH TOÁN</span>
             </button>
@@ -139,8 +164,14 @@
         >
           <div class="product-link">
             <div class="product-item">
-              <span class="discount-badge" v-if="product.discount">{{ product.discount }}%</span>
-              <img :src="product.imageUrl" class="img-fluid img-default" :alt="product.name" />
+              <span class="discount-badge" v-if="product.discount"
+                >{{ product.discount }}%</span
+              >
+              <img
+                :src="product.imageUrl"
+                class="img-fluid img-default"
+                :alt="product.name"
+              />
               <img
                 :src="product.imageHoverUrl"
                 class="img-fluid img-hover"
@@ -149,7 +180,9 @@
             </div>
             <div class="product-name">{{ product.name }}</div>
             <div>
-              <span class="discounted-price">{{ formatPrice(product.discountedPrice) }}</span>
+              <span class="discounted-price">{{
+                formatPrice(product.discountedPrice)
+              }}</span>
               <span class="original-price" v-if="product.originalPrice">
                 {{ formatPrice(product.originalPrice) }}
               </span>
@@ -172,13 +205,14 @@ import {
   removeCartItem,
   clearCart,
   getRelatedProducts,
-} from '@/api/user/cartAPI'
-import { useToast } from 'vue-toastification'
+} from "@/api/user/cartAPI";
+import promotionApi from "@/api/PromotionClien";
+import { useToast } from "vue-toastification";
 
-const toast = useToast()
+const toast = useToast();
 
 export default {
-  name: 'CartPage',
+  name: "CartPage",
   data() {
     return {
       selectedItems: [],
@@ -187,189 +221,301 @@ export default {
         userId: null,
         details: [],
       },
-      orderNote: '',
+      orderNote: "",
       relatedProducts: [],
       loading: false,
       loadingRelated: false,
       error: null,
-    }
+    };
   },
   computed: {
     totalPrice() {
-  return this.cart.details
-    .filter(item => this.selectedItems.includes(item.cartDetailId))
-    .reduce((total, item) => total + item.price * item.quantity, 0);
-},
-
+      return this.cart.details
+        .filter((item) => this.selectedItems.includes(item.cartDetailId))
+        .reduce(
+          (total, item) => total + (item.discountedPrice || item.price) * item.quantity,
+          0
+        );
+    },
   },
   methods: {
     formatPrice(price) {
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-      }).format(price)
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(price);
     },
     async fetchCart() {
-      this.error = null
-      const toastId = toast.info('Đang tải giỏ hàng...', { timeout: false })
+      this.error = null;
+      const toastId = toast.info("Đang tải giỏ hàng...", { timeout: false });
       try {
-        const cartData = await getCart()
+        const cartData = await getCart();
+        // Fetch active promotions
+        const promos = await promotionApi.getActivePromotions();
+        const promotionMap = new Map();
+        promos.forEach((promo) => {
+          promo.productPromotions.forEach((pp) => {
+            promotionMap.set(pp.productVariantId, promo);
+          });
+        });
+
+        // Apply promotions to cart items
         this.cart = {
           ...cartData,
-          details: cartData.details.map((item) => ({
-            ...item,
-            productName: item.productName || 'Sản phẩm',
-            imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
-            size: item.size || 'S',
-            color: item.color || 'Không xác định',
-            stock: item.stock || 0,
-          })),
-        }
-        toast.success('Tải giỏ hàng thành công!')
+          details: cartData.details.map((item) => {
+            const promo = promotionMap.get(item.productVariantId);
+            let discountedPrice = item.price;
+            let discountPercent = 0;
+            if (promo) {
+              discountPercent = promo.discountAmount || 0;
+              discountedPrice = Math.round(item.price * (1 - discountPercent / 100));
+            }
+            return {
+              ...item,
+              productName: item.productName || "Sản phẩm",
+              imageUrl: item.imageUrl || "https://via.placeholder.com/100x140",
+              size: item.size || "S",
+              color: item.color || "Không xác định",
+              stock: item.stock || 0,
+              originalPrice: item.price,
+              discountedPrice: discountedPrice,
+              discountPercent: discountPercent,
+            };
+          }),
+        };
+        toast.success("Tải giỏ hàng thành công!");
       } catch (error) {
-        console.error('Error fetching cart:', error.message)
-        toast.error('Không thể tải giỏ hàng. Vui lòng đăng nhập lại.')
-        this.$router.push('/login')
+        console.error("Error fetching cart:", error.message);
+        toast.error("Không thể tải giỏ hàng. Vui lòng đăng nhập lại.");
+        this.$router.push("/login");
       } finally {
-        toast.dismiss(toastId)
+        toast.dismiss(toastId);
       }
     },
     async fetchRelatedProducts() {
-      this.loadingRelated = true
+      this.loadingRelated = true;
       try {
-        this.relatedProducts = await getRelatedProducts()
+        const products = await getRelatedProducts();
+        // Apply promotions to related products
+        const promos = await promotionApi.getActivePromotions();
+        const promotionMap = new Map();
+        promos.forEach((promo) => {
+          promo.productPromotions.forEach((pp) => {
+            promotionMap.set(pp.productVariantId, promo);
+          });
+        });
+
+        this.relatedProducts = products.map((product) => {
+          const promo = promotionMap.get(product.id);
+          let discountedPrice = product.price;
+          let discount = 0;
+          if (promo) {
+            discount = promo.discountAmount || 0;
+            discountedPrice = Math.round(product.price * (1 - discount / 100));
+          }
+          return {
+            ...product,
+            imageUrl: product.imageUrl || "https://via.placeholder.com/100x140",
+            imageHoverUrl:
+              product.imageHoverUrl ||
+              product.imageUrl ||
+              "https://via.placeholder.com/100x140",
+            originalPrice: product.price,
+            discountedPrice: discountedPrice,
+            discount: discount,
+          };
+        });
       } catch (error) {
-        console.error('Error fetching related products:', error.message)
-        this.relatedProducts = []
+        console.error("Error fetching related products:", error.message);
+        this.relatedProducts = [];
       } finally {
-        this.loadingRelated = false
+        this.loadingRelated = false;
       }
     },
     async addToCart(productVariantId, quantity) {
-      this.loading = true
-      this.error = null
+      this.loading = true;
+      this.error = null;
       try {
-        const cartData = await addToCart(productVariantId, quantity)
+        const cartData = await addToCart(productVariantId, quantity);
+        // Fetch promotions again to apply to the newly added item
+        const promos = await promotionApi.getActivePromotions();
+        const promotionMap = new Map();
+        promos.forEach((promo) => {
+          promo.productPromotions.forEach((pp) => {
+            promotionMap.set(pp.productVariantId, promo);
+          });
+        });
+
         this.cart = {
           ...cartData,
-          details: cartData.details.map((item) => ({
-            ...item,
-            productName: item.productName || 'Sản phẩm',
-            imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
-            size: item.size || 'S',
-            color: item.color || 'Không xác định',
-            stock: item.stock || 0,
-          })),
-        }
-        toast.success('Thêm sản phẩm vào giỏ thành công!')
+          details: cartData.details.map((item) => {
+            const promo = promotionMap.get(item.productVariantId);
+            let discountedPrice = item.price;
+            let discountPercent = 0;
+            if (promo) {
+              discountPercent = promo.discountAmount || 0;
+              discountedPrice = Math.round(item.price * (1 - discountPercent / 100));
+            }
+            return {
+              ...item,
+              productName: item.productName || "Sản phẩm",
+              imageUrl: item.imageUrl || "https://via.placeholder.com/100x140",
+              size: item.size || "S",
+              color: item.color || "Không xác định",
+              stock: item.stock || 0,
+              originalPrice: item.price,
+              discountedPrice: discountedPrice,
+              discountPercent: discountPercent,
+            };
+          }),
+        };
+        toast.success("Thêm sản phẩm vào giỏ thành công!");
       } catch (error) {
-        console.error('Error adding to cart:', error.message)
-        toast.error('Thêm sản phẩm vào giỏ hàng thất bại.')
-        this.error = 'Thêm sản phẩm vào giỏ hàng thất bại.'
+        console.error("Error adding to cart:", error.message);
+        toast.error("Thêm sản phẩm vào giỏ hàng thất bại.");
+        this.error = "Thêm sản phẩm vào giỏ hàng thất bại.";
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     async updateQuantity(cartDetailId, quantity) {
-      if (quantity < 1) return
-      this.loading = true
-      this.error = null
+      if (quantity < 1) return;
+      this.loading = true;
+      this.error = null;
       try {
-        const cartData = await updateCartItem(cartDetailId, quantity)
+        const cartData = await updateCartItem(cartDetailId, quantity);
+        // Reapply promotions
+        const promos = await promotionApi.getActivePromotions();
+        const promotionMap = new Map();
+        promos.forEach((promo) => {
+          promo.productPromotions.forEach((pp) => {
+            promotionMap.set(pp.productVariantId, promo);
+          });
+        });
+
         this.cart = {
           ...cartData,
-          details: cartData.details.map((item) => ({
-            ...item,
-            productName: item.productName || 'Sản phẩm',
-            imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
-            size: item.size || 'S',
-            color: item.color || 'Không xác định',
-            stock: item.stock || 0,
-          })),
-        }
-        toast.success('Cập nhật số lượng thành công!')
+          details: cartData.details.map((item) => {
+            const promo = promotionMap.get(item.productVariantId);
+            let discountedPrice = item.price;
+            let discountPercent = 0;
+            if (promo) {
+              discountPercent = promo.discountAmount || 0;
+              discountedPrice = Math.round(item.price * (1 - discountPercent / 100));
+            }
+            return {
+              ...item,
+              productName: item.productName || "Sản phẩm",
+              imageUrl: item.imageUrl || "https://via.placeholder.com/100x140",
+              size: item.size || "S",
+              color: item.color || "Không xác định",
+              stock: item.stock || 0,
+              originalPrice: item.price,
+              discountedPrice: discountedPrice,
+              discountPercent: discountPercent,
+            };
+          }),
+        };
+        toast.success("Cập nhật số lượng thành công!");
       } catch (error) {
-        console.error('Error updating quantity:', error.message)
-        toast.error('Cập nhật số lượng thất bại.')
-        this.error = 'Cập nhật số lượng thất bại.'
+        console.error("Error updating quantity:", error.message);
+        toast.error("Cập nhật số lượng thất bại.");
+        this.error = "Cập nhật số lượng thất bại.";
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     async removeItem(cartDetailId) {
-      this.loading = true
-      this.error = null
+      this.loading = true;
+      this.error = null;
       try {
-        const cartData = await removeCartItem(cartDetailId)
+        const cartData = await removeCartItem(cartDetailId);
+        // Reapply promotions
+        const promos = await promotionApi.getActivePromotions();
+        const promotionMap = new Map();
+        promos.forEach((promo) => {
+          promo.productPromotions.forEach((pp) => {
+            promotionMap.set(pp.productVariantId, promo);
+          });
+        });
+
         this.cart = {
           ...cartData,
-          details: cartData.details.map((item) => ({
-            ...item,
-            productName: item.productName || 'Sản phẩm',
-            imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
-            size: item.size || 'S',
-            color: item.color || 'Không xác định',
-            stock: item.stock || 0,
-          })),
-        }
-        toast.success('Xóa sản phẩm thành công!')
+          details: cartData.details.map((item) => {
+            const promo = promotionMap.get(item.productVariantId);
+            let discountedPrice = item.price;
+            let discountPercent = 0;
+            if (promo) {
+              discountPercent = promo.discountAmount || 0;
+              discountedPrice = Math.round(item.price * (1 - discountPercent / 100));
+            }
+            return {
+              ...item,
+              productName: item.productName || "Sản phẩm",
+              imageUrl: item.imageUrl || "https://via.placeholder.com/100x140",
+              size: item.size || "S",
+              color: item.color || "Không xác định",
+              stock: item.stock || 0,
+              originalPrice: item.price,
+              discountedPrice: discountedPrice,
+              discountPercent: discountPercent,
+            };
+          }),
+        };
+        toast.success("Xóa sản phẩm thành công!");
       } catch (error) {
-        console.error('Error removing item:', error.message)
-        toast.error('Xóa sản phẩm thất bại.')
-        this.error = 'Xóa sản phẩm thất bại.'
+        console.error("Error removing item:", error.message);
+        toast.error("Xóa sản phẩm thất bại.");
+        this.error = "Xóa sản phẩm thất bại.";
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     async clearCart() {
-      this.loading = true
-      this.error = null
+      this.loading = true;
       try {
-        const cartData = await clearCart()
+        const cartData = await clearCart();
         this.cart = {
           ...cartData,
-          details: cartData.details.map((item) => ({
-            ...item,
-            productName: item.productName || 'Sản phẩm',
-            imageUrl: item.imageUrl || 'https://via.placeholder.com/100x140',
-            size: item.size || 'S',
-            color: item.color || 'Không xác định',
-            stock: item.stock || 0,
-          })),
-        }
-        toast.success('Xóa giỏ hàng thành công!')
+          details: [],
+        };
+        this.selectedItems = [];
+        toast.success("Xóa giỏ hàng thành công!");
       } catch (error) {
-        console.error('Error clearing cart:', error.message)
-        toast.error('Xóa giỏ hàng thất bại.')
-        this.error = 'Xóa giỏ hàng thất bại.'
+        console.error("Error clearing cart:", error.message);
+        toast.error("Xóa giỏ hàng thất bại.");
+        this.error = "Xóa giỏ hàng thất bại.";
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     proceedToCheckout() {
-      const selectedDetails = this.cart.details.filter((item) =>
-        this.selectedItems.includes(item.cartDetailId),
-      )
+      const selectedDetails = this.cart.details
+        .filter((item) => this.selectedItems.includes(item.cartDetailId))
+        .map((item) => ({
+          ...item,
+          price: item.discountedPrice || item.price, // Đảm bảo luôn lấy giá khuyến mãi
+        }));
 
       if (selectedDetails.length === 0) {
-        toast.error('Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.')
-        return
+        toast.error("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.");
+        return;
       }
 
-      localStorage.setItem('orderNote', this.orderNote)
-      localStorage.setItem('cartDetails', JSON.stringify(selectedDetails))
-      this.$router.push('/user/checkout')
+      localStorage.setItem("orderNote", this.orderNote);
+      localStorage.setItem("cartDetails", JSON.stringify(selectedDetails));
+      this.$router.push("/user/checkout");
     },
   },
   mounted() {
-    if (!localStorage.getItem('token')) {
-      this.$router.push('/login')
+    if (!localStorage.getItem("token")) {
+      this.$router.push("/login");
     } else {
-      this.fetchCart()
-      this.fetchRelatedProducts()
+      this.fetchCart();
+      this.fetchRelatedProducts();
     }
   },
-}
+};
 </script>
 
 <style src="@/assets/css/cart.css"></style>

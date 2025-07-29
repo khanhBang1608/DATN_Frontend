@@ -93,53 +93,64 @@ $(function () {
 
     //  Chart ( 2 )
     var Chart2 = document.getElementById('myChart2').getContext('2d');
-    var chart = new Chart(Chart2, {
-    type: 'line',
-    data: {
-        labels: ["January", "February", "March", "April", 'test', 'test', 'test', 'test'],
-        datasets: [{
-        label: "My First dataset",
-        backgroundColor: 'rgb(255, 99, 132)',
-        borderColor: 'rgb(255, 79, 116)',
-        borderWidth: 2,
-        pointBorderColor: false,
-        data: [5, 10, 5, 8, 20, 30, 20, 10],
-        fill: false,
-        lineTension: .4,
-        }, {
-        label: "Month",
-        fill: false,
-        lineTension: .4,
-        startAngle: 2,
-        data: [20, 14, 20, 25, 10, 15, 25, 10],
-        // , '#ff6384', '#4bc0c0', '#ffcd56', '#457ba1'
-        backgroundColor: "transparent",
-        pointBorderColor: "#4bc0c0",
-        borderColor: '#4bc0c0',
-        borderWidth: 2,
-        showLine: true,
-        }, {
-        label: "Month",
-        fill: false,
-        lineTension: .4,
-        startAngle: 2,
-        data: [40, 20, 5, 10, 30, 15, 15, 10],
-        // , '#ff6384', '#4bc0c0', '#ffcd56', '#457ba1'
-        backgroundColor: "transparent",
-        pointBorderColor: "#ffcd56",
-        borderColor: '#ffcd56',
-        borderWidth: 2,
-        showLine: true,
-        }]
-    },
+    // Assume monthlyRevenueData is populated from backend
+var Chart2 = document.getElementById('myChart2').getContext('2d');
 
-    // Configuration options
-    options: {
-        title: {
-        display: false
+// Lấy dữ liệu từ biến global hoặc khai báo ở đầu file
+// Giả sử dữ liệu từ backend đã được truyền vào biến này:
+const monthlyRevenueData = [
+  { revenue: 3020000.00, month: 7 },
+  { revenue: 4500000.00, month: 6 },
+  { revenue: 5000000.00, month: 5 }
+  // thêm các tháng khác nếu có
+];
+
+// Sắp xếp tăng dần theo tháng (tuỳ ý)
+monthlyRevenueData.sort((a, b) => a.month - b.month);
+
+// Tạo nhãn và dữ liệu
+const labels = monthlyRevenueData.map(item => `Tháng ${item.month}`);
+const dataPoints = monthlyRevenueData.map(item => item.revenue);
+
+var revenueChart = new Chart(Chart2, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [{
+      label: "Doanh thu (VNĐ)",
+      data: dataPoints,
+      fill: false,
+      borderColor: "#4bc0c0",
+      backgroundColor: "#4bc0c0",
+      tension: 0.4
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            return context.dataset.label + ": " +
+              context.parsed.y.toLocaleString('vi-VN') + "₫";
+          }
         }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function (value) {
+            return value.toLocaleString('vi-VN') + "₫";
+          }
+        }
+      }
     }
-    });
+  }
+});
+
 
     var chart = document.getElementById('chart3');
     var myChart = new Chart(chart, {

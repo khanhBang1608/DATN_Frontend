@@ -10,7 +10,7 @@
       <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Sổ địa chỉ</a>
       <span class="custom-breadcrumb-separator">/</span>
       <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Thêm địa chỉ mới</a
+        >Chỉnh sửa địa chỉ</a
       >
     </nav>
   </div>
@@ -34,7 +34,7 @@
             class="d-flex justify-content-between flex-column flex-sm-row align-items-start align-items-sm-center mt-3"
           >
             <div>
-              <h6 class="fw-bold mb-1">Thêm Địa Chỉ Mới</h6>
+              <h6 class="fw-bold mb-1">Cập Nhật Địa Chỉ</h6>
               <small class="text-muted">* Trường thông tin bắt buộc</small>
             </div>
           </div>
@@ -158,8 +158,8 @@
             >
           </div>
           <button type="submit" class="btn address-form-btn" :disabled="isLoading">
-            <span v-if="isLoading">Đang lưu...</span>
-            <span v-else>Lưu địa chỉ</span>
+            <span v-if="isLoading">Đang cập nhật...</span>
+            <span v-else>Cập nhật địa chỉ</span>
           </button>
         </form>
       </div>
@@ -169,26 +169,28 @@
 
 <script setup>
 import { ref, reactive, onMounted } from "vue";
+import { useRoute } from "vue-router";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 
 const ghnToken = "b1128a4b-3c99-11f0-b2d1-fa768adb59a3";
-
 const provinces = ref([]);
 const districts = ref([]);
 const wards = ref([]);
 const isLoading = ref(false);
 
-function clearFieldError(field) {
-  errors[field] = "";
-}
+const route = useRoute();
+const addressId = route.params.id;
 
 const form = reactive({
   customerName: "",
   phone: "",
   provinceId: "",
+  provinceName: "",
   districtId: "",
+  districtName: "",
   wardId: "",
+  wardName: "",
   address: "",
 });
 
@@ -200,6 +202,10 @@ const errors = reactive({
   wardId: "",
   address: "",
 });
+
+function clearFieldError(field) {
+  errors[field] = "";
+}
 
 function clearErrors() {
   Object.keys(errors).forEach((key) => (errors[key] = ""));
@@ -251,9 +257,7 @@ function validateForm() {
 async function loadProvinces() {
   const res = await fetch(
     "https://online-gateway.ghn.vn/shiip/public-api/master-data/province",
-    {
-      headers: { Token: ghnToken },
-    }
+    { headers: { Token: ghnToken } }
   );
   const data = await res.json();
   provinces.value = data.data || [];
@@ -297,7 +301,7 @@ async function submitForm() {
     return;
   }
 
-  isLoading.value = true;
+  isLoading.value = true; // Bật hiệu ứng loading
 
   const payload = {
     customerName: form.customerName,
@@ -311,44 +315,58 @@ async function submitForm() {
       districts.value.find((d) => d.DistrictID == form.districtId)?.DistrictName || "",
     wardId: Number(form.wardId),
     wardName: wards.value.find((w) => w.WardCode == form.wardId)?.WardName || "",
-    defaultAddress: form.defaultAddress || false,
   };
 
   try {
-    const res = await fetch("http://localhost:8080/api/user/address/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${Token}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    const res = await fetch(
+      `http://localhost:8080/api/user/address/update/${addressId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Token}`,
+        },
+        body: JSON.stringify(payload),
+      }
+    );
 
-    if (!res.ok) throw new Error("Lỗi khi gửi dữ liệu");
+    if (!res.ok) throw new Error("Cập nhật thất bại");
 
     iziToast.success({
       title: "Thành công",
-      message: "Địa chỉ đã được lưu!",
+      message: "Đã cập nhật địa chỉ!",
       position: "topRight",
     });
 
-    // ⏳ Giữ loading và chuyển trang sau 500ms
+    // ⏳ Chờ 1 giây để toast hiển thị, sau đó chuyển trang (giữ nguyên loading)
     setTimeout(() => {
       window.location.href = "/user/listaddress";
     }, 1000);
   } catch (err) {
     iziToast.error({
       title: "Lỗi",
-      message: "Lỗi khi lưu địa chỉ.",
+      message: "Cập nhật địa chỉ thất bại.",
       position: "topRight",
     });
     console.error(err);
-    isLoading.value = false; // Chỉ tắt khi có lỗi
+    isLoading.value = false; // Chỉ tắt loading nếu bị lỗi
   }
 }
 
-onMounted(() => {
-  loadProvinces();
+function loadEditData() {
+  const stored = localStorage.getItem("editAddress");
+  if (!stored) return;
+
+  const data = JSON.parse(stored);
+  Object.assign(form, data);
+}
+
+onMounted(async () => {
+  await loadProvinces();
+  loadEditData();
+
+  if (form.provinceId) await loadDistricts();
+  if (form.districtId) await loadWards();
 });
 </script>
 
@@ -447,6 +465,7 @@ onMounted(() => {
     height: 16px;
   }
 }
+
 .address-form-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;

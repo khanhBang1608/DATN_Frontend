@@ -18,3 +18,19 @@ export const getVariantByColorAndSize = (productId, colorId, sizeId = null) => {
 
 export const getProductOptions = (productId) =>
   axios.get(`${API_BASE}/products/${productId}/options`);
+
+export const getRelatedProducts = (categoryId, excludeProductId) =>
+  axios.get(`${API_BASE}/products/related`, {
+    params: {
+      categoryId,
+      excludeProductId
+    }
+  });
+
+export const searchProductsByName = (keyword) =>
+  axios.get(`${API_BASE}/products/search`, {
+    params: { keyword }
+  });
+
+export const fetchAverageRating = (productId) =>
+  axios.get(`${API_BASE}/products/${productId}/average-rating`);

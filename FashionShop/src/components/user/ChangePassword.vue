@@ -7,9 +7,9 @@
         >Tổng quan tài khoản</a
       >
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">
-        Đổi Mật Khẩu
-      </a>
+      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
+        >Đổi Mật Khẩu</a
+      >
     </nav>
   </div>
 
@@ -19,61 +19,61 @@
         <a href="/user/account">Tổng quan tài khoản</a><br />
         <a href="/user/profile">Thông tin của tôi</a><br />
         <a href="#" class="active">Đổi mật khẩu</a><br />
-        <a href="/user/address">Sổ địa chỉ</a><br />
+        <a href="/user/listaddress">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
         <a href="#">Danh sách yêu thích</a>
       </div>
+
       <div class="change-password-container col-md-10">
         <h3 class="text-center change-password-title">Đổi Mật Khẩu</h3>
+
         <form @submit.prevent="handleChangePassword">
           <div class="mb-3">
-            <label for="currentPassword" class="form-label change-password-label">
-              Mật khẩu hiện tại *
-            </label>
+            <label for="currentPassword" class="form-label change-password-label"
+              >Mật khẩu hiện tại *</label
+            >
             <input
               type="password"
               class="form-control change-password-input-old"
               id="currentPassword"
               v-model="currentPassword"
             />
+            <div v-if="errors.currentPassword" class="text-danger mt-1">
+              {{ errors.currentPassword }}
+            </div>
           </div>
+
           <div class="mb-3">
-            <label for="newPassword" class="form-label change-password-label">
-              Mật khẩu mới *
-            </label>
+            <label for="newPassword" class="form-label change-password-label"
+              >Mật khẩu mới *</label
+            >
             <input
               type="password"
               class="form-control change-password-input-new"
               id="newPassword"
               v-model="newPassword"
             />
+            <div v-if="errors.newPassword" class="text-danger mt-1">
+              {{ errors.newPassword }}
+            </div>
           </div>
+
           <div class="mb-3">
-            <label for="confirmPassword" class="form-label change-password-label">
-              Xác nhận mật khẩu mới *
-            </label>
+            <label for="confirmPassword" class="form-label change-password-label"
+              >Xác nhận mật khẩu mới *</label
+            >
             <input
               type="password"
               class="form-control change-password-input-confirm"
               id="confirmPassword"
               v-model="confirmPassword"
             />
+            <div v-if="errors.confirmPassword" class="text-danger mt-1">
+              {{ errors.confirmPassword }}
+            </div>
           </div>
 
-          <div
-            v-if="errorMessage"
-            class="alert alert-danger text-center change-password-error"
-          >
-            {{ errorMessage }}
-          </div>
-
-          <div
-            v-if="successMessage"
-            class="alert alert-success text-center change-password-success"
-          >
-            {{ successMessage }}
-          </div>
           <div class="text-center mt-4">
             <button type="submit" class="btn change-password-btn-save">
               Lưu Mật Khẩu Mới
@@ -87,25 +87,62 @@
 
 <script setup>
 import { ref } from "vue";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
 const currentPassword = ref("");
 const newPassword = ref("");
 const confirmPassword = ref("");
-const errorMessage = ref("");
-const successMessage = ref("");
+
+const errors = ref({
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
+});
 
 async function handleChangePassword() {
-  errorMessage.value = "";
-  successMessage.value = "";
+  // Reset lỗi
+  errors.value = {
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  };
 
-  if (newPassword.value !== confirmPassword.value) {
-    errorMessage.value = "Mật khẩu xác nhận không khớp.";
+  // Kiểm tra phía client
+  let hasError = false;
+
+  if (!currentPassword.value.trim()) {
+    errors.value.currentPassword = "Vui lòng nhập mật khẩu hiện tại.";
+    hasError = true;
+  }
+
+  if (!newPassword.value.trim()) {
+    errors.value.newPassword = "Vui lòng nhập mật khẩu mới.";
+    hasError = true;
+  } else if (newPassword.value.length < 6) {
+    errors.value.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự.";
+    hasError = true;
+  }
+
+  if (!confirmPassword.value.trim()) {
+    errors.value.confirmPassword = "Vui lòng xác nhận mật khẩu mới.";
+    hasError = true;
+  } else if (newPassword.value !== confirmPassword.value) {
+    errors.value.confirmPassword = "Xác nhận mật khẩu không khớp.";
+    hasError = true;
+  }
+
+  if (hasError) {
     return;
   }
 
   const token = localStorage.getItem("token");
   if (!token) {
-    errorMessage.value = "Vui lòng đăng nhập để đổi mật khẩu.";
+    iziToast.error({
+      title: "Lỗi",
+      message: "Vui lòng đăng nhập để đổi mật khẩu.",
+      position: "topRight",
+    });
     return;
   }
 
@@ -128,9 +165,26 @@ async function handleChangePassword() {
     const data = await res.text();
 
     if (!res.ok) {
-      errorMessage.value = data;
+      // Xử lý lỗi dưới input
+      if (data.includes("hiện tại")) {
+        errors.value.currentPassword = data;
+      } else if (data.includes("mới")) {
+        errors.value.newPassword = data;
+      } else if (data.includes("Xác nhận")) {
+        errors.value.confirmPassword = data;
+      } else {
+        iziToast.error({
+          title: "Lỗi",
+          message: data,
+          position: "topRight",
+        });
+      }
     } else {
-      successMessage.value = data;
+      iziToast.success({
+        title: "Thành công",
+        message: data,
+        position: "topRight",
+      });
 
       currentPassword.value = "";
       newPassword.value = "";
@@ -138,7 +192,11 @@ async function handleChangePassword() {
     }
   } catch (error) {
     console.error("Lỗi:", error);
-    errorMessage.value = "Đã xảy ra lỗi. Vui lòng thử lại!";
+    iziToast.error({
+      title: "Lỗi hệ thống",
+      message: "Đã xảy ra lỗi. Vui lòng thử lại sau!",
+      position: "topRight",
+    });
   }
 }
 </script>

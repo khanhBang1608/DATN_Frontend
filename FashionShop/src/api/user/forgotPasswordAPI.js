@@ -125,6 +125,7 @@ export function forgotPasswordAPI() {
           );
           modal?.hide();
         }, 1500);
+        window.location.reload();
       } else {
         handleValidationError(res);
       }

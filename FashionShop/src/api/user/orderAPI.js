@@ -57,3 +57,15 @@ export const cancelOrder = async (orderId) => {
     throw error.response?.data?.message || 'Failed to cancel order';
   }
 };
+
+export const requestReturn = async (orderId) => {
+  try {
+    const response = await axios.put(`${BASE_URL}/${orderId}/return-request`, null, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error requesting return:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Failed to request return';
+  }
+};

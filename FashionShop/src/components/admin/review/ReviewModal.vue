@@ -65,13 +65,14 @@
   </div>
 </template>
 
+
 <script>
-import { getReviewById } from '@/api/admin/reviewAPI';
-import { Modal } from 'bootstrap';
-import { nextTick } from 'vue';
+import { getReviewById } from "@/api/admin/reviewAPI";
+import { Modal } from "bootstrap";
+import { nextTick } from "vue";
 
 export default {
-  name: 'ReviewModal',
+  name: "ReviewModal",
   props: {
     reviewId: {
       type: Number,
@@ -88,10 +89,10 @@ export default {
   },
   methods: {
     formatDate(date) {
-      return new Intl.DateTimeFormat('vi-VN', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
+      return new Intl.DateTimeFormat("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
       }).format(new Date(date));
     },
     async fetchReview() {
@@ -99,29 +100,28 @@ export default {
       this.error = null;
       try {
         this.review = await getReviewById(this.reviewId);
-        console.log('Fetched review:', this.review);
         await nextTick();
         this.showModal();
       } catch (error) {
-        console.error('Error fetching review:', error.message);
-        this.error = 'Không thể tải chi tiết đánh giá.';
+        console.error("Error fetching review:", error.message);
+        this.error = "Không thể tải chi tiết đánh giá.";
       } finally {
         this.loading = false;
       }
     },
     showModal() {
-      const modalElement = document.getElementById('reviewModal' + this.reviewId);
+      const modalElement = document.getElementById(
+        "reviewModal" + this.reviewId
+      );
       if (modalElement) {
         if (this.modalInstance) {
           this.modalInstance.dispose?.();
         }
         this.modalInstance = new Modal(modalElement, {
-          backdrop: 'static',
+          backdrop: "static",
           keyboard: false,
         });
         this.modalInstance.show();
-      } else {
-        console.error('Modal element not found for ID: reviewModal' + this.reviewId);
       }
     },
     closeModal() {
@@ -131,7 +131,7 @@ export default {
         this.modalInstance = null;
       }
       this.review = null;
-      this.$emit('close');
+      this.$emit("close");
     },
   },
   watch: {
@@ -146,6 +146,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 .modal-content { background-color: #f8f9fa; }

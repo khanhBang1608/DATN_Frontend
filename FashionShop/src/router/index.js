@@ -9,6 +9,8 @@ import Order from '@/views/admin/OrderView.vue'
 import Category from '@/views/CategoryView.vue'
 import User from '@/views/UserView.vue'
 import Product from '@/views/admin/ProductView.vue'
+import Color from '@/views/admin/ColorView.vue'
+import size from '@/views/admin/SizeView.vue'
 import ProductFrom from '@/views/admin/ProductFormViews.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -25,13 +27,15 @@ import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
 import DiscountForm from '../components/admin/discounts/DiscountModal.vue'
-import ProductVariantList from '@/components/admin/product/ProductVariantList.vue'
-import AddProductVariant from '@/components/admin/product/AddProductVariant.vue'
+import ProductVariantList from '@/components/admin/product/ProductVariantMain.vue'
 import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
 import ProductPromotions from '@/components/admin/promotions/ProductPromotions.vue'
 import ProductPromotionForm from '@/components/admin/promotions/ProductPromotionForm.vue'
 import ProductPromotionForm2 from '@/components/admin/promotions/ProductPromotionForm2.vue'
-
+import ListAddressView from '@/views/ListAddressView.vue'
+import EditAddressView from '@/views/EditAddressView.vue'
+import FavoriteView from '@/views/FavoriteView.vue'
+import PaymentSuccess from '@/views/PaymentResult.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -86,6 +90,11 @@ const router = createRouter({
       component: CheckOutView,
     },
     {
+      path: '/payment-success',
+      name: 'PaymentSuccess',
+      component: PaymentSuccess,
+    },
+    {
       path: '/contact-us',
       name: 'contact-us',
       component: ContactUsView,
@@ -114,6 +123,23 @@ const router = createRouter({
       path: '/user/address',
       name: 'address',
       component: AddressView,
+    },
+    {
+      path: '/user/listaddress',
+      name: 'listaddress',
+      component: ListAddressView,
+    },
+    {
+      path: '/user/editaddress/:id',
+      name: 'editaddress',
+      component: EditAddressView,
+      props: true
+    },
+    {
+      path: '/user/listfavorite',
+      name: 'listfavorite',
+      component: FavoriteView,
+      props: true
     },
     {
       path: '/about',
@@ -168,13 +194,23 @@ const router = createRouter({
         },
             {
           path: 'review',
-          name: 'Review',
+          name: 'AdminReview',
           component: Review,
         },
          {
           path: 'product',
           name: 'Product',
           component: Product,
+        },
+        {
+          path: 'attribute/colors',
+          name: 'Color',
+          component: Color,
+        },
+        {
+          path: 'attribute/sizes',
+          name: 'size',
+          component: size,
         },
         {
           path: 'product/form',
@@ -185,16 +221,6 @@ const router = createRouter({
           path: 'product/:id/variants',
           name:'ProductVariantList',
           component: ProductVariantList
-        },
-        {
-          path: 'product/:id/variants/add',
-          name:'AddProductVariant',
-          component: AddProductVariant
-        },
-        {
-          path: 'product/:id/variants/add/:variantId',
-          name:'AddProductVariantUpdate',
-          component: AddProductVariant
         },
         {
           path: 'promotion/form',
