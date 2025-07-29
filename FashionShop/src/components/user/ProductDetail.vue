@@ -281,24 +281,29 @@ function getImageUrl(imageName) {
 
         <!-- Màu sắc -->
         <div class="mb-4">
-  <div class="mb-1">
-    <div class="fw-semibold">Màu sắc:</div>
-    <div class="color-options-wrapper">
-      <div class="d-flex gap-2 flex-wrap" style="margin-left: 0;">
-        <div
-          v-for="(color, index) in uniqueColors"
-          :key="index"
-          class="color-option"
-          :class="{ 'selected': selectedColorId === color.colorId }"
-          @click="selectedColorId = selectedColorId === color.colorId ? null : color.colorId"
-        >
-          <span class="color-name">{{ color.colorName }}</span>
-          <span v-if="selectedColorId === color.colorId" class="check-mark">✓</span>
+          <div class="mb-1">
+            <div class="fw-semibold">Màu sắc:</div>
+            <div class="color-options-wrapper">
+              <div class="d-flex gap-2 flex-wrap" style="margin-left: 0">
+                <div
+                  v-for="(color, index) in uniqueColors"
+                  :key="index"
+                  class="color-option"
+                  :class="{ selected: selectedColorId === color.colorId }"
+                  @click="
+                    selectedColorId =
+                      selectedColorId === color.colorId ? null : color.colorId
+                  "
+                >
+                  <span class="color-name">{{ color.colorName }}</span>
+                  <span v-if="selectedColorId === color.colorId" class="check-mark"
+                    >✓</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
 
         <!-- Kích thước -->
         <div class="mb-4">
@@ -309,7 +314,9 @@ function getImageUrl(imageName) {
               :key="index"
               class="product-detail-size"
               :class="{ active: selectedSizeId === size.sizeId }"
-              @click="selectedSizeId = selectedSizeId === size.sizeId ? null : size.sizeId"
+              @click="
+                selectedSizeId = selectedSizeId === size.sizeId ? null : size.sizeId
+              "
             >
               {{ size.sizeName }}
             </div>
@@ -334,13 +341,17 @@ function getImageUrl(imageName) {
         </button>
 
         <!-- Yêu thích & Tìm -->
-        <div class="mb-2">
+        <div class="mb-2 mt-2">
           <div class="d-flex justify-content-between text-muted small">
             <div @click="handleToggleFavorite" style="cursor: pointer">
               <i
                 :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
               ></i>
-              {{ isFavorite ? "Đã yêu thích" : "Thêm vào Danh sách yêu thích" }}
+              {{
+                isFavorite
+                  ? "Đã nằm trong danh sách yêu thích"
+                  : "Thêm vào danh sách yêu thích"
+              }}
             </div>
             <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
           </div>
@@ -430,7 +441,9 @@ function getImageUrl(imageName) {
               {{ item.variants?.[0]?.discountedPrice?.toLocaleString() }}₫
             </span>
             <span
-              v-if="item.variants?.[0]?.discountedPrice < item.variants?.[0]?.originalPrice"
+              v-if="
+                item.variants?.[0]?.discountedPrice < item.variants?.[0]?.originalPrice
+              "
               class="original-price text-muted text-decoration-line-through ms-2"
             >
               {{ item.variants?.[0]?.originalPrice?.toLocaleString() }}₫
