@@ -27,44 +27,22 @@
           <div class="row g-3 mt-3">
             <div
               v-for="item in favoriteProducts"
-              :key="item.productId"
+              :key="item.id"
               class="col-6 col-sm-6 col-md-4 col-lg-3"
             >
               <div class="product-item-wrapper position-relative">
                 <RouterLink :to="`/product-detail/${item.productId}`" class="product-link">
                   <div class="product-item">
-                    <span
-                      v-if="item.variants?.[0]?.discountPercent > 0"
-                      class="discount-badge"
-                    >
-                      -{{ item.variants[0].discountPercent }}%
-                    </span>
                     <img
-                      :src="getImageUrl(item.variants?.[0]?.imageName)"
-                      class="img-fluid img-default"
-                      :alt="item.name"
-                    />
-                    <img
-                      :src="getImageUrl(item.variants?.[0]?.imageName)"
-                      class="img-fluid img-hover"
-                      :alt="item.name"
+                      :src="getImageUrl(item.imageName)"
+                      class="img-fluid"
+                      :alt="item.productName"
                     />
                   </div>
-                  <div class="product-name mt-2 text-truncate">{{ item.name }}</div>
-                  <div>
-                    <span class="discounted-price text-danger fw-bold">
-                      {{ item.variants?.[0]?.discountedPrice?.toLocaleString() }}₫
-                    </span>
-                    <span
-                      v-if="item.variants?.[0]?.discountedPrice < item.variants?.[0]?.originalPrice"
-                      class="original-price text-muted text-decoration-line-through ms-2"
-                    >
-                      {{ item.variants?.[0]?.originalPrice?.toLocaleString() }}₫
-                    </span>
-                  </div>
+                  <div class="product-name text-truncate">{{ item.productName }}</div>
                 </RouterLink>
                 <button
-                  class="btn btn-sm btn-outline-danger w-100 mt-2"
+                  class="btn btn-sm btn-outline-danger w-100"
                   @click="removeFromFavorite(item.productId)"
                 >
                   Gỡ khỏi yêu thích ❤️
@@ -96,6 +74,7 @@ const message = ref("");
 const loadFavorites = async () => {
   try {
     favoriteProducts.value = await getFavorites();
+    message.value = "";
   } catch (err) {
     message.value = err.message || "Lỗi khi tải danh sách yêu thích.";
   }
@@ -105,14 +84,14 @@ const removeFromFavorite = async (productId) => {
   try {
     const result = await toggleFavorite(productId);
     message.value = result;
-    await loadFavorites(); // Cập nhật lại danh sách
+    await loadFavorites();
   } catch (err) {
     message.value = err.message || "Lỗi khi xoá sản phẩm yêu thích.";
   }
 };
 
 const getImageUrl = (imageName) => {
-  return imageName ? `/images/${imageName}` : "/images/default.png";
+  return imageName ? `http://localhost:8080/images/${imageName}` : "/images/default.png";
 };
 
 onMounted(() => {
@@ -121,38 +100,31 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.card-img-top {
-  height: 200px;
-  object-fit: cover;
-}
-
 .product-item-wrapper {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  gap: 0.5rem; /* Controlled spacing between image, name, and button */
 }
 
-.discount-badge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: red;
-  color: white;
-  padding: 2px 6px;
-  font-size: 0.8rem;
-  border-radius: 4px;
+.product-item {
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+}
+
+.img-fluid {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  display: block;
 }
 
 .product-name {
   font-size: 1rem;
   font-weight: 500;
+  text-align: center;
+  padding: 0 0.5rem; 
 }
 
-.discounted-price {
-  font-size: 1.1rem;
-}
-
-.original-price {
-  font-size: 0.9rem;
-}
 </style>
