@@ -194,7 +194,7 @@ const router = createRouter({
         },
             {
           path: 'review',
-          name: 'Review',
+          name: 'AdminReview',
           component: Review,
         },
          {

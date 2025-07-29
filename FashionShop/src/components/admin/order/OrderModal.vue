@@ -111,6 +111,13 @@
           <button type="button" class="btn btn-outline-primary" @click="exportToPDF">
             Xuất hóa đơn PDF
           </button>
+          <button v-if="order.status === 4" class="btn btn-success" @click="approveReturn">
+            Duyệt yêu cầu trả hàng
+          </button>
+
+          <button v-if="order.status === 4" class="btn btn-danger" @click="rejectReturn">
+            Từ chối yêu cầu trả hàng
+          </button>
 
           <button
             v-if="[0, 1, 2].includes(order.status)"
@@ -118,10 +125,6 @@
             @click="updateStatusFlow"
           >
             Cập nhật trạng thái
-          </button>
-
-          <button v-if="order.status === 3" class="btn btn-warning" @click="returnOrder">
-            Trả hàng
           </button>
 
           <button v-if="order.status === 0" class="btn btn-danger" @click="cancelOrder">
@@ -151,7 +154,13 @@
   </div>
 </template>
 <script>
-import { getOrderById, updateOrder, downloadInvoicePDF } from '@/api/admin/orderAPI'
+import {
+  getOrderById,
+  updateOrder,
+  downloadInvoicePDF,
+  approveReturnRequest,
+  rejectReturnRequest,
+} from '@/api/admin/orderAPI'
 import { Modal } from 'bootstrap'
 import { nextTick } from 'vue'
 
@@ -171,16 +180,40 @@ export default {
       error: null,
       modalInstance: null,
       statusOptions: [
-        'Chờ xác nhận',
-        'Chờ lấy hàng',
-        'Chờ giao hàng',
+        'Chờ xác nhận', // 0
+        'Chờ lấy hàng', // 1
+        'Chờ giao hàng', // 2
         'Đã giao',
-        'Trả hàng',
+        'Yêu cầu trả hàng',
         'Đã hủy',
+        'Trả hàng đã duyệt',
+        'Từ chối trả hàng',
       ],
     }
   },
   methods: {
+    async approveReturn() {
+      try {
+        await approveReturnRequest(this.orderId)
+        this.order.status = 6 // 'Trả hàng đã duyệt'
+        this.$emit('order-updated')
+        this.closeModal()
+      } catch (error) {
+        this.error = error || 'Không thể duyệt yêu cầu trả hàng.'
+      }
+    },
+
+    async rejectReturn() {
+      try {
+        await rejectReturnRequest(this.orderId)
+        this.order.status = 7 // 'Từ chối trả hàng'
+        this.$emit('order-updated')
+        this.closeModal()
+      } catch (error) {
+        this.error = error || 'Không thể từ chối yêu cầu trả hàng.'
+      }
+    },
+
     formatPrice(price) {
       return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
     },
@@ -238,14 +271,6 @@ export default {
         return
       }
       this.order.status = 5
-      this.saveOrder()
-    },
-    returnOrder() {
-      if (this.order.status !== 3) {
-        this.error = 'Chỉ có thể trả hàng sau khi đơn đã giao.'
-        return
-      }
-      this.order.status = 4
       this.saveOrder()
     },
     showModal() {

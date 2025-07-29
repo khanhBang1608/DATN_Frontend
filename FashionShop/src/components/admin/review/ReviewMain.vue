@@ -154,7 +154,7 @@ export default {
       loading: false,
       error: null,
       filters: {
-        rating: "", // ✅ Mặc định "Tất cả sao"
+        rating: "",
         startDate: "",
         endDate: "",
         userFullName: "",
@@ -186,8 +186,12 @@ export default {
       try {
         this.reviews = await getAllReviews({
           ratings: this.filters.rating ? [this.filters.rating] : null,
-          startDate: this.filters.startDate || null,
-          endDate: this.filters.endDate || null,
+          startDate: this.filters.startDate
+            ? this.filters.startDate + "T00:00:00"
+            : null,
+          endDate: this.filters.endDate
+            ? this.filters.endDate + "T23:59:59"
+            : null,
           userFullName: this.filters.userFullName.trim() || null,
         });
         this.applyFilters();
@@ -232,6 +236,15 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    clearFilters() {
+      this.filters = {
+        rating: "",
+        startDate: "",
+        endDate: "",
+        userFullName: "",
+      };
+      this.fetchReviews();
     },
   },
   mounted() {

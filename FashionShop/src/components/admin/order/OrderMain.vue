@@ -88,27 +88,24 @@
         <tbody>
           <tr v-for="order in filteredOrders" :key="order.orderId">
             <td>{{ order.orderId }}</td>
-            <td>{{ order.userFullName || "Không xác định" }}</td>
-            <td>{{ new Date(order.orderDate).toLocaleDateString("vi-VN") }}</td>
+            <td>{{ order.userFullName || 'Không xác định' }}</td>
+            <td>{{ new Date(order.orderDate).toLocaleDateString('vi-VN') }}</td>
             <td>{{ order.address }}</td>
-            <td>{{ order.phoneNumber || "Không xác định" }}</td>
+            <td>{{ order.phoneNumber || 'Không xác định' }}</td>
             <td>{{ formatPrice(order.totalAmount) }}</td>
             <td>{{ order.paymentMethod }}</td>
             <td
               :class="{
                 'text-warning': order.status === 0,
                 'text-info': order.status === 1 || order.status === 2,
-                'text-success': order.status === 3,
-                'text-danger': order.status === 4 || order.status === 5,
+                'text-success': order.status === 3 || order.status === 6,
+                'text-danger': order.status === 4 || order.status === 5 || order.status === 7,
               }"
             >
               {{ orderStatus(order.status) }}
             </td>
             <td class="text-center">
-              <button
-                class="btn btn-primary btn-sm me-2"
-                @click="viewOrder(order.orderId)"
-              >
+              <button class="btn btn-primary btn-sm me-2" @click="viewOrder(order.orderId)">
                 Xem
               </button>
               <button
@@ -127,12 +124,12 @@
 </template>
 
 <script>
-import { getAllOrders, getOrderById, updateOrder } from "@/api/admin/orderAPI";
-import Datepicker from "vue3-datepicker";
-import { useToast } from "vue-toastification";
+import { getAllOrders, getOrderById, updateOrder } from '@/api/admin/orderAPI'
+import Datepicker from 'vue3-datepicker'
+import { useToast } from 'vue-toastification'
 
 export default {
-  name: "OrderMain",
+  name: 'OrderMain',
   components: { Datepicker },
   data() {
     return {
@@ -143,116 +140,115 @@ export default {
         status: [],
         startDate: null,
         endDate: null,
-        userFullName: "",
+        userFullName: '',
       },
       statusOptions: [
-        "Chờ xác nhận",
-        "Chờ lấy hàng",
-        "Chờ giao hàng",
-        "Đã giao",
-        "Trả hàng",
-        "Đã hủy",
+        'Chờ xác nhận', // 0
+        'Chờ lấy hàng', // 1
+        'Chờ giao hàng', // 2
+        'Đã giao', // 3
+        'Yêu cầu trả hàng', // 4
+        'Đã hủy', // 5
+        'Trả hàng đã duyệt', // 6
+        'Từ chối trả hàng', // 7 -> CÁI NÀY MÀY VIẾT CHƯA CHẮC CHẮN
       ],
+
       toast: useToast(),
-    };
+    }
   },
   methods: {
     formatPrice(price) {
-      return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-      }).format(price);
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND',
+      }).format(price)
     },
     orderStatus(status) {
-      return this.statusOptions[status] || "Không xác định";
+      return this.statusOptions[status] || 'Không xác định'
     },
     async fetchOrders() {
-      this.loading = true;
+      this.loading = true
       try {
-        this.orders = await getAllOrders();
-        this.applyFilters();
-        this.toast.success("Tải đơn hàng thành công!");
+        this.orders = await getAllOrders()
+        this.applyFilters()
+        this.toast.success('Tải đơn hàng thành công!')
       } catch (err) {
-        if (err.message.includes("Access denied")) {
-          this.toast.error(
-            "Bạn không có quyền truy cập. Vui lòng đăng nhập tài khoản admin."
-          );
-          this.$router.push("/login");
+        if (err.message.includes('Access denied')) {
+          this.toast.error('Bạn không có quyền truy cập. Vui lòng đăng nhập tài khoản admin.')
+          this.$router.push('/login')
         } else {
-          this.toast.error("Không thể tải danh sách đơn hàng.");
+          this.toast.error('Không thể tải danh sách đơn hàng.')
         }
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
     applyFilters() {
-      let result = [...this.orders];
+      let result = [...this.orders]
 
       if (this.filters.status.length > 0) {
-        result = result.filter((o) => this.filters.status.includes(o.status));
+        result = result.filter((o) => this.filters.status.includes(o.status))
       }
 
       if (this.filters.startDate && this.filters.endDate) {
-        const start = new Date(this.filters.startDate);
-        const end = new Date(this.filters.endDate);
-        end.setHours(23, 59, 59, 999);
+        const start = new Date(this.filters.startDate)
+        const end = new Date(this.filters.endDate)
+        end.setHours(23, 59, 59, 999)
         result = result.filter((o) => {
-          const orderDate = new Date(o.orderDate);
-          return orderDate >= start && orderDate <= end;
-        });
+          const orderDate = new Date(o.orderDate)
+          return orderDate >= start && orderDate <= end
+        })
       }
 
       if (this.filters.userFullName.trim()) {
-        const search = this.filters.userFullName.trim().toLowerCase();
-        result = result.filter((o) =>
-          (o.userFullName || "").toLowerCase().includes(search)
-        );
+        const search = this.filters.userFullName.trim().toLowerCase()
+        result = result.filter((o) => (o.userFullName || '').toLowerCase().includes(search))
       }
 
-      this.filteredOrders = result;
+      this.filteredOrders = result
     },
     clearFilters() {
       this.filters = {
         status: [],
         startDate: null,
         endDate: null,
-        userFullName: "",
-      };
-      this.applyFilters();
-      this.toast.info("Đã xóa tất cả bộ lọc.");
+        userFullName: '',
+      }
+      this.applyFilters()
+      this.toast.info('Đã xóa tất cả bộ lọc.')
     },
     viewOrder(orderId) {
-      this.$emit("view-order", orderId);
+      this.$emit('view-order', orderId)
     },
     async cancelOrder(orderId) {
-      if (!confirm("Bạn có chắc muốn hủy đơn hàng này?")) return;
-      this.loading = true;
+      if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return
+      this.loading = true
       try {
-        const order = await getOrderById(orderId);
+        const order = await getOrderById(orderId)
         if (order.status !== 0) {
-          this.toast.warning('Chỉ có thể hủy đơn hàng ở trạng thái "Chờ xác nhận".');
-          return;
+          this.toast.warning('Chỉ có thể hủy đơn hàng ở trạng thái "Chờ xác nhận".')
+          return
         }
-        await updateOrder(orderId, { ...order, status: 5 });
-        await this.fetchOrders();
-        this.toast.success("Đơn hàng đã được hủy.");
-        this.$emit("order-updated");
+        await updateOrder(orderId, { ...order, status: 5 })
+        await this.fetchOrders()
+        this.toast.success('Đơn hàng đã được hủy.')
+        this.$emit('order-updated')
       } catch (err) {
-        this.toast.error(err.message || "Lỗi khi hủy đơn hàng.");
+        this.toast.error(err.message || 'Lỗi khi hủy đơn hàng.')
       } finally {
-        this.loading = false;
+        this.loading = false
       }
     },
   },
   mounted() {
-    if (!localStorage.getItem("token")) {
-      this.toast.error("Vui lòng đăng nhập tài khoản admin.");
-      this.$router.push("/login");
+    if (!localStorage.getItem('token')) {
+      this.toast.error('Vui lòng đăng nhập tài khoản admin.')
+      this.$router.push('/login')
     } else {
-      this.fetchOrders();
+      this.fetchOrders()
     }
   },
-};
+}
 </script>
 
 <style scoped>
