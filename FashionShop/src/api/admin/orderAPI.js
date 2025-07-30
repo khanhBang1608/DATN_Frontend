@@ -43,17 +43,33 @@ export const updateOrder = async (orderId, orderData) => {
     throw new Error(error.response?.data?.message || 'Failed to update order');
   }
 };
-
 export const downloadInvoicePDF = async (orderId) => {
-  const res = await axios.get(`${API_URL}/${orderId}/invoice`, {
-    headers: {
-      ...getAuthHeaders(),
-      'Accept': 'application/pdf',
-    },
-    responseType: 'blob',
-  });
-  return res.data;
+  try {
+    const res = await axios.get(`${API_URL}/${orderId}/invoice`, {
+      headers: {
+        ...getAuthHeaders(),
+        'Accept': 'application/pdf',
+      },
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([res.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `hoa-don-${orderId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error('Download PDF failed:', error.response?.data || error.message);
+    throw new Error('Không thể tải hóa đơn PDF.');
+  }
 };
+
 export const approveReturnRequest = async (orderId) => {
   try {
     const response = await axios.put(`${API_URL}/${orderId}/approve-return`, null, {
