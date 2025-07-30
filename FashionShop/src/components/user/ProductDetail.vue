@@ -1,7 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getProductDetail, getRelatedProducts } from "@/api/ProductClient";
+import {
+  getProductDetail,
+  getRelatedProducts,
+  getFavoriteCount,
+} from "@/api/ProductClient";
 import ReviewComponent from "@/components/user/Review.vue";
 import promotionApi from "@/api/PromotionClien";
 import { toggleFavorite } from "@/api/user/FavoriteAPI";
@@ -10,11 +14,14 @@ import { addToCart } from "@/api/user/cartAPI";
 
 const router = useRouter();
 const isFavorite = ref(false);
+const favoriteCount = ref(0);
 
 const handleToggleFavorite = async () => {
   try {
     await toggleFavorite(product.value.productId);
     isFavorite.value = !isFavorite.value;
+    const countRes = await getFavoriteCount(product.value.productId); // cập nhật lại
+    favoriteCount.value = countRes.data.favoriteCount;
   } catch (err) {
     console.error(err);
   }
@@ -170,6 +177,8 @@ onMounted(async () => {
       });
 
       relatedProducts.value = related;
+      const countRes = await getFavoriteCount(id);
+      favoriteCount.value = countRes.data.favoriteCount;
     } catch (err) {
       console.error("Lỗi khi tải sản phẩm liên quan:", err);
     }
@@ -341,20 +350,14 @@ function getImageUrl(imageName) {
         </button>
 
         <!-- Yêu thích & Tìm -->
-        <div class="mb-2 mt-2">
-          <div class="d-flex justify-content-between text-muted small">
-            <div @click="handleToggleFavorite" style="cursor: pointer">
-              <i
-                :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
-              ></i>
-              {{
-                isFavorite
-                  ? "Đã nằm trong danh sách yêu thích"
-                  : "Thêm vào danh sách yêu thích"
-              }}
-            </div>
-            <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
+        <div class="d-flex justify-content-between text-muted small fs-5 mt-2">
+          <div @click="handleToggleFavorite" style="cursor: pointer">
+            <i
+              :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
+            ></i>
+            <span class="ms-1"> Đã thích ({{ favoriteCount }})</span>
           </div>
+          <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
         </div>
         <hr class="product-detail-divider" />
 

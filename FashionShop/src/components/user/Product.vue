@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import { onMounted, ref, nextTick, watch } from 'vue'
 import { setupFilterSidebar } from '@/assets/js/product'
@@ -633,4 +632,3 @@ const handleSort = (option) => {
 </template>
 
 <style src="./src/assets/css/product.css"></style>
-```

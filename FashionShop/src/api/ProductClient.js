@@ -34,3 +34,6 @@ export const searchProductsByName = (keyword) =>
 
 export const fetchAverageRating = (productId) =>
   axios.get(`${API_BASE}/products/${productId}/average-rating`);
+
+export const getFavoriteCount = (productId) =>
+  axios.get(`${API_BASE}/products/${productId}/favorite-count`);
