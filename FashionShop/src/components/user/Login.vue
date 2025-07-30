@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { forgotPasswordAPI } from "@/api/user/forgotPasswordAPI";
-import { loginWithGoogle } from './GoogleLogin.js'
+import { loginWithGoogle } from "./GoogleLogin.js";
 
 const email = ref("");
 const password = ref("");
@@ -40,9 +40,13 @@ const login = async () => {
 
       // ✅ Điều hướng theo quyền
       if (role === 0) {
-        router.push("/admin/dashboard");
+        router.push("/admin/dashboard").then(() => {
+          window.location.reload();
+        });
       } else {
-        router.push("/");
+        router.push("/").then(() => {
+          window.location.reload();
+        });
       }
     } else {
       throw new Error("Không tìm thấy thông tin người dùng");
@@ -98,11 +102,14 @@ const handleGoogleLogin = async () => {
 
     // ✅ Điều hướng theo quyền
     if (userData.role === 0) {
-      router.push("/admin/dashboard");
+      router.push("/admin/dashboard").then(() => {
+        window.location.reload();
+      });
     } else {
-      router.push("/");
+      router.push("/").then(() => {
+        window.location.reload();
+      });
     }
-
   } catch (err) {
     alert("Lỗi đăng nhập: " + err.message);
     console.error(err);
@@ -162,11 +169,8 @@ const handleGoogleLogin = async () => {
                 class="social-icon me-2"
               />
               Tiếp tục với Google
-
-
             </button>
           </div>
-
         </div>
       </div>
       <!-- Modal Quên Mật Khẩu -->
