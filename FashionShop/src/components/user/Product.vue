@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import { onMounted, ref, nextTick, watch } from 'vue'
 import { setupFilterSidebar } from '@/assets/js/product'
@@ -42,12 +41,16 @@ const handleProductClick = async (productId) => {
   try {
     const token = localStorage.getItem('token')
     if (token) {
-      await axios.post('/api/user/product-views/record', null, {
-        params: { productId },
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+      await axios.post(
+        "/api/user/product-views/record",
+        null,
+        {
+          params: { productId },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
     }
     router.push(`/product-detail/${productId}`)
   } catch (error) {
@@ -126,21 +129,21 @@ const handleSort = (option) => {
   let sortedProducts = [...products.value]
 
   switch (option) {
-    case 'Giá: Tăng dần':
-      sortedProducts.sort((a, b) => (a.variants[0]?.price || 0) - (b.variants[0]?.price || 0))
-      break
-    case 'Giá: Giảm dần':
-      sortedProducts.sort((a, b) => (b.variants[0]?.price || 0) - (a.variants[0]?.price || 0))
-      break
-    case 'Tên: A-Z':
-      sortedProducts.sort((a, b) => a.name.localeCompare(b.name))
-      break
-    case 'Tên: Z-A':
-      sortedProducts.sort((a, b) => b.name.localeCompare(a.name))
-      break
-    case 'Tồn kho: Giảm dần':
-      sortedProducts.sort((a, b) => (b.variants[0]?.stock || 0) - (a.variants[0]?.stock || 0))
-      break
+    case "Giá: Tăng dần":
+      sortedProducts.sort((a, b) => (a.variants[0]?.price || 0) - (b.variants[0]?.price || 0));
+      break;
+    case "Giá: Giảm dần":
+      sortedProducts.sort((a, b) => (b.variants[0]?.price || 0) - (a.variants[0]?.price || 0));
+      break;
+    case "Tên: A-Z":
+      sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "Tên: Z-A":
+      sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+      break;
+    case "Tồn kho: Giảm dần":
+      sortedProducts.sort((a, b) => (b.variants[0]?.stock || 0) - (a.variants[0]?.stock || 0));
+      break;
     default:
       break
   }
@@ -161,7 +164,7 @@ const handleSort = (option) => {
       </div>
 
       <h4 class="text-center mt-4 fw-bold">TẤT CẢ SẢN PHẨM</h4>
-      <hr class="my-2 mt-2" style="height: 1px; background-color: #000; border: none" />
+      <hr class="my-2 mt-2" style="height: 0.5px; background-color: #000; border: none" />
     </div>
 
     <div
@@ -527,21 +530,19 @@ const handleSort = (option) => {
       </p>
 
       <div class="dropdown product-sort-dropdown">
-        <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <button
+          class="btn btn-light dropdown-toggle"
+          type="button"
+          data-bs-toggle="dropdown"
+        >
           <i class="bi bi-chevron-down ms-2"></i> {{ sortOption }}
         </button>
         <ul class="dropdown-menu product-dropdown-box">
-          <li>
-            <a class="dropdown-item" @click="handleSort('Giá: Tăng dần')">Giá: Tăng dần</a>
-          </li>
-          <li>
-            <a class="dropdown-item" @click="handleSort('Giá: Giảm dần')">Giá: Giảm dần</a>
-          </li>
+          <li><a class="dropdown-item" @click="handleSort('Giá: Tăng dần')">Giá: Tăng dần</a></li>
+          <li><a class="dropdown-item" @click="handleSort('Giá: Giảm dần')">Giá: Giảm dần</a></li>
           <li><a class="dropdown-item" @click="handleSort('Tên: A-Z')">Tên: A-Z</a></li>
           <li><a class="dropdown-item" @click="handleSort('Tên: Z-A')">Tên: Z-A</a></li>
-          <li>
-            <a class="dropdown-item" @click="handleSort('Tồn kho: Giảm dần')">Tồn kho: Giảm dần</a>
-          </li>
+          <li><a class="dropdown-item" @click="handleSort('Tồn kho: Giảm dần')">Tồn kho: Giảm dần</a></li>
         </ul>
       </div>
     </div>

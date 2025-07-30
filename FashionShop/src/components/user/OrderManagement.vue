@@ -80,7 +80,8 @@
           <div
             class="order-management-tab"
             :class="{ active: selectedStatus === 'rejected' }"
-            @click="selectedStatus = 'rejected'">
+            @click="selectedStatus = 'rejected'"
+          >
             Từ chối trả hàng
           </div>
         </div>
@@ -152,150 +153,156 @@
       </table>
     </div>
   </div>
-<!-- Modal Chi tiết đơn hàng -->
-<div v-if="showOrderModal" class="product-detail-modal">
-  <div class="product-detail-modal-content">
-    <div class="product-detail-modal-header">
-      <h3>Chi tiết đơn hàng #{{ selectedOrder.orderId }}</h3>
-      <button class="product-detail-modal-close-btn" @click="closeOrderModal">
-        <i class="bi bi-x-lg"></i>
-      </button>
-    </div>
-    <div class="product-detail-modal-body">
-      <div class="order-info-section">
-        <h4 class="section-title">Thông tin đơn hàng</h4>
-        <div class="order-info-grid">
-          <p><strong>Ngày đặt:</strong> {{ formatDate(selectedOrder.orderDate) }}</p>
-          <p><strong>Tổng tiền:</strong> {{ formatPrice(selectedOrder.totalAmount) }}</p>
-          <p><strong>Trạng thái:</strong>
-            <span :class="getStatusClass(selectedOrder.status)">
-              {{ getStatusText(selectedOrder.status) }}
-            </span>
-          </p>
-          <p><strong>Địa chỉ:</strong> {{ selectedOrder.address }}</p>
-          <p><strong>Phương thức thanh toán:</strong> {{ selectedOrder.paymentMethod }}</p>
-          <p><strong>Phí vận chuyển:</strong> {{ formatPrice(selectedOrder.shippingFee) }}</p>
-          <p><strong>Giảm giá:</strong> {{ formatPrice(selectedOrder.discountAmount) }}</p>
-        </div>
+  <!-- Modal Chi tiết đơn hàng -->
+  <div v-if="showOrderModal" class="product-detail-modal">
+    <div class="product-detail-modal-content">
+      <div class="product-detail-modal-header">
+        <h3>Chi tiết đơn hàng #{{ selectedOrder.orderId }}</h3>
+        <button class="product-detail-modal-close-btn" @click="closeOrderModal">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
-      <div class="order-items-section">
-        <h4 class="section-title">Sản phẩm</h4>
-        <div v-for="item in selectedOrder.orderDetails" :key="item.orderDetailId" class="order-item-card">
-          <div class="d-flex align-items-center">
-            <img
-              :src="`http://localhost:8080/images/${item.imageUrl}`"
-              :alt="item.productName"
-              class="order-item-image me-3"
-              @error="handleImageError"
-            />
-            <div class="order-item-details flex-grow-1">
-              <p class="mb-0 fw-bold">{{ item.productName }}</p>
-              <p class="mb-0">Size: {{ item.size }} | Màu: {{ item.color }}</p>
-              <p class="mb-0">Số lượng: {{ item.quantity }}</p>
-              <p class="mb-0">Giá: {{ formatPrice(item.price) }}</p>
-            </div>
-            <div class="order-item-actions ms-auto">
-              <div class="fw-bold mb-2">{{ formatPrice(item.price * item.quantity) }}</div>
-              <button
-                v-if="selectedOrder.status === 3 && !item.reviewed"
-                class="order-management-action-btn review"
-                @click="toggleReviewCollapse(item.orderDetailId)"
-              >
-                <i class="bi bi-star-fill me-1"></i> Đánh giá
-              </button>
-              <router-link
-                :to="`/product-detail/${item.productId}`"
-                class="order-management-action-btn buy-again"
-              >
-                <i class="bi bi-cart-plus me-1"></i> Mua lại
-              </router-link>
-            </div>
+      <div class="product-detail-modal-body">
+        <div class="order-info-section">
+          <h4 class="section-title">Thông tin đơn hàng</h4>
+          <div class="order-info-grid">
+            <p><strong>Ngày đặt:</strong> {{ formatDate(selectedOrder.orderDate) }}</p>
+            <p><strong>Tổng tiền:</strong> {{ formatPrice(selectedOrder.totalAmount) }}</p>
+            <p>
+              <strong>Trạng thái:</strong>
+              <span :class="getStatusClass(selectedOrder.status)">
+                {{ getStatusText(selectedOrder.status) }}
+              </span>
+            </p>
+            <p><strong>Số điện thoại:</strong> {{ selectedOrder.address.split(' - ')[0] }}</p>
+            <p><strong>Địa chỉ:</strong> {{ selectedOrder.address.split(' - ')[1] }}</p>
+            <p><strong>Phương thức thanh toán:</strong> {{ selectedOrder.paymentMethod }}</p>
+            <p><strong>Phí vận chuyển:</strong> {{ formatPrice(selectedOrder.shippingFee) }}</p>
+            <p><strong>Giảm giá:</strong> {{ formatPrice(selectedOrder.discountAmount) }}</p>
           </div>
-          <!-- Collapse Form Đánh giá -->
+        </div>
+        <div class="order-items-section">
+          <h4 class="section-title">Sản phẩm</h4>
           <div
-            v-if="selectedOrder.status === 3 && !item.reviewed"
-            :id="'review-collapse-' + item.orderDetailId"
-            class="collapse mt-3"
-            :class="{ show: activeReviewCollapse === item.orderDetailId }"
+            v-for="item in selectedOrder.orderDetails"
+            :key="item.orderDetailId"
+            class="order-item-card"
           >
-            <div class="review-form card p-3">
-              <h5>Đánh giá sản phẩm {{ item.productName }}</h5>
-              <div class="form-group mb-3">
-                <label>Điểm đánh giá</label>
-                <div class="review-stars">
-                  <i
-                    v-for="n in 5"
-                    :key="n"
-                    :class="[
-                      'bi',
-                      n <= reviewRatings[item.orderDetailId] || 0
-                        ? 'bi-star-fill filled'
-                        : 'bi-star',
-                      'review-star',
-                    ]"
-                    @click="setReviewRating(item.orderDetailId, n)"
-                  ></i>
-                </div>
+            <div class="d-flex align-items-center">
+              <img
+                :src="`http://localhost:8080/images/${item.imageUrl}`"
+                :alt="item.productName"
+                class="order-item-image me-3"
+                @error="handleImageError"
+              />
+              <div class="order-item-details flex-grow-1">
+                <p class="mb-0 fw-bold">{{ item.productName }}</p>
+                <p class="mb-0">Size: {{ item.size }} | Màu: {{ item.color }}</p>
+                <p class="mb-0">Số lượng: {{ item.quantity }}</p>
+                <p class="mb-0">Giá: {{ formatPrice(item.price) }}</p>
               </div>
-              <div class="form-group mb-3">
-                <label>Bình luận</label>
-                <textarea
-                  v-model="reviewComments[item.orderDetailId]"
-                  placeholder="Nhập bình luận của bạn"
-                  class="form-control"
-                ></textarea>
-              </div>
-              <div class="form-group mb-3">
-                <label>Loại đánh giá</label>
-                <select v-model="reviewTypes[item.orderDetailId]" class="form-control">
-                  <option value="text">Chỉ văn bản</option>
-                  <option value="image">Hình ảnh</option>
-                  <option value="video">Video</option>
-                </select>
-              </div>
-              <div v-if="reviewTypes[item.orderDetailId] !== 'text'" class="form-group mb-3">
-                <label
-                  >Tải lên
-                  {{ reviewTypes[item.orderDetailId] === 'image' ? 'hình ảnh' : 'video' }}</label
+              <div class="order-item-actions ms-auto">
+                <div class="fw-bold mb-2">{{ formatPrice(item.price * item.quantity) }}</div>
+                <button
+                  v-if="selectedOrder.status === 3 && !item.reviewed"
+                  class="order-management-action-btn review"
+                  @click="toggleReviewCollapse(item.orderDetailId)"
                 >
-                <input
-                  type="file"
-                  class="form-control"
-                  :accept="
-                    reviewTypes[item.orderDetailId] === 'image'
-                      ? 'image/jpeg,image/png,image/gif'
-                      : 'video/mp4,video/webm,video/ogg'
-                  "
-                  @change="handleFileUpload($event, item.orderDetailId)"
-                />
-                <div v-if="filePreviews[item.orderDetailId]" class="file-preview mt-2">
-                  <img
-                    v-if="reviewTypes[item.orderDetailId] === 'image'"
-                    :src="filePreviews[item.orderDetailId]"
-                    alt="Preview"
-                    class="img-fluid"
-                  />
-                  <video
-                    v-else
-                    :src="filePreviews[item.orderDetailId]"
-                    controls
-                    class="img-fluid"
-                  ></video>
-                </div>
+                  <i class="bi bi-star-fill me-1"></i> Đánh giá
+                </button>
+                <router-link
+                  :to="`/product-detail/${item.productId}`"
+                  class="order-management-action-btn buy-again"
+                >
+                  <i class="bi bi-cart-plus me-1"></i> Mua lại
+                </router-link>
               </div>
-              <button
-                class="btn btn-primary"
-                @click="submitReview(item.orderDetailId, item.productName)"
-              >
-                Gửi đánh giá
-              </button>
+            </div>
+            <!-- Collapse Form Đánh giá -->
+            <div
+              v-if="selectedOrder.status === 3 && !item.reviewed"
+              :id="'review-collapse-' + item.orderDetailId"
+              class="collapse mt-3"
+              :class="{ show: activeReviewCollapse === item.orderDetailId }"
+            >
+              <div class="review-form card p-3">
+                <h5>Đánh giá sản phẩm {{ item.productName }}</h5>
+                <div class="form-group mb-3">
+                  <label>Điểm đánh giá</label>
+                  <div class="review-stars">
+                    <i
+                      v-for="n in 5"
+                      :key="n"
+                      :class="[
+                        'bi',
+                        n <= reviewRatings[item.orderDetailId] || 0
+                          ? 'bi-star-fill filled'
+                          : 'bi-star',
+                        'review-star',
+                      ]"
+                      @click="setReviewRating(item.orderDetailId, n)"
+                    ></i>
+                  </div>
+                </div>
+                <div class="form-group mb-3">
+                  <label>Bình luận</label>
+                  <textarea
+                    v-model="reviewComments[item.orderDetailId]"
+                    placeholder="Nhập bình luận của bạn"
+                    class="form-control"
+                  ></textarea>
+                </div>
+                <div class="form-group mb-3">
+                  <label>Loại đánh giá</label>
+                  <select v-model="reviewTypes[item.orderDetailId]" class="form-control">
+                    <option value="text">Chỉ văn bản</option>
+                    <option value="image">Hình ảnh</option>
+                    <option value="video">Video</option>
+                  </select>
+                </div>
+                <div v-if="reviewTypes[item.orderDetailId] !== 'text'" class="form-group mb-3">
+                  <label
+                    >Tải lên
+                    {{ reviewTypes[item.orderDetailId] === 'image' ? 'hình ảnh' : 'video' }}</label
+                  >
+                  <input
+                    type="file"
+                    class="form-control"
+                    :accept="
+                      reviewTypes[item.orderDetailId] === 'image'
+                        ? 'image/jpeg,image/png,image/gif'
+                        : 'video/mp4,video/webm,video/ogg'
+                    "
+                    @change="handleFileUpload($event, item.orderDetailId)"
+                  />
+                  <div v-if="filePreviews[item.orderDetailId]" class="file-preview mt-2">
+                    <img
+                      v-if="reviewTypes[item.orderDetailId] === 'image'"
+                      :src="filePreviews[item.orderDetailId]"
+                      alt="Preview"
+                      class="img-fluid"
+                    />
+                    <video
+                      v-else
+                      :src="filePreviews[item.orderDetailId]"
+                      controls
+                      class="img-fluid"
+                    ></video>
+                  </div>
+                </div>
+                <button
+                  class="btn btn-primary"
+                  @click="submitReview(item.orderDetailId, item.productName)"
+                >
+                  Gửi đánh giá
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 </template>
 
 <script>
@@ -337,7 +344,7 @@ export default {
           returnRequested: 4,
           cancelled: 5,
           refund: 6,
-          rejected: 7
+          rejected: 7,
         }
 
         const matchesStatus =

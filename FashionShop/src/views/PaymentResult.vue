@@ -8,13 +8,13 @@ const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 
-const status = route.query.status;
+const vnpStatus = route.query.vnp_TransactionStatus;
 
-if (status === "success") {
+if (vnpStatus === "00") {
   const orderData = JSON.parse(localStorage.getItem("pendingOrder"));
   if (orderData) {
     createOrder(orderData)
-      .then(async (res) => {
+      .then(async () => {
         await clearCart();
         localStorage.removeItem("pendingOrder");
         toast.success("Thanh toán & đặt hàng thành công!");
@@ -29,6 +29,8 @@ if (status === "success") {
   }
 } else {
   toast.error("Thanh toán thất bại hoặc bị hủy.");
-  router.push("/user/cart");
+  setTimeout(() => {
+    router.push("/user/cart");
+  }, 2000);
 }
 </script>

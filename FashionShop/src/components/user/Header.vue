@@ -113,7 +113,7 @@ function handleSearch() {
             <i class="bi bi-people fs-4"></i>
           </a>
 
-          <a href="/user/cart" class="text-dark text-decoration-none mx-2">
+          <a href="/user/favorite" class="text-dark text-decoration-none mx-2">
             <i class="bi bi-heart fs-4"></i>
           </a>
 
@@ -339,58 +339,6 @@ function handleSearch() {
           </ul>
 
           <div class="d-none d-lg-flex align-items-center">
-            <!-- Nếu ĐÃ đăng nhập: Hiện dropdown -->
-            <!-- <div v-if="isLoggedIn" class="dropdown">
-              <a
-                href="#"
-                class="text-dark text-decoration-none mx-2"
-                id="desktopUserDropdownToggle"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <i class="bi bi-person fs-4"></i>
-              </a>
-              <ul
-                class="dropdown-menu custom-dropdown shadow-sm border-0 rounded-3 mt-2"
-                style="min-width: 240px"
-                aria-labelledby="desktopUserDropdownToggle"
-              >
-                <li>
-                  <a class="dropdown-item" href="/user/profile"
-                    ><i class="bi bi-pencil-square me-2"></i> Cập nhật thông tin</a
-                  >
-                </li>
-                <li>
-                  <a class="dropdown-item" href="/user/change-password"
-                    ><i class="bi bi-key me-2"></i> Đổi mật khẩu</a
-                  >
-                </li>
-                <li>
-                  <a class="dropdown-item" href="/user/address"
-                    ><i class="bi bi-geo-alt-fill me-2"></i> Địa chỉ của tôi</a
-                  >
-                </li>
-                <li>
-                  <a class="dropdown-item" href="/user/order-management"
-                    ><i class="bi bi-box-seam me-2"></i> Đơn hàng</a
-                  >
-                </li>
-                <li>
-                  <a class="dropdown-item" href="/user/review-history"
-                    ><i class="bi bi-star-fill me-2"></i> Lịch sử đánh giá</a
-                  >
-                </li>
-                <li>
-                  <hr class="dropdown-divider" />
-                </li>
-                <li>
-                  <a class="dropdown-item text-danger" href="/logout"
-                    ><i class="bi bi-box-arrow-right me-2"></i> Đăng xuất</a
-                  >
-                </li>
-              </ul>
-            </div> -->
-
             <div v-if="isLoggedIn" class="dropdown position-relative">
               <a
                 href="#"
@@ -431,7 +379,7 @@ function handleSearch() {
               </a>
             </div>
 
-            <a href="/user/cart" class="text-dark text-decoration-none mx-2">
+            <a href="/user/favorite" class="text-dark text-decoration-none mx-2">
               <i class="bi bi-heart fs-4"></i>
             </a>
 

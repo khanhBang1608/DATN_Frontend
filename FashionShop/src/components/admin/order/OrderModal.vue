@@ -32,16 +32,11 @@
             </div>
             <div class="col-md-6">
               <label class="form-label">Địa chỉ</label>
-              <input type="text" class="form-control" :value="order.address" disabled />
+              <input type="text" class="form-control" :value="extractedAddress" disabled />
             </div>
             <div class="col-md-6">
               <label class="form-label">Số điện thoại</label>
-              <input
-                type="text"
-                class="form-control"
-                :value="order.phoneNumber || 'Không xác định'"
-                disabled
-              />
+              <input type="text" class="form-control" :value="extractedPhone" disabled />
             </div>
             <div class="col-md-6">
               <label class="form-label">Tổng số tiền</label>
@@ -190,6 +185,15 @@ export default {
         'Từ chối trả hàng',
       ],
     }
+  },
+
+  computed: {
+    extractedPhone() {
+      return this.order?.address?.split(' - ')[0] || 'Không xác định'
+    },
+    extractedAddress() {
+      return this.order?.address?.split(' - ')[1] || this.order?.address || 'Không xác định'
+    },
   },
   methods: {
     async approveReturn() {

@@ -90,8 +90,8 @@
             <td>{{ order.orderId }}</td>
             <td>{{ order.userFullName || 'Không xác định' }}</td>
             <td>{{ new Date(order.orderDate).toLocaleDateString('vi-VN') }}</td>
-            <td>{{ order.address }}</td>
-            <td>{{ order.phoneNumber || 'Không xác định' }}</td>
+            <td>{{ extractAddress(order.address) }}</td>
+            <td>{{ extractPhone(order.address) }}</td>
             <td>{{ formatPrice(order.totalAmount) }}</td>
             <td>{{ order.paymentMethod }}</td>
             <td
@@ -157,6 +157,13 @@ export default {
     }
   },
   methods: {
+    extractPhone(address) {
+      return address?.split(' - ')[0] || 'Không xác định'
+    },
+    extractAddress(address) {
+      return address?.split(' - ')[1] || address
+    },
+
     formatPrice(price) {
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
