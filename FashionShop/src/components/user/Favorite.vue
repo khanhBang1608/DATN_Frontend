@@ -67,7 +67,11 @@
                       {{ getOriginalPrice(item)?.toLocaleString() }}₫
                     </span>
                   </div>
-
+                  <div class="view-count text-muted" style="font-size: 14px">
+                    <i class="bi bi-eye me-1"></i>{{ item.product.viewCount || 0
+                    }}<i class="bi bi-bag-check me-1 ms-3"></i
+                    >{{ item.product.soldCount || 0 }} sản phẩm
+                  </div>
                   <div class="product-rating">
                     <span v-for="i in 5" :key="i">
                       <i
@@ -123,7 +127,8 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { getFavorites, toggleFavorite } from "@/api/user/FavoriteAPI";
-import promotionApi from '@/api/PromotionClien';
+import { fetchAverageRating } from "@/api/ProductClient";
+import promotionApi from "@/api/PromotionClien";
 
 const router = useRouter();
 const favoriteProducts = ref([]);
@@ -141,23 +146,56 @@ const loadFavorites = async () => {
       });
     });
 
-    favorites.forEach((item) => {
-      const variant = item.product.variants?.[0];
-      if (!variant) return;
+    const token = localStorage.getItem("token");
 
-      const promo = promotionMap.get(variant.productVariantId);
-      if (promo) {
-        const discountPercent = promo.discountAmount || 0;
-        const originalPrice = variant.price;
-        const discountedPrice = originalPrice * (1 - discountPercent / 100);
+    favoriteProducts.value = await Promise.all(
+      favorites.map(async (item) => {
+        const variant = item.product.variants?.[0];
+        if (!variant) return item;
 
-        item.product.originalPrice = originalPrice;
-        variant.price = Math.round(discountedPrice);
-        item.product.discount = discountPercent;
-      }
-    });
+        // Handle promotions
+        const promo = promotionMap.get(variant.productVariantId);
+        if (promo) {
+          const discountPercent = promo.discountAmount || 0;
+          const originalPrice = variant.price;
+          const discountedPrice = originalPrice * (1 - discountPercent / 100);
+          item.product.originalPrice = originalPrice;
+          variant.price = Math.round(discountedPrice);
+          item.product.discount = discountPercent;
+        }
 
-    favoriteProducts.value = favorites;
+        // Fetch average rating
+        const rating = await fetchAverageRating(item.product.productId);
+        item.product.averageRating = rating.data;
+
+        // Fetch sold count
+        const soldResponse = await axios.get(
+          `/api/public/products/${item.product.productId}/sold-count`
+        );
+        item.product.soldCount = soldResponse.data.soldCount || 0;
+
+        // Fetch view count (assuming viewCount is available in ProductEntity or via API)
+        if (token) {
+          try {
+            const viewResponse = await axios.get("/api/user/product-views/recent", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const viewItem = viewResponse.data.find(
+              (view) => view.product?.[0]?.productId === item.product.productId
+            );
+            item.product.viewCount = viewItem ? viewItem.product[0].viewCount || 0 : 0;
+          } catch (error) {
+            console.error("Lỗi khi lấy lượt xem:", error);
+            item.product.viewCount = 0;
+          }
+        } else {
+          item.product.viewCount = 0;
+        }
+
+        return item;
+      })
+    );
+
     message.value = "";
   } catch (err) {
     message.value = err.message || "Lỗi khi tải danh sách yêu thích.";
@@ -184,7 +222,7 @@ const getDiscount = (item) => {
   if (original && p?.price && original > p.price) {
     return Math.round(((original - p.price) / original) * 100);
   }
-  return 0;
+  return item.product.discount || 0; // Fallback to discount from promotion
 };
 
 const getPrice = (item) => item.product.variants?.[0]?.price || 0;
@@ -194,16 +232,12 @@ const handleProductClick = async (productId) => {
   try {
     const token = localStorage.getItem("token");
     if (token) {
-      await axios.post(
-        "/api/user/product-views/record",
-        null,
-        {
-          params: { productId },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.post("/api/user/product-views/record", null, {
+        params: { productId },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
     }
     router.push(`/product-detail/${productId}`);
   } catch (error) {
@@ -216,7 +250,6 @@ onMounted(() => {
   loadFavorites();
 });
 </script>
-
 
 <style scoped>
 .product-content-wrapper {
