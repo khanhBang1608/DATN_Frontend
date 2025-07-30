@@ -1,3 +1,4 @@
+```vue
 <template>
   <div>
     <!-- Danh mục -->
@@ -63,13 +64,16 @@
                 <div>
                   <span class="discounted-price">
                     {{
-                      product.variants[0]?.price ? product.variants[0].price.toLocaleString() : '0'
+                      product.variants[0]?.price
+                        ? product.variants[0].price.toLocaleString()
+                        : "0"
                     }}₫
                   </span>
                   <span
                     class="original-price"
                     v-if="
-                      product.originalPrice && product.originalPrice > product.variants[0]?.price
+                      product.originalPrice &&
+                      product.originalPrice > product.variants[0]?.price
                     "
                   >
                     {{ product.originalPrice.toLocaleString() }}₫
@@ -87,11 +91,11 @@
                     ></i>
                   </span>
                   <span class="ms-1 text-muted"
-                    >({{ product.averageRating?.toFixed(1) || '0.0' }})</span
+                    >({{ product.averageRating?.toFixed(1) || "0.0" }})</span
                   >
                 </div>
                 <div class="sold-count text-muted" style="font-size: 14px">
-                  Đã bán: {{ product.soldCount || 0 }} sản phẩm
+                  <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản phẩm
                 </div>
               </a>
             </div>
@@ -168,13 +172,16 @@
                 <div>
                   <span class="discounted-price">
                     {{
-                      product.variants[0]?.price ? product.variants[0].price.toLocaleString() : '0'
+                      product.variants[0]?.price
+                        ? product.variants[0].price.toLocaleString()
+                        : "0"
                     }}₫
                   </span>
                   <span
                     class="original-price"
                     v-if="
-                      product.originalPrice && product.originalPrice > product.variants[0]?.price
+                      product.originalPrice &&
+                      product.originalPrice > product.variants[0]?.price
                     "
                   >
                     {{ product.originalPrice.toLocaleString() }}₫
@@ -192,11 +199,11 @@
                     ></i>
                   </span>
                   <span class="ms-1 text-muted"
-                    >({{ product.averageRating?.toFixed(1) || '0.0' }})</span
+                    >({{ product.averageRating?.toFixed(1) || "0.0" }})</span
                   >
                 </div>
                 <div class="sold-count text-muted" style="font-size: 14px">
-                  Đã bán: {{ product.soldCount || 0 }} sản phẩm
+                  <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản phẩm
                 </div>
               </a>
             </div>
@@ -247,18 +254,27 @@
                 <div>
                   <span class="discounted-price">
                     {{
-                      product.variants[0]?.price ? product.variants[0].price.toLocaleString() : '0'
+                      product.variants[0]?.price
+                        ? product.variants[0].price.toLocaleString()
+                        : "0"
                     }}₫
                   </span>
                   <span
                     class="original-price"
                     v-if="
-                      product.originalPrice && product.originalPrice > product.variants[0]?.price
+                      product.originalPrice &&
+                      product.originalPrice > product.variants[0]?.price
                     "
                   >
                     {{ product.originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
+
+                <div class="view-count text-muted" style="font-size: 14px">
+                  <i class="bi bi-eye me-1"></i>{{ product.viewCount || 0 }}
+                  <i class="bi bi-bag-check me-1 ms-3"></i>{{ product.soldCount || 0 }}
+                </div>
+
                 <div class="product-rating">
                   <span v-for="i in 5" :key="i">
                     <i
@@ -271,14 +287,8 @@
                     ></i>
                   </span>
                   <span class="ms-1 text-muted"
-                    >({{ product.averageRating?.toFixed(1) || '0.0' }})</span
+                    >({{ product.averageRating?.toFixed(1) || "0.0" }})</span
                   >
-                </div>
-                <div class="view-count text-muted" style="font-size: 14px">
-                  Đã xem: {{ product.viewCount || 0 }} lần
-                </div>
-                <div class="sold-count text-muted" style="font-size: 14px">
-                  Đã bán: {{ product.soldCount || 0 }} sản phẩm
                 </div>
               </a>
             </div>
@@ -294,8 +304,8 @@ import axios from "axios";
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import { categories, useScrollCategory } from "@/assets/js/scrollcategory.js";
-import { fetchAverageRating } from '@/api/ProductClient';
-import promotionApi from '@/api/PromotionClien';
+import { fetchAverageRating } from "@/api/ProductClient";
+import promotionApi from "@/api/PromotionClien";
 
 // Khởi tạo các ref
 const scrollContent = ref(null);
@@ -338,8 +348,10 @@ const processProducts = async (products) => {
       products.map(async (product) => {
         if (!product.variants || product.variants.length === 0) return product;
 
-        let minVariant = product.variants.reduce((min, v) =>
-          v.price < min.price ? v : min, product.variants[0]);
+        let minVariant = product.variants.reduce(
+          (min, v) => (v.price < min.price ? v : min),
+          product.variants[0]
+        );
 
         const promo = promotionMap.get(minVariant.productVariantId);
         if (promo) {
@@ -355,15 +367,20 @@ const processProducts = async (products) => {
         product.averageRating = rating.data;
 
         // Gọi API mới để lấy số lượng đã bán
-        const soldResponse = await axios.get(`/api/public/products/${product.productId}/sold-count`);
+        const soldResponse = await axios.get(
+          `/api/public/products/${product.productId}/sold-count`
+        );
         product.soldCount = soldResponse.data.soldCount || 0;
 
-        product.variants = [minVariant, ...product.variants.filter((v) => v !== minVariant)];
+        product.variants = [
+          minVariant,
+          ...product.variants.filter((v) => v !== minVariant),
+        ];
         return product;
       })
     );
   } catch (err) {
-    console.error('Lỗi khi xử lý sản phẩm:', err);
+    console.error("Lỗi khi xử lý sản phẩm:", err);
     return products;
   }
 };
@@ -454,4 +471,4 @@ onBeforeUnmount(() => {
 </script>
 
 <style src="./src/assets/css/product.css"></style>
-
+```
