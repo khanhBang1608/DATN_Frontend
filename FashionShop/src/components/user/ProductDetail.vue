@@ -341,13 +341,17 @@ function getImageUrl(imageName) {
         </button>
 
         <!-- Yêu thích & Tìm -->
-        <div class="mb-2">
+        <div class="mb-2 mt-2">
           <div class="d-flex justify-content-between text-muted small">
             <div @click="handleToggleFavorite" style="cursor: pointer">
               <i
                 :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
               ></i>
-              {{ isFavorite ? "Đã yêu thích" : "Thêm vào Danh sách yêu thích" }}
+              {{
+                isFavorite
+                  ? "Đã nằm trong danh sách yêu thích"
+                  : "Thêm vào danh sách yêu thích"
+              }}
             </div>
             <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
           </div>

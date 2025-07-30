@@ -136,8 +136,8 @@ const router = createRouter({
       props: true
     },
     {
-      path: '/user/listfavorite',
-      name: 'listfavorite',
+      path: '/user/favorite',
+      name: 'favorite',
       component: FavoriteView,
       props: true
     },
