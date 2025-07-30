@@ -29,6 +29,8 @@ if (vnpStatus === "00") {
   }
 } else {
   toast.error("Thanh toán thất bại hoặc bị hủy.");
-  router.push("/user/cart");
+  setTimeout(() => {
+    router.push("/user/cart");
+  }, 2000);
 }
 </script>
