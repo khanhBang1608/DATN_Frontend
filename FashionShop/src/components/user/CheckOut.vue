@@ -132,6 +132,7 @@ export default {
 
       try {
         if (this.paymentMethod === "COD") {
+
           // Đặt hàng bình thường
           const orderData = {
             address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`,
@@ -165,6 +166,7 @@ export default {
           const tempOrderData = {
             address: `${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`,
             paymentMethod: this.paymentMethod,
+            paymentStatus : 1,
             discountCode: this.discountCode || null,
             discountAmount: this.discountAmount || 0,
             orderDetails: this.cartDetails.map((item) => ({

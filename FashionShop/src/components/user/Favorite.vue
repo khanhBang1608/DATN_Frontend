@@ -29,7 +29,7 @@
           <div class="row g-3 mt-2">
             <div
               v-for="item in favoriteProducts"
-              :key="item.productId"
+              :key="item.id"
               class="col-6 col-sm-6 col-md-4 col-lg-3"
             >
               <div class="product-content-wrapper position-relative">
@@ -38,21 +38,10 @@
                   class="product-link"
                 >
                   <div class="product-item">
-                    <span
-                      v-if="item.variants?.[0]?.discountPercent > 0"
-                      class="discount-badge"
-                    >
-                      -{{ item.variants[0].discountPercent }}%
-                    </span>
                     <img
-                      :src="getImageUrl(item.variants?.[0]?.imageName)"
-                      class="img-fluid img-default"
-                      :alt="item.name"
-                    />
-                    <img
-                      :src="getImageUrl(item.variants?.[0]?.imageName)"
-                      class="img-fluid img-hover"
-                      :alt="item.name"
+                      :src="getImageUrl(item.imageName)"
+                      class="img-fluid"
+                      :alt="item.productName"
                     />
                   </div>
                   <div class="product-name mt-2 text-truncate">{{ item.name }}</div>
@@ -61,10 +50,7 @@
                       {{ item.variants?.[0]?.discountedPrice?.toLocaleString() }}₫
                     </span>
                     <span
-                      v-if="
-                        item.variants?.[0]?.discountedPrice <
-                        item.variants?.[0]?.originalPrice
-                      "
+                      v-if="item.variants?.[0]?.discountedPrice < item.variants?.[0]?.originalPrice"
                       class="original-price text-muted text-decoration-line-through ms-2"
                     >
                       {{ item.variants?.[0]?.originalPrice?.toLocaleString() }}₫
@@ -72,7 +58,7 @@
                   </div>
                 </RouterLink>
                 <button
-                  class="btn btn-sm btn-outline-danger w-100 mt-2"
+                  class="btn btn-sm btn-outline-danger w-100"
                   @click="removeFromFavorite(item.productId)"
                 >
                   Gỡ khỏi yêu thích ❤️
@@ -114,6 +100,7 @@ const message = ref("");
 const loadFavorites = async () => {
   try {
     favoriteProducts.value = await getFavorites();
+    message.value = "";
   } catch (err) {
     message.value = err.message || "Lỗi khi tải danh sách yêu thích.";
   }
@@ -123,14 +110,14 @@ const removeFromFavorite = async (productId) => {
   try {
     const result = await toggleFavorite(productId);
     message.value = result;
-    await loadFavorites(); // Cập nhật lại danh sách
+    await loadFavorites();
   } catch (err) {
     message.value = err.message || "Lỗi khi xoá sản phẩm yêu thích.";
   }
 };
 
 const getImageUrl = (imageName) => {
-  return imageName ? `/images/${imageName}` : "/images/default.png";
+  return imageName ? `http://localhost:8080/images/${imageName}` : "/images/default.png";
 };
 
 onMounted(() => {
@@ -139,115 +126,38 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.product-item {
-  position: relative;
-  overflow: hidden;
-  height: 360px;
-}
-
-.product-item img {
-  height: 360px;
-  width: 100%;
+.card-img-top {
+  height: 200px;
   object-fit: cover;
-  display: block;
-  transition: opacity 0.4s ease;
-  position: absolute;
-  top: 0;
-  left: 0;
 }
 
-.img-hover {
-  opacity: 0;
-  z-index: 2;
-}
-
-.product-item:hover .img-hover {
-  opacity: 1;
-}
-
-.product-item:hover .img-default {
-  opacity: 0;
+.product-item-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .discount-badge {
   position: absolute;
-  top: 5px;
-  left: 5px;
-  background: white;
-  color: red;
-  font-weight: bold;
-  padding: 5px 10px;
-  font-size: 14px;
-  z-index: 3;
+  top: 8px;
+  left: 8px;
+  background: red;
+  color: white;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  border-radius: 4px;
 }
 
 .product-name {
   position: relative;
   font-weight: 500;
-  margin-top: 8px;
-}
-
-.original-price {
-  text-decoration: line-through;
-  color: #999;
-  margin-left: 8px;
 }
 
 .discounted-price {
-  color: red;
-  font-weight: bold;
+  font-size: 1.1rem;
 }
 
-.product-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-}
-
-/* Empty State */
-.favorite-empty {
-  text-align: center;
-  padding: 80px 24px;
-}
-
-.favorite-empty-icon {
-  width: 96px;
-  height: 96px;
-  background-color: #f3f4f6;
-  border-radius: 9999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 24px;
-}
-
-.favorite-empty-title {
-  font-size: 1.5rem;
-  color: #111827;
-  font-weight: 600;
-}
-
-.favorite-empty-message {
-  font-size: 1rem;
-  color: #6b7280;
-  margin-bottom: 16px;
-}
-
-.favorite-start-btn {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 20px;
-  background-color: #000;
-  color: #fff;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 1rem;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.favorite-start-btn:hover {
-  background-color: #1f2937;
-  transform: translateY(-1px);
+.original-price {
+  font-size: 0.9rem;
 }
 </style>
