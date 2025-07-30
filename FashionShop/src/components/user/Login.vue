@@ -28,15 +28,17 @@ const login = async () => {
 
     if (response.data && response.data.user) {
       const user = response.data.user;
-      console.log(user)
       const role = user.role; // 0 = admin, 1 = user
 
-      // Lưu token và role
+      // ✅ Lưu token, role và thời gian hết hạn (sau 2 tiếng)
+      const ttl = 2 * 60 * 60 * 1000; // 2 tiếng tính bằng milliseconds
+      const expiresAt = Date.now() + ttl;
+
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("role", role);
-      // document.cookie = `userRole=${role}; path=/`;
+      localStorage.setItem("tokenExpiresAt", expiresAt.toString());
 
-      // Điều hướng theo quyền
+      // ✅ Điều hướng theo quyền
       if (role === 0) {
         router.push("/admin/dashboard");
       } else {
@@ -88,8 +90,11 @@ const handleGoogleLogin = async () => {
     const { token, user: userData } = response.data;
 
     // ✅ Lưu token và role vào localStorage
+    const ttl = 2 * 60 * 60 * 1000; // 2 tiếng tính bằng milliseconds
+    const expiresAt = Date.now() + ttl;
     localStorage.setItem("token", token);
     localStorage.setItem("role", userData.role);
+    localStorage.setItem("tokenExpiresAt", expiresAt.toString());
 
     // ✅ Điều hướng theo quyền
     if (userData.role === 0) {
