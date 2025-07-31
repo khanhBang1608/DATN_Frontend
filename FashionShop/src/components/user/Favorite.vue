@@ -53,26 +53,42 @@
                       :alt="item.product.name"
                     />
                   </div>
-<<<<<<<<< Temporary merge branch 1
-                  <div class="product-name mt-2 text-truncate">{{ item.name }}</div>
+
+                  <div class="product-name">{{ item.product.name }}</div>
+
                   <div>
                     <span class="discounted-price">
                       {{ getPrice(item)?.toLocaleString() }}₫
                     </span>
                     <span
-                      v-if="
-                        item.variants?.[0]?.discountedPrice <
-                        item.variants?.[0]?.originalPrice
-                      "
-                      class="original-price text-muted text-decoration-line-through ms-2"
+                      class="original-price"
+                      v-if="getOriginalPrice(item) > getPrice(item)"
                     >
-                      {{ item.variants?.[0]?.originalPrice?.toLocaleString() }}₫
+                      {{ getOriginalPrice(item)?.toLocaleString() }}₫
                     </span>
                   </div>
-=========
-                  <div class="product-name text-truncate">{{ item.productName }}</div>
->>>>>>>>> Temporary merge branch 2
-                </RouterLink>
+<div class="view-count text-muted" style="font-size: 14px">
+                    <i class="bi bi-eye me-1"></i>{{ item.product.viewCount || 0
+                    }}<i class="bi bi-bag-check me-1 ms-3"></i
+                    >{{ item.product.soldCount || 0 }} sản phẩm
+                  </div>
+                  <div class="product-rating">
+                    <span v-for="i in 5" :key="i">
+                      <i
+                        class="bi"
+                        :class="
+                          i <= Math.round(item.product.averageRating || 0)
+                            ? 'bi-star-fill text-warning'
+                            : 'bi-star text-muted'
+                        "
+                      ></i>
+                    </span>
+                    <span class="ms-1 text-muted">
+                      ({{ item.product.averageRating?.toFixed(1) || "0.0" }})
+                    </span>
+                  </div>
+                </a>
+
                 <button
                   class="btn btn-sm btn-outline-danger w-100 mt-2"
                   @click="removeFromFavorite(item.product.productId)"
@@ -138,7 +154,7 @@ const loadFavorites = async () => {
         if (!variant) return item;
 
         // Handle promotions
-        const promo = promotionMap.get(variant.productVariantId);
+const promo = promotionMap.get(variant.productVariantId);
         if (promo) {
           const discountPercent = promo.discountAmount || 0;
           const originalPrice = variant.price;
@@ -225,7 +241,7 @@ const handleProductClick = async (productId) => {
     }
     router.push(`/product-detail/${productId}`);
   } catch (error) {
-    console.error("Lỗi khi ghi nhận lượt xem:", error);
+console.error("Lỗi khi ghi nhận lượt xem:", error);
     router.push(`/product-detail/${productId}`);
   }
 };
@@ -236,15 +252,22 @@ onMounted(() => {
 </script>
 
 <style scoped>
-<<<<<<<<< Temporary merge branch 1
+.product-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+}
+
 .product-item {
   position: relative;
   overflow: hidden;
-  height: 360px;
+  height: 280px;
+  width: 100%;
 }
 
 .product-item img {
-  height: 360px;
+  height: 100%;
   width: 100%;
   object-fit: cover;
   display: block;
@@ -277,32 +300,13 @@ onMounted(() => {
   padding: 5px 10px;
   font-size: 14px;
   z-index: 3;
-=========
-.product-item-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.5rem; /* Controlled spacing between image, name, and button */
-}
-
-.product-item {
-  width: 100%;
-  height: 280px;
-  overflow: hidden;
-}
-
-.img-fluid {
-  width: 100%;
-  height: auto;
-  max-width: 100%;
-  display: block;
->>>>>>>>> Temporary merge branch 2
 }
 
 .product-name {
   position: relative;
   font-weight: 500;
-<<<<<<<<< Temporary merge branch 1
+  text-align: center;
+  padding: 0 0.5rem;
   margin-top: 8px;
 }
 
@@ -313,17 +317,60 @@ onMounted(() => {
 }
 
 .discounted-price {
-  font-size: 1.1rem;
+  color: red;
+  font-weight: bold;
 }
 
-.original-price {
-  font-size: 0.9rem;
+.product-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
-</style>
-=========
+
+/* Empty State */
+.favorite-empty {
   text-align: center;
-  padding: 0 0.5rem; 
+  padding: 80px 24px;
 }
 
+.favorite-empty-icon {
+  width: 96px;
+  height: 96px;
+  background-color: #f3f4f6;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
+.favorite-empty-title {
+  font-size: 1.5rem;
+  color: #111827;
+  font-weight: 600;
+}
+
+.favorite-empty-message {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+.favorite-start-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 20px;
+  background-color: #000;
+  color: #fff;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.favorite-start-btn:hover {
+  background-color: #1f2937;
+  transform: translateY(-1px);
+}
 </style>
->>>>>>>>> Temporary merge branch 2

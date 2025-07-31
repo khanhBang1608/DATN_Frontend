@@ -93,21 +93,16 @@
 
 /* ========== Modal Swiper ========== */
 #galleryModal {
-  position: fixed;
-  z-index: 9999;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
   background: rgba(0, 0, 0, 0.9);
-  display: flex; /* Mặc định là flex, được kiểm soát bởi v-show */
+
   justify-content: center;
   align-items: center;
 }
 
-#galleryModal[style*="display: none"] {
-  display: none !important; /* Đảm bảo v-show ẩn nó đúng cách */
-}
 .pd-modal-slider {
     position: relative;
     max-width: 90%;

@@ -11,6 +11,7 @@ import ReviewComponent from "@/components/user/Review.vue";
 import promotionApi from "@/api/PromotionClien";
 import { toggleFavorite, checkFavorite } from "@/api/user/FavoriteAPI";
 import { addToCart } from "@/api/user/cartAPI";
+import axios from "axios";
 
 const router = useRouter();
 const route = useRoute();
@@ -270,51 +271,28 @@ onMounted(async () => {
     <div class="row">
       <div class="col-md-6">
         <div class="product-detail-gallery">
-          <div class="product-detail-thumbnails" v-if="!isMobile">
-            <img
-              v-for="(src, index) in imageSources"
-              :key="index"
-              :src="src"
-              :class="{ active: currentIndex === index }"
-              @click="scrollToImage(index)"
-              loading="lazy"
-            />
-          </div>
+          <div class="product-detail-thumbnails" ref="thumbnailList"></div>
 
-          <div class="product-detail-scroll-wrapper position-relative" v-if="!isMobile">
+          <div class="product-detail-scroll-wrapper position-relative">
             <div class="product-detail-scroll-area" ref="scrollArea">
-              <div class="product-detail-large-images">
-                <div
-                  v-for="(src, index) in imageSources"
-                  :key="index"
-                  class="product-detail-zoom-container"
-                >
-                  <img :src="src" :id="'img' + index" loading="lazy" />
-                </div>
-              </div>
+              <div class="product-detail-large-images" ref="largeImagesContainer"></div>
             </div>
           </div>
 
           <div
             class="product-detail-fullscreen-icon d-flex justify-content-center"
-            v-if="!isMobile"
             @click="openCurrentGallery"
           >
             <i class="bi bi-arrows-fullscreen"></i>
           </div>
 
           <!-- Mobile Swiper -->
-          <div class="pd-mobile-swiper" v-if="isMobile">
+          <div class="pd-mobile-swiper">
             <div class="swiper pd-mobile-swiper-core">
-              <div class="swiper-wrapper">
-                <div
-                  class="swiper-slide"
-                  v-for="(src, index) in imageSources"
-                  :key="index"
-                >
-                  <img :src="src" class="img-fluid" />
-                </div>
-              </div>
+              <div
+                class="swiper-wrapper pd-mobile-swiper-wrapper"
+                ref="mobileSwiperWrapper"
+              ></div>
               <div class="swiper-pagination pd-mobile-swiper-pagination"></div>
             </div>
             <button class="pd-scroll-btn pd-scroll-left" @click="swiperSlidePrev">
@@ -541,19 +519,15 @@ onMounted(async () => {
   </div>
 
   <!-- Swiper Modal -->
-  <div id="galleryModal" v-show="isModalOpen" @click="closeGallery">
+  <div ref="galleryModal" id="galleryModal" @click="closeGallery">
     <div class="pd-modal-slider">
       <div class="swiper pd-modal-swiper">
-        <div class="swiper-wrapper" ref="modalWrapper">
-          <div class="swiper-slide" v-for="(src, index) in imageSources" :key="index">
-            <img :src="src" alt="Hình ảnh gallery" />
-          </div>
-        </div>
+        <div class="swiper-wrapper pd-modal-swiper-wrapper" ref="swiperWrapper"></div>
         <div class="swiper-button-next pd-modal-swiper-next"></div>
         <div class="swiper-button-prev pd-modal-swiper-prev"></div>
         <div class="swiper-pagination pd-modal-swiper-pagination"></div>
       </div>
-      <span class="pd-modal-close-btn" @click="closeGallery">&times;</span>
+      <span class="pd-modal-close-btn" @click="closeGallery($event)">&times;</span>
     </div>
   </div>
 </template>
