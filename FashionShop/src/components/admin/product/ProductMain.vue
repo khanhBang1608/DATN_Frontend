@@ -42,7 +42,7 @@ const fetchCategories = async () => {
   try {
     categories.value = await getAllCategories();
   } catch (error) {
-    console.error("❌ Không tải được danh mục:", error);
+    console.error("Không tải được danh mục:", error);
   }
 };
 
@@ -62,7 +62,7 @@ const openEditModal = async (id) => {
     product.value = await getProductById(id);
     showModal.value = true;
   } catch (error) {
-    console.error("❌ Lỗi khi tải sản phẩm:", error);
+    console.error("Lỗi khi tải sản phẩm:", error);
   }
 };
 

@@ -245,7 +245,6 @@ onMounted(() => {
             @input="formErrors.name = ''"
             class="form-control mb-2"
           />
-
           <div v-if="formErrors.name" class="text-danger small mb-2">
             {{ formErrors.name }}
           </div>

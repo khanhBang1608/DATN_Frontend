@@ -359,7 +359,7 @@ export default {
                   :value="address.addressId"
                 >
                   {{ address.customerName }} -
-                  {{ address.fullAddress || address.address }}
+                  {{ address.fullAddress || address.address }} - {{ address.phone }}
                 </option>
               </select>
 
