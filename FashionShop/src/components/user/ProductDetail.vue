@@ -1,46 +1,36 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getProductDetail, getRelatedProducts } from "@/api/ProductClient";
+import {
+  getProductDetail,
+  getRelatedProducts,
+  getFavoriteCount,
+  fetchAverageRating,
+} from "@/api/ProductClient";
 import ReviewComponent from "@/components/user/Review.vue";
 import promotionApi from "@/api/PromotionClien";
-import { toggleFavorite } from "@/api/user/FavoriteAPI";
-import { checkFavorite } from "@/api/user/FavoriteAPI";
+import { toggleFavorite, checkFavorite } from "@/api/user/FavoriteAPI";
 import { addToCart } from "@/api/user/cartAPI";
-import { useProductDetail } from "@/assets/js/useProductDetail";
-
-const {
-  imageSources,
-  currentIndex,
-  isModalOpen,
-  isMobile,
-  scrollArea,
-  modalWrapper,
-  scrollToImage,
-  openCurrentGallery,
-  closeGallery,
-  swiperSlidePrev,
-  swiperSlideNext,
-} = useProductDetail();
 
 const router = useRouter();
+const route = useRoute();
 const isFavorite = ref(false);
+const favoriteCount = ref(0);
+const product = ref({ variants: [] });
+const selectedColorId = ref(null);
+const selectedSizeId = ref(null);
+const relatedProducts = ref([]);
 
 const handleToggleFavorite = async () => {
   try {
     await toggleFavorite(product.value.productId);
     isFavorite.value = !isFavorite.value;
+    const countRes = await getFavoriteCount(product.value.productId);
+    favoriteCount.value = countRes.data.favoriteCount;
   } catch (err) {
-    console.error(err);
+    console.error("Lỗi khi thay đổi trạng thái yêu thích:", err);
   }
 };
-
-const relatedProducts = ref([]);
-
-const route = useRoute();
-const product = ref({ variants: [] });
-const selectedColorId = ref(null);
-const selectedSizeId = ref(null);
 
 const displayedPrice = computed(() => {
   if (!product.value.variants || product.value.variants.length === 0)
@@ -108,6 +98,40 @@ const handleAddToCart = async () => {
   }
 };
 
+const uniqueColors = computed(() => {
+  const seen = new Set();
+  return product.value.variants.filter((v) => {
+    if (!seen.has(v.colorId)) {
+      seen.add(v.colorId);
+      return true;
+    }
+    return false;
+  });
+});
+
+const uniqueSizes = computed(() => {
+  const seen = new Set();
+  return product.value.variants.filter((v) => {
+    if (selectedColorId.value && v.colorId !== selectedColorId.value) return false;
+    if (!seen.has(v.sizeId)) {
+      seen.add(v.sizeId);
+      return true;
+    }
+    return false;
+  });
+});
+
+const displayedStock = computed(() => {
+  if (selectedVariant.value) {
+    return selectedVariant.value.stock;
+  }
+  return product.value.variants.reduce((sum, v) => sum + v.stock, 0);
+});
+
+function getImageUrl(imageName) {
+  return imageName ? `http://localhost:8080/images/${imageName}` : "/default.jpg";
+}
+
 onMounted(async () => {
   try {
     const id = route.params.id;
@@ -144,6 +168,10 @@ onMounted(async () => {
       };
     });
 
+    // Fetch sold count for the main product
+    const soldResponse = await axios.get(`/api/public/products/${id}/sold-count`);
+    data.soldCount = soldResponse.data.soldCount || 0;
+
     product.value = data;
 
     const token = localStorage.getItem("token");
@@ -157,34 +185,68 @@ onMounted(async () => {
     }
 
     try {
+      const countRes = await getFavoriteCount(id);
+      favoriteCount.value = countRes.data.favoriteCount;
+
       const resRelated = await getRelatedProducts(id, data.categoryId);
       const related = resRelated.data;
 
-      related.forEach((prod) => {
-        prod.variants = prod.variants.map((v) => {
-          const promo = promotionMap.get(v.productVariantId);
+      relatedProducts.value = await Promise.all(
+        related.map(async (prod) => {
+          let minVariant = prod.variants.reduce((min, v) =>
+            (v.discountedPrice ?? v.price) < (min.discountedPrice ?? min.price) ? v : min,
+            prod.variants[0]
+          );
+
+          const promo = promotionMap.get(minVariant.productVariantId);
           if (promo) {
             const discountPercent = promo.discountAmount || 0;
-            const originalPrice = v.price;
+            const originalPrice = minVariant.price;
             const discountedPrice = originalPrice * (1 - discountPercent / 100);
-
-            return {
-              ...v,
+            prod.originalPrice = originalPrice;
+            minVariant = {
+              ...minVariant,
               originalPrice: originalPrice,
               discountedPrice: Math.round(discountedPrice),
               discountPercent: discountPercent,
             };
+          } else {
+            minVariant = {
+              ...minVariant,
+              originalPrice: minVariant.price,
+              discountedPrice: minVariant.price,
+              discountPercent: 0,
+            };
           }
-          return {
-            ...v,
-            originalPrice: v.price,
-            discountedPrice: v.price,
-            discountPercent: 0,
-          };
-        });
-      });
 
-      relatedProducts.value = related;
+          // Fetch average rating
+          const rating = await fetchAverageRating(prod.productId);
+          prod.averageRating = rating.data;
+
+          // Fetch sold count
+          const soldResponse = await axios.get(`/api/public/products/${prod.productId}/sold-count`);
+          prod.soldCount = soldResponse.data.soldCount || 0;
+
+          // Fetch view count
+          prod.viewCount = 0;
+          if (token) {
+            try {
+              const viewResponse = await axios.get("/api/user/product-views/recent", {
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              const viewItem = viewResponse.data.find(
+                (view) => view.product?.[0]?.productId === prod.productId
+              );
+              prod.viewCount = viewItem ? viewItem.product[0].viewCount || 0 : 0;
+            } catch (error) {
+              console.error("Lỗi khi lấy lượt xem:", error);
+            }
+          }
+
+          prod.variants = [minVariant, ...prod.variants.filter((v) => v !== minVariant)];
+          return prod;
+        })
+      );
     } catch (err) {
       console.error("Lỗi khi tải sản phẩm liên quan:", err);
     }
@@ -192,42 +254,6 @@ onMounted(async () => {
     console.error("Lỗi khi tải sản phẩm:", error);
   }
 });
-
-// Màu sắc khả dụng theo size đang chọn
-const uniqueColors = computed(() => {
-  const seen = new Set();
-  return product.value.variants.filter((v) => {
-    if (!seen.has(v.colorId)) {
-      seen.add(v.colorId);
-      return true;
-    }
-    return false;
-  });
-});
-
-// Kích thước khả dụng theo màu đang chọn
-const uniqueSizes = computed(() => {
-  const seen = new Set();
-  return product.value.variants.filter((v) => {
-    if (selectedColorId.value && v.colorId !== selectedColorId.value) return false;
-    if (!seen.has(v.sizeId)) {
-      seen.add(v.sizeId);
-      return true;
-    }
-    return false;
-  });
-});
-
-const displayedStock = computed(() => {
-  if (selectedVariant.value) {
-    return selectedVariant.value.stock;
-  }
-  return product.value.variants.reduce((sum, v) => sum + v.stock, 0);
-});
-
-function getImageUrl(imageName) {
-  return imageName ? `http://localhost:8080/images/${imageName}` : "/default.jpg";
-}
 </script>
 
 <template>
@@ -313,6 +339,9 @@ function getImageUrl(imageName) {
           >
             {{ displayedPrice.originalPrice.toLocaleString() }}₫
           </span>
+          <div class="sold-count text-muted mt-1" style="font-size: 14px">
+            <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản phẩm
+          </div>
         </div>
 
         <hr class="product-detail-divider" />
@@ -379,20 +408,14 @@ function getImageUrl(imageName) {
         </button>
 
         <!-- Yêu thích & Tìm -->
-        <div class="mb-2 mt-2">
-          <div class="d-flex justify-content-between text-muted small">
-            <div @click="handleToggleFavorite" style="cursor: pointer">
-              <i
-                :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
-              ></i>
-              {{
-                isFavorite
-                  ? "Đã nằm trong danh sách yêu thích"
-                  : "Thêm vào danh sách yêu thích"
-              }}
-            </div>
-            <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
+        <div class="d-flex justify-content-between text-muted small fs-5 mt-2">
+          <div @click="handleToggleFavorite" style="cursor: pointer">
+            <i
+              :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
+            ></i>
+            <span class="ms-1"> Đã thích ({{ favoriteCount }})</span>
           </div>
+          <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
         </div>
         <hr class="product-detail-divider" />
 
@@ -457,7 +480,11 @@ function getImageUrl(imageName) {
         :key="item.productId"
         class="col-6 col-sm-6 col-md-4 col-lg-3"
       >
-        <RouterLink :to="`/product-detail/${item.productId}`" class="product-link">
+        <RouterLink
+          :to="`/product-detail/${item.productId}`"
+          class="product-link"
+          @click.prevent="handleProductClick(item.productId)"
+        >
           <div class="product-item position-relative">
             <span v-if="item.variants?.[0]?.discountPercent > 0" class="discount-badge">
               -{{ item.variants[0].discountPercent }}%
@@ -468,7 +495,7 @@ function getImageUrl(imageName) {
               :alt="item.name"
             />
             <img
-              :src="getImageUrl(item.variants?.[0]?.imageName)"
+              :src="getImageUrl(item.variants?.[1]?.imageName) || getImageUrl(item.variants?.[0]?.imageName)"
               class="img-fluid img-hover"
               :alt="item.name"
             />
@@ -486,6 +513,27 @@ function getImageUrl(imageName) {
             >
               {{ item.variants?.[0]?.originalPrice?.toLocaleString() }}₫
             </span>
+          </div>
+          <div class="product-rating">
+            <span v-for="i in 5" :key="i">
+              <i
+                class="bi"
+                :class="
+                  i <= Math.round(item.averageRating || 0)
+                    ? 'bi-star-fill text-warning'
+                    : 'bi-star text-muted'
+                "
+              ></i>
+            </span>
+            <span class="ms-1 text-muted">
+              ({{ item.averageRating?.toFixed(1) || "0.0" }})
+            </span>
+          </div>
+          <div class="view-count text-muted" style="font-size: 14px">
+            <i class="bi bi-eye me-1"></i>{{ item.viewCount || 0 }} lần
+          </div>
+          <div class="sold-count text-muted" style="font-size: 14px">
+            <i class="bi bi-cart me-1"></i>{{ item.soldCount || 0 }} sản phẩm
           </div>
         </RouterLink>
       </div>
@@ -517,7 +565,7 @@ function getImageUrl(imageName) {
   justify-content: center;
   width: 80px;
   height: 40px;
-  border: 0.5px solid #ddd; /* Viền mỏng hơn */
+  border: 0.5px solid #ddd;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -548,7 +596,7 @@ function getImageUrl(imageName) {
 }
 
 .color-options-wrapper {
-  margin-left: 0; /* Đảm bảo các ô màu bắt đầu từ cùng vị trí với chữ "Màu sắc:" */
+  margin-left: 0;
 }
 </style>
 
