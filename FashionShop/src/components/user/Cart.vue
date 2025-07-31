@@ -250,12 +250,17 @@ export default {
       const toastId = toast.info("Đang tải giỏ hàng...", { timeout: false });
       try {
         const cartData = await getCart();
+
         // Fetch active promotions
         const promos = await promotionApi.getActivePromotions();
         const promotionMap = new Map();
         promos.forEach((promo) => {
           promo.productPromotions.forEach((pp) => {
-            promotionMap.set(pp.productVariantId, promo);
+            promotionMap.set(pp.productVariantId, {
+              promoId: promo.id,
+              discountAmount: promo.discountAmount || 0,
+              quantityLimit: pp.quantityLimit || 0,
+            });
           });
         });
 
@@ -266,10 +271,20 @@ export default {
             const promo = promotionMap.get(item.productVariantId);
             let discountedPrice = item.price;
             let discountPercent = 0;
+            let hasPromotion = false;
+
             if (promo) {
-              discountPercent = promo.discountAmount || 0;
-              discountedPrice = Math.round(item.price * (1 - discountPercent / 100));
+              if (item.quantity <= promo.quantityLimit) {
+                discountPercent = promo.discountAmount;
+                discountedPrice = Math.round(item.price * (1 - discountPercent / 100));
+                hasPromotion = true;
+              } else {
+                discountedPrice = item.price;
+                discountPercent = 0;
+                hasPromotion = false;
+              }
             }
+
             return {
               ...item,
               productName: item.productName || "Sản phẩm",
@@ -280,9 +295,11 @@ export default {
               originalPrice: item.price,
               discountedPrice: discountedPrice,
               discountPercent: discountPercent,
+              hasPromotion: hasPromotion,
             };
           }),
         };
+
         toast.success("Tải giỏ hàng thành công!");
       } catch (error) {
         console.error("Error fetching cart:", error.message);
@@ -383,13 +400,19 @@ export default {
       this.loading = true;
       this.error = null;
       try {
+        // Gọi API cập nhật số lượng trước (nếu cần backend kiểm tra lại thì vẫn giữ)
         const cartData = await updateCartItem(cartDetailId, quantity);
-        // Reapply promotions
+
+        // Lấy danh sách khuyến mãi hiện tại
         const promos = await promotionApi.getActivePromotions();
         const promotionMap = new Map();
         promos.forEach((promo) => {
           promo.productPromotions.forEach((pp) => {
-            promotionMap.set(pp.productVariantId, promo);
+            promotionMap.set(pp.productVariantId, {
+              promoId: promo.id,
+              discountAmount: promo.discountAmount || 0,
+              quantityLimit: pp.quantityLimit || 0,
+            });
           });
         });
 
@@ -399,10 +422,22 @@ export default {
             const promo = promotionMap.get(item.productVariantId);
             let discountedPrice = item.price;
             let discountPercent = 0;
+            let hasPromotion = false;
+
             if (promo) {
-              discountPercent = promo.discountAmount || 0;
-              discountedPrice = Math.round(item.price * (1 - discountPercent / 100));
+              // ✅ Kiểm tra nếu số lượng trong giỏ hàng vượt quá giới hạn khuyến mãi
+              if (quantity <= promo.quantityLimit) {
+                discountPercent = promo.discountAmount;
+                discountedPrice = Math.round(item.price * (1 - discountPercent / 100));
+                hasPromotion = true;
+              } else {
+                // Không áp dụng khuyến mãi nếu vượt limit
+                discountPercent = 0;
+                discountedPrice = item.price;
+                hasPromotion = false;
+              }
             }
+
             return {
               ...item,
               productName: item.productName || "Sản phẩm",
@@ -413,9 +448,11 @@ export default {
               originalPrice: item.price,
               discountedPrice: discountedPrice,
               discountPercent: discountPercent,
+              hasPromotion: hasPromotion,
             };
           }),
         };
+
         toast.success("Cập nhật số lượng thành công!");
       } catch (error) {
         console.error("Error updating quantity:", error.message);
