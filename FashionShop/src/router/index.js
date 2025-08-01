@@ -267,40 +267,51 @@ const router = createRouter({
   ],
 })
 //  Hàm lấy thông tin user từ localStorage
+// Hàm lấy role người dùng
 function getUserRole() {
   try {
-    const role = (localStorage.getItem("role"));
-    return role ?? null;
+    return localStorage.getItem("role") ?? null;
   } catch {
     return null;
   }
 }
 
+// Hàm kiểm tra token hết hạn
+function isTokenExpired() {
+  const expiresAt = localStorage.getItem("tokenExpiresAt");
+  return !expiresAt || Date.now() > Number(expiresAt);
+}
+
 // Navigation Guard kiểm tra phân quyền truy cập
 router.beforeEach((to, from, next) => {
-  const role = getUserRole(); // 0 = Admin, 1 = User
-  const isLoggedIn = role !== null;
+  const role = getUserRole(); // "0" = Admin, "1" = User
+  const isLoggedIn = role !== null && !isTokenExpired();
 
-  // Nếu chưa đăng nhập
+  // Nếu token hết hạn -> xóa localStorage và điều hướng đến login
+  if (isTokenExpired()) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("tokenExpiresAt");
+    localStorage.removeItem("user");
+  }
+
+  // Chưa đăng nhập hoặc token hết hạn
   if (!isLoggedIn) {
     if (to.path.startsWith("/admin") || to.path.startsWith("/user")) {
       return next("/login");
     } else {
-      return next(); // Cho vào các trang public
+      return next(); // Cho phép vào trang public
     }
   }
 
-  // Nếu đã đăng nhập
-  if (role === 0 && to.path.startsWith("/user")) {
-    // Admin không được vào trang user
-    return next("/login");
+  // Đã đăng nhập nhưng phân quyền sai
+  if (role === "0" && to.path.startsWith("/user")) {
+    return next("/login"); // Admin không vào trang user
+  }
+  if (role === "1" && to.path.startsWith("/admin")) {
+    return next("/login"); // User không vào trang admin
   }
 
-  if (role === 1 && to.path.startsWith("/admin")) {
-    // User không được vào trang admin
-    return next("/login");
-  }
-
-  return next(); // Các trường hợp còn lại được phép
+  next(); // Hợp lệ, cho phép vào
 });
 export default router
