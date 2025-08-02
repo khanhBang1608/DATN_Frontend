@@ -14,6 +14,11 @@ import { addToCart } from "@/api/user/cartAPI";
 import axios from "axios";
 import { userProductDetail } from "@/assets/js/userProductDetail";
 
+// iziToast
+import "izitoast/dist/css/iziToast.min.css";
+import iziToast from "izitoast";
+
+const product = ref({ variants: [] });
 const {
   imageSources,
   currentIndex,
@@ -26,13 +31,13 @@ const {
   closeGallery,
   swiperSlidePrev,
   swiperSlideNext,
-} = userProductDetail();
+  updateImageSources,
+} = userProductDetail(product);
 
 const router = useRouter();
 const route = useRoute();
 const isFavorite = ref(false);
 const favoriteCount = ref(0);
-const product = ref({ variants: [] });
 const selectedColorId = ref(null);
 const selectedSizeId = ref(null);
 const relatedProducts = ref([]);
@@ -89,27 +94,56 @@ const selectedVariant = computed(() => {
 const handleAddToCart = async () => {
   const token = localStorage.getItem("token");
   if (!token) {
-    alert("⚠️ Bạn cần đăng nhập để thêm vào giỏ hàng.");
+    iziToast.warning({
+      title: "Cảnh báo",
+      message: "Bạn cần đăng nhập để thêm vào giỏ hàng.",
+      position: "topRight",
+    });
     router.push("/login");
     return;
   }
 
-  if (!selectedColorId.value || !selectedSizeId.value) {
-    alert("⚠️ Vui lòng chọn đầy đủ màu sắc và kích thước.");
+  if (!selectedColorId.value) {
+    iziToast.warning({
+      title: "Thiếu màu sắc",
+      message: "Vui lòng chọn màu sắc trước.",
+      position: "topRight",
+    });
+    return;
+  }
+
+  if (!selectedSizeId.value) {
+    iziToast.warning({
+      title: "Thiếu kích thước",
+      message: "Vui lòng chọn kích thước trước.",
+      position: "topRight",
+    });
     return;
   }
 
   const variant = selectedVariant.value;
   if (!variant) {
-    alert("❌ Không tìm thấy biến thể phù hợp.");
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không tìm thấy biến thể phù hợp.",
+      position: "topRight",
+    });
     return;
   }
 
   try {
     await addToCart(variant.productVariantId, 1);
-    alert("✅ Sản phẩm đã được thêm vào giỏ hàng!");
+    iziToast.success({
+      title: "Thành công",
+      message: "Sản phẩm đã được thêm vào giỏ hàng!",
+      position: "topRight",
+    });
   } catch (error) {
-    alert("❌ Thêm vào giỏ hàng thất bại: " + (error.message || "Lỗi không xác định"));
+    iziToast.error({
+      title: "Thất bại",
+      message: "Thêm vào giỏ hàng thất bại: " + (error.message || "Lỗi không xác định"),
+      position: "topRight",
+    });
     console.error(error);
   }
 };
@@ -125,17 +159,33 @@ const uniqueColors = computed(() => {
   });
 });
 
-const uniqueSizes = computed(() => {
+const allSizes = computed(() => {
   const seen = new Set();
-  return product.value.variants.filter((v) => {
-    if (selectedColorId.value && v.colorId !== selectedColorId.value) return false;
-    if (!seen.has(v.sizeId)) {
-      seen.add(v.sizeId);
-      return true;
-    }
-    return false;
-  });
+  return product.value.variants
+    .map((v) => ({ sizeId: v.sizeId, sizeName: v.sizeName }))
+    .filter((v) => {
+      if (!seen.has(v.sizeId)) {
+        seen.add(v.sizeId);
+        return true;
+      }
+      return false;
+    });
 });
+
+const uniqueSizes = computed(() => {
+  if (!selectedColorId.value) return allSizes.value;
+  return allSizes.value.map((size) => ({
+    sizeId: size.sizeId,
+    sizeName: size.sizeName,
+  }));
+});
+
+const hasStock = (sizeId) => {
+  const variant = product.value.variants.find(
+    (v) => v.colorId === selectedColorId.value && v.sizeId === sizeId
+  );
+  return variant ? variant.stock > 0 : false;
+};
 
 const displayedStock = computed(() => {
   if (selectedVariant.value) {
@@ -153,6 +203,15 @@ onMounted(async () => {
     const id = route.params.id;
     const res = await getProductDetail(id);
     const data = res.data;
+
+    product.value = { ...data, variants: data.variants || [] };
+    if (product.value.variants.length > 0) {
+      const firstColorId = product.value.variants[0].colorId;
+      selectedColorId.value = firstColorId;
+    }
+
+    console.log("Dữ liệu sản phẩm:", product.value);
+    console.log("imageSources sau khi tải:", imageSources.value);
 
     const promos = await promotionApi.getActivePromotions();
     const promotionMap = new Map();
@@ -184,7 +243,9 @@ onMounted(async () => {
       };
     });
 
-    // Fetch sold count for the main product
+    updateImageSources();
+    console.log("imageSources sau khi cập nhật lại:", imageSources.value);
+
     const soldResponse = await axios.get(`/api/public/products/${id}/sold-count`);
     data.soldCount = soldResponse.data.soldCount || 0;
 
@@ -238,17 +299,14 @@ onMounted(async () => {
             };
           }
 
-          // Fetch average rating
           const rating = await fetchAverageRating(prod.productId);
           prod.averageRating = rating.data;
 
-          // Fetch sold count
           const soldResponse = await axios.get(
             `/api/public/products/${prod.productId}/sold-count`
           );
           prod.soldCount = soldResponse.data.soldCount || 0;
 
-          // Fetch view count
           prod.viewCount = 0;
           if (token) {
             try {
@@ -369,39 +427,50 @@ onMounted(async () => {
 
         <!-- Màu sắc -->
         <div class="mb-4">
-          <div class="mb-1">
-            <div class="fw-semibold">Màu sắc:</div>
-            <div class="color-options-wrapper">
-              <div class="d-flex gap-2 flex-wrap" style="margin-left: 0">
-                <div
-                  v-for="(color, index) in uniqueColors"
-                  :key="index"
-                  class="color-option"
-                  :class="{ selected: selectedColorId === color.colorId }"
-                  @click="
-                    selectedColorId =
-                      selectedColorId === color.colorId ? null : color.colorId
-                  "
-                >
-                  <span class="color-name">{{ color.colorName }}</span>
-                  <span v-if="selectedColorId === color.colorId" class="check-mark"
-                    >✓</span
-                  >
-                </div>
-              </div>
+          <div class="fw-semibold mb-2">
+            Màu sắc:
+            <span v-if="selectedColorId">
+              {{
+                uniqueColors.find((color) => color.colorId === selectedColorId)
+                  ?.colorName || ""
+              }}
+            </span>
+          </div>
+
+          <div class="d-flex gap-2 py-2 flex-wrap">
+            <div
+              v-for="(color, index) in uniqueColors"
+              :key="index"
+              class="product-detail-color"
+              :class="{ active: selectedColorId === color.colorId }"
+              @click="
+                selectedColorId = selectedColorId === color.colorId ? null : color.colorId
+              "
+            >
+              {{ color.colorName }}
             </div>
           </div>
         </div>
 
         <!-- Kích thước -->
         <div class="mb-4">
-          <div class="fw-semibold mb-2">Kích thước:</div>
-          <div class="d-flex gap-2 py-2 flex-wrap">
+          <div class="fw-semibold mb-2">
+            Kích thước:
+            <span v-if="selectedSizeId">
+              {{
+                uniqueSizes.find((size) => size.sizeId === selectedSizeId)?.sizeName || ""
+              }}
+            </span>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
             <div
               v-for="(size, index) in uniqueSizes"
               :key="index"
               class="product-detail-size"
-              :class="{ active: selectedSizeId === size.sizeId }"
+              :class="{
+                active: selectedSizeId === size.sizeId,
+                disabled: !hasStock(size.sizeId),
+              }"
               @click="
                 selectedSizeId = selectedSizeId === size.sizeId ? null : size.sizeId
               "
@@ -413,11 +482,11 @@ onMounted(async () => {
         </div>
 
         <div class="mb-4">
-          <strong>Số lượng còn lại: </strong>
+          <strong>Tình trạng kho: </strong>
           <span v-if="selectedVariant">
-            {{ displayedStock }} sản phẩm (biến thể đã chọn)
+            Còn lại {{ displayedStock }} sản phẩm cho kích thước đã chọn
           </span>
-          <span v-else> {{ displayedStock }} sản phẩm (tổng toàn bộ biến thể) </span>
+          <span v-else> Tổng số lượng còn lại: {{ displayedStock }} sản phẩm </span>
         </div>
 
         <!-- Thêm vào giỏ -->
@@ -429,7 +498,7 @@ onMounted(async () => {
         </button>
 
         <!-- Yêu thích & Tìm -->
-        <div class="d-flex justify-content-between text-muted small fs-5 mt-2">
+        <div class="d-flex justify-content-between text-muted mt-2">
           <div @click="handleToggleFavorite" style="cursor: pointer">
             <i
               :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
@@ -570,7 +639,7 @@ onMounted(async () => {
       <div class="swiper pd-modal-swiper">
         <div class="swiper-wrapper" ref="modalWrapper">
           <div class="swiper-slide" v-for="(src, index) in imageSources" :key="index">
-            <img :src="src" :alt="'Hình ảnh gallery ' + index" />
+            <img :src="src" :alt="'Hình ảnh gallery ' + index" loading="lazy" />
           </div>
         </div>
         <div class="swiper-button-next pd-modal-swiper-next"></div>
@@ -581,47 +650,5 @@ onMounted(async () => {
     </div>
   </div>
 </template>
-
-<style>
-.color-option {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 40px;
-  border: 0.5px solid #ddd;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-  padding: 5px;
-}
-
-.color-option:hover {
-  transform: scale(1.05);
-  border-color: #007bff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.color-option.selected {
-  border-color: #007bff;
-  background-color: #e7f0ff;
-}
-
-.color-name {
-  margin-right: 5px;
-}
-
-.check-mark {
-  color: #007bff;
-  font-weight: bold;
-}
-
-.color-options-wrapper {
-  margin-left: 0;
-}
-</style>
 
 <style src="@/assets/css/product-detail.css"></style>
