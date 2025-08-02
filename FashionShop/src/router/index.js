@@ -8,6 +8,7 @@ import Review from '@/views/admin/ReviewView.vue'
 import Order from '@/views/admin/OrderView.vue'
 import Category from '@/views/CategoryView.vue'
 import User from '@/views/UserView.vue'
+import UserAddress from '@/views/admin/UserAddressView.vue'
 import Product from '@/views/admin/ProductView.vue'
 import Color from '@/views/admin/ColorView.vue'
 import size from '@/views/admin/SizeView.vue'
@@ -261,7 +262,12 @@ const router = createRouter({
           path: 'user',
           name: 'User',
           component: User,
-        }
+        },
+         {
+          path: '/admin/users/:id/addresses',
+          name: 'UserAddress',
+          component: UserAddress,
+        },
       ],
     },
   ],

@@ -131,18 +131,17 @@ const handleGoogleLogin = async () => {
           <form @submit.prevent="login">
             <input
               v-model="email"
-              type="email"
+              type="text"
               class="form-control auth-input"
               placeholder="Địa chỉ email"
-              required
             />
             <input
               v-model="password"
               type="password"
               class="form-control auth-input"
               placeholder="Mật khẩu"
-              required
             />
+            <p v-if="error" class="text-danger mt-2">{{ error }}</p>
             <button type="submit" class="btn auth-btn auth-btn-login">ĐĂNG NHẬP</button>
             <a
               href="#"
@@ -152,9 +151,6 @@ const handleGoogleLogin = async () => {
             >
               Quên Mật Khẩu?
             </a>
-
-            <!-- Thông báo lỗi -->
-            <p v-if="error" class="text-danger mt-2">{{ error }}</p>
           </form>
 
           <div class="auth-divider">

@@ -25,11 +25,9 @@ async function fetchUserInfo() {
   }
 }
 
-
 function checkLoginStatus() {
   isLoggedIn.value = !!localStorage.getItem("token");
 }
-
 
 function goToLogin() {
   router.push("/login");
@@ -113,10 +111,13 @@ function handleSearch() {
           <a href="/about" class="text-dark text-decoration-none me-3">Giới thiệu</a>
           <a href="/contact-us" class="text-dark text-decoration-none me-3">Liên hệ</a>
           <a href="/contact" class="text-dark text-decoration-none me-3">Chính sách</a>
-          <!-- <router-link to="/login" class="text-dark text-decoration-none me-3"
-            >Đăng nhập</router-link
-          > -->
-          <a href="/user/profile" v-if="userInfo"> {{ userInfo.name }}</a>
+          <a
+            href="/user/profile"
+            class="text-dark text-decoration-none me-3 fw-bold"
+            v-if="userInfo"
+          >
+            <i class="bi bi-emoji-smile me-1"></i> {{ userInfo.name }}
+          </a>
         </div>
       </div>
     </div>
