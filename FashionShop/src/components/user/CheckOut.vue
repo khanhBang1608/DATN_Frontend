@@ -1,162 +1,229 @@
 <script>
-import { createOrder } from '@/api/user/orderAPI'
-import { clearCart } from '@/api/user/cartAPI'
-import { useToast } from 'vue-toastification'
-import { getDiscount } from '@/api/user/discountAPI'
-import axios from 'axios'
+import axios from "axios";
+import { createOrder } from "@/api/user/orderAPI";
+import { clearCart } from "@/api/user/cartAPI";
+import { useToast } from "vue-toastification";
+import { getDiscount } from "@/api/user/discountAPI";
+import { getShippingFee } from "@/api/user/ShippingFeeAPI";
 
-const toast = useToast()
+const toast = useToast();
 
 export default {
   data() {
     return {
-      // Địa chỉ hành chính
+      // Địa chỉ
       provinces: [],
       districts: [],
       wards: [],
       addressList: [],
-      selectedAddressId: '',
+      selectedAddressId: "",
 
-      // Form người dùng
+      // Thông tin form
       form: {
-        fullName: '',
-        email: '',
-        phone: '',
-        address: '',
-        country: 'Vietnam',
-        city: '',
-        district: '',
-        ward: '',
-        province: '',
+        fullName: "",
+        email: "",
+        phone: "",
+        address: "",
+        country: "Vietnam",
+        city: "",
+        district: "",
+        ward: "",
+        province: "",
       },
 
+      // Giỏ hàng và đơn hàng
       cartDetails: [],
-      paymentMethod: 'COD',
-      shippingFee: 10000,
-      isMobileOrderVisible: false,
+      paymentMethod: "COD",
+      shippingFee: null,
       loading: false,
+      isMobileOrderVisible: false,
 
       // Giảm giá
       discountList: [],
       selectedDiscount: null,
-      discountCode: '',
+      discountCode: "",
       discountAmount: 0,
-      discountError: '',
-    }
-  },
-
-  watch: {
-    'form.province'(provinceName) {
-      const selectedProvince = this.provinces.find((p) => p.name === provinceName)
-      if (selectedProvince) {
-        axios
-          .get(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
-          .then((res) => {
-            this.districts = res.data.districts
-            this.form.district = ''
-            this.wards = []
-            this.form.ward = ''
-          })
-      }
-    },
-    'form.district'(districtName) {
-      const selectedDistrict = this.districts.find((d) => d.name === districtName)
-      if (selectedDistrict) {
-        axios
-          .get(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
-          .then((res) => {
-            this.wards = res.data.wards
-            this.form.ward = ''
-          })
-      }
-    },
+      discountError: "",
+    };
   },
 
   computed: {
     subtotal() {
-      return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0)
+      return this.cartDetails.reduce(
+        (total, item) => total + item.price * item.quantity,
+        0
+      );
     },
     total() {
-      return this.subtotal + this.shippingFee - this.discountAmount
+      return this.subtotal + this.shippingFee - this.discountAmount;
     },
     toggleIcon() {
-      return this.isMobileOrderVisible ? 'bi-chevron-up' : 'bi-chevron-down'
+      return this.isMobileOrderVisible ? "bi-chevron-up" : "bi-chevron-down";
+    },
+  },
+
+  watch: {
+    selectedAddressId(newId) {
+      if (newId) {
+        this.onSelectAddress(); // Lấy thông tin địa chỉ và gọi tính phí
+      }
+    },
+    "form.province"(provinceName) {
+      const selectedProvince = this.provinces.find((p) => p.name === provinceName);
+      if (selectedProvince) {
+        axios
+          .get(`https://provinces.open-api.vn/api/p/${selectedProvince.code}?depth=2`)
+          .then((res) => {
+            this.districts = res.data.districts;
+            this.form.district = "";
+            this.wards = [];
+            this.form.ward = "";
+          });
+      }
+    },
+    "form.district"(districtName) {
+      const selectedDistrict = this.districts.find((d) => d.name === districtName);
+      if (selectedDistrict) {
+        axios
+          .get(`https://provinces.open-api.vn/api/d/${selectedDistrict.code}?depth=2`)
+          .then((res) => {
+            this.wards = res.data.wards;
+            this.form.ward = "";
+          });
+      }
     },
   },
 
   methods: {
     formatPrice(price) {
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-      }).format(price)
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(price);
     },
 
     toggleOrderCollapse() {
-      this.isMobileOrderVisible = !this.isMobileOrderVisible
+      this.isMobileOrderVisible = !this.isMobileOrderVisible;
     },
 
     applyDiscount() {
-      this.discountAmount = 0
-      this.discountCode = ''
-      this.discountError = ''
+      this.discountAmount = 0;
+      this.discountCode = "";
+      this.discountError = "";
 
-      const discount = this.selectedDiscount
-      if (!discount) return
+      const discount = this.selectedDiscount;
+      if (!discount) return;
 
       if (this.subtotal < (discount.minOrderAmount || 0)) {
         this.discountError = `Cần mua tối thiểu ${this.formatPrice(
-          discount.minOrderAmount,
-        )} để dùng mã này.`
-        return
+          discount.minOrderAmount
+        )} để dùng mã này.`;
+        return;
       }
 
-      const percentDiscount = (this.subtotal * discount.discountPercent) / 100
-      const maxDiscount = discount.maxDiscountAmount || percentDiscount
-      this.discountAmount = Math.min(percentDiscount, maxDiscount)
-      this.discountCode = discount.discountCode
+      const percentDiscount = (this.subtotal * discount.discountPercent) / 100;
+      const maxDiscount = discount.maxDiscountAmount || percentDiscount;
+      this.discountAmount = Math.min(percentDiscount, maxDiscount);
+      this.discountCode = discount.discountCode;
 
-      toast.success(`Áp dụng mã ${this.discountCode} thành công!`)
+      toast.success(`Áp dụng mã ${this.discountCode} thành công!`);
     },
+
+async calculateShippingFee() {
+  if (!this.selectedAddressId || this.cartDetails.length === 0) return;
+
+  // Tạm tính khối lượng đơn hàng
+  const weight = this.cartDetails.reduce(
+    (total, item) => total + item.weight * item.quantity,
+    0
+  ) || 500;
+
+  // Các kích thước mặc định (nên lấy từ DB sản phẩm nếu có)
+  const length = 20;
+  const width = 15;
+  const height = 10;
+
+  try {
+    // Gọi API backend để tính phí ship
+    const response = await getShippingFee({
+      addressId: Number(this.selectedAddressId),
+      weight,
+      length,
+      width,
+      height,
+      insuranceValue: this.subtotal,
+    });
+
+    console.log("✅ Phản hồi từ API phí vận chuyển:", response);
+
+    if (response && response.data && typeof response.data.total === "number") {
+      this.shippingFee = response.data.total;
+    } else {
+      console.warn("⚠️ Không tìm thấy 'total' trong phản hồi. Dùng mặc định 10000");
+      this.shippingFee = 10000;
+    }
+  } catch (err) {
+    console.error("❌ Không thể tính phí vận chuyển:");
+
+    // Ghi chi tiết nếu là lỗi từ response GHN
+    if (err.response && err.response.data) {
+      console.error("Mã lỗi:", err.response.data.code);
+      console.error("Thông báo:", err.response.data.message);
+      console.error("Chi tiết:", err.response.data.data);
+    } else {
+      console.error(err);
+    }
+
+    // Dùng mặc định khi lỗi
+    this.shippingFee = 80000;
+  }
+
+  // Log thông tin gửi đi để tiện debug
+  console.log("📦 Gọi tính phí với:", {
+    addressId: this.selectedAddressId,
+    weight,
+    insuranceValue: this.subtotal,
+    dimensions: { length, width, height }
+  });
+},
 
     async placeOrder() {
       if (this.cartDetails.length === 0) {
-        toast.error('Giỏ hàng trống. Vui lòng thêm sản phẩm.')
-        return
+        toast.error("Giỏ hàng trống. Vui lòng thêm sản phẩm.");
+        return;
       }
 
-      this.loading = true
+      this.loading = true;
 
       try {
-        const fullAddress = `${this.form.phone} - ${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`
+        const fullAddress = `${this.form.phone} - ${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`;
 
-        if (this.paymentMethod === 'COD') {
+        const orderDetails = this.cartDetails.map((item) => ({
+          productVariantId: item.productVariantId,
+          quantity: item.quantity,
+          price: item.discountedPrice || item.price,
+        }));
+
+        if (this.paymentMethod === "COD") {
           const orderData = {
             address: fullAddress,
             paymentMethod: this.paymentMethod,
             discountCode: this.discountCode || null,
             discountAmount: this.discountAmount || 0,
-            orderDetails: this.cartDetails.map((item) => ({
-              productVariantId: item.productVariantId,
-              quantity: item.quantity,
-              price: item.discountedPrice || item.price,
-            })),
-          }
+            shippingFee: this.shippingFee,
+            orderDetails,
+          };
 
-          const response = await createOrder(orderData)
-          await clearCart()
+          const response = await createOrder(orderData);
+          await clearCart();
 
-          toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`)
-          this.$router.push('/user/order-management')
-        } else if (this.paymentMethod === 'VNPAY') {
-          const total = this.total
-
-          const res = await axios.get('/api/user/payment/create', {
-            params: { total },
-            headers: {
-              Authorization: 'Bearer ' + localStorage.getItem('token'),
-            },
-          })
+          toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`);
+          this.$router.push("/user/order-management");
+        } else if (this.paymentMethod === "VNPAY") {
+          const res = await axios.get("/api/user/payment/create", {
+            params: { total: this.total },
+            headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+          });
 
           const tempOrderData = {
             address: fullAddress,
@@ -164,87 +231,88 @@ export default {
             paymentStatus: 1,
             discountCode: this.discountCode || null,
             discountAmount: this.discountAmount || 0,
-            orderDetails: this.cartDetails.map((item) => ({
-              productVariantId: item.productVariantId,
-              quantity: item.quantity,
-              price: item.discountedPrice || item.price,
-            })),
-          }
-          localStorage.setItem('pendingOrder', JSON.stringify(tempOrderData))
-          window.location.href = res.data.paymentUrl
+            shippingFee: this.shippingFee,
+            orderDetails,
+          };
+
+          localStorage.setItem("pendingOrder", JSON.stringify(tempOrderData));
+          window.location.href = res.data.paymentUrl;
         }
       } catch (error) {
-        console.error(error)
-        toast.error('Có lỗi xảy ra khi đặt hàng.')
+        console.error(error);
+        toast.error("Có lỗi xảy ra khi đặt hàng.");
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
+
     async fetchAddresses() {
       try {
-        const res = await axios.get('/api/user/address/list', {
-          headers: {
-            Authorization: 'Bearer ' + localStorage.getItem('token'),
-          },
-        })
-        this.addressList = res.data
+        const res = await axios.get("/api/user/address/list", {
+          headers: { Authorization: "Bearer " + localStorage.getItem("token") },
+        });
+        this.addressList = res.data;
 
-        // Nếu không có địa chỉ nào, chuyển đến trang thêm địa chỉ
         if (this.addressList.length === 0) {
-          this.$toast.warning('Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước.')
-          this.$router.push('/user/address')
+          this.$toast.warning(
+            "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước."
+          );
+          this.$router.push("/user/address");
         }
       } catch (err) {
-        console.error('Lỗi khi lấy địa chỉ:', err)
+        console.error("Lỗi khi lấy địa chỉ:", err);
       }
     },
-    onSelectAddress() {
-      const selected = this.addressList.find((a) => a.addressId === this.selectedAddressId)
-      if (!selected) return
 
-      // Fill vào form
-      this.form.fullName = selected.customerName
-      this.form.phone = selected.phone
-      this.form.address = selected.address
-      this.form.province = selected.provinceName
-      this.form.district = selected.districtName
-      this.form.ward = selected.wardName
+    onSelectAddress() {
+      const selected = this.addressList.find(
+        (a) => a.addressId === this.selectedAddressId
+      );
+      if (!selected) return;
+
+      // Điền dữ liệu vào form
+      this.form.fullName = selected.customerName;
+      this.form.phone = selected.phone;
+      this.form.address = selected.address;
+      this.form.province = selected.provinceName;
+      this.form.district = selected.districtName;
+      this.form.ward = selected.wardName;
+
+      // Tính lại phí vận chuyển
+      this.calculateShippingFee();
     },
   },
 
   mounted() {
-    // Load danh sách tỉnh
-    axios.get('https://provinces.open-api.vn/api/p/').then((res) => {
-      this.provinces = res.data
-    })
+    axios.get("https://provinces.open-api.vn/api/p/").then((res) => {
+      this.provinces = res.data;
+    });
 
-    // Load danh sách mã giảm giá
     getDiscount()
       .then((res) => {
-        this.discountList = res
+        this.discountList = res;
       })
       .catch(() => {
-        this.discountError = 'Không thể tải mã giảm giá.'
-      })
+        this.discountError = "Không thể tải mã giảm giá.";
+      });
 
-    // Load danh sách địa chỉ đã lưu
-    this.fetchAddresses()
+    this.fetchAddresses();
 
-    // Kiểm tra đăng nhập và giỏ hàng
-    if (!localStorage.getItem('token')) {
-      toast.error('Vui lòng đăng nhập để tiếp tục.')
-      this.$router.push('/login')
+    if (!localStorage.getItem("token")) {
+      toast.error("Vui lòng đăng nhập để tiếp tục.");
+      this.$router.push("/login");
     } else {
-      const cartDetails = localStorage.getItem('cartDetails')
+      const cartDetails = localStorage.getItem("cartDetails");
       if (cartDetails) {
-        this.cartDetails = JSON.parse(cartDetails)
+        this.cartDetails = JSON.parse(cartDetails);
+        this.calculateShippingFee();
       } else {
-        toast.error('Không tìm thấy thông tin giỏ hàng.')
-        this.$router.push('/user/cart')
+        toast.error("Không tìm thấy thông tin giỏ hàng.");
+        this.$router.push("/user/cart");
       }
     }
   },
-}
+};
 </script>
 
 <template>
@@ -315,8 +383,16 @@ export default {
             </div>
             <div class="checkout-shipping-fee d-flex justify-content-between mb-2">
               <span>Phí vận chuyển</span>
-              <span>{{ formatPrice(shippingFee) }}</span>
+              <span>
+                <template v-if="selectedAddressId">
+                  {{ formatPrice(shippingFee) }}
+                </template>
+                <template v-else>
+                  <span class="text-muted">Chưa chọn địa chỉ</span>
+                </template>
+              </span>
             </div>
+
             <div
               class="checkout-discount-amount d-flex justify-content-between mb-2"
               v-if="discountAmount > 0"
@@ -337,7 +413,9 @@ export default {
       <div class="col-md-7 border-end bg-white px-4 py-3">
         <div class="checkout-form-container">
           <nav class="checkout-breadcrumb mb-3">
-            <router-link to="/cart" class="text-muted text-decoration-none">Giỏ hàng</router-link>
+            <router-link to="/cart" class="text-muted text-decoration-none"
+              >Giỏ hàng</router-link
+            >
             >
             <span class="text-muted">Thông tin giao hàng</span>
           </nav>
@@ -351,7 +429,11 @@ export default {
             <!-- Dropdown địa chỉ -->
             <div class="mb-3">
               <label class="form-label fw-semibold">Chọn địa chỉ giao hàng:</label>
-              <select v-model="selectedAddressId" @change="onSelectAddress" class="form-select">
+              <select
+                v-model="selectedAddressId"
+                @change="onSelectAddress"
+                class="form-select"
+              >
                 <option disabled value="">-- Chọn địa chỉ đã lưu --</option>
                 <option
                   v-for="address in addressList"
@@ -446,10 +528,12 @@ export default {
             </div>
 
             <!-- Nút hoàn tất -->
-            <div class="checkout-actions d-flex justify-content-between align-items-center gap-3">
+            <div
+              class="checkout-actions d-flex justify-content-between align-items-center gap-3"
+            >
               <router-link to="/cart" class="link-cart text-center">Giỏ hàng</router-link>
               <button type="submit" class="btn btn-complete" :disabled="loading">
-                {{ loading ? 'Đang xử lý...' : 'Hoàn tất đơn hàng' }}
+                {{ loading ? "Đang xử lý..." : "Hoàn tất đơn hàng" }}
               </button>
             </div>
           </form>
@@ -491,7 +575,11 @@ export default {
 
             <div class="mb-3">
               <label class="form-label fw-bold">Mã giảm giá:</label>
-              <select class="form-select" v-model="selectedDiscount" @change="applyDiscount">
+              <select
+                class="form-select"
+                v-model="selectedDiscount"
+                @change="applyDiscount"
+              >
                 <option
                   v-for="d in discountList"
                   :key="d.discountId"
@@ -500,7 +588,7 @@ export default {
                 >
                   {{ d.discountCode }} - Giảm {{ d.discountPercent }}% (Tối đa
                   {{ formatPrice(d.maxDiscountAmount || 0) }}) - Số lượng:
-                  {{ d.quantityLimit === 0 ? '0' : d.quantityLimit }}
+                  {{ d.quantityLimit === 0 ? "0" : d.quantityLimit }}
                 </option>
               </select>
 
@@ -511,10 +599,21 @@ export default {
               <span>Tạm tính</span>
               <span>{{ formatPrice(subtotal) }}</span>
             </div>
-            <div class="checkout-shipping-fee d-flex justify-content-between mb-2">
-              <span>Phí vận chuyển</span>
-              <span>{{ formatPrice(shippingFee) }}</span>
+            <div
+              class="checkout-shipping-method mb-4 d-flex align-items-center justify-content-between px-3 py-2 bg-white border rounded shadow-sm"
+            >
+              <div class="d-flex align-items-center">
+                <i class="bi bi-truck fs-4 text-primary me-3"></i>
+                <div>
+                  <strong>Phí vận chuyển</strong>
+                  <p class="mb-0 small text-muted">
+                    Tự động tính theo địa chỉ và trọng lượng
+                  </p>
+                </div>
+              </div>
+              <div class="text-end fw-bold">{{ formatPrice(shippingFee) }}</div>
             </div>
+
             <div
               class="checkout-discount-amount d-flex justify-content-between mb-2"
               v-if="discountAmount > 0"
