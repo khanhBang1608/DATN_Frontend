@@ -1,34 +1,70 @@
-import { ref, nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import Swiper from 'swiper/bundle';
-import 'swiper/css/bundle';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+import 'swiper/css/effect-fade';
+import { debounce } from 'lodash';
 
-export function userProductDetail() {
-  const imageSources = [
-    'https://images2.thanhnien.vn/528068263637045248/2025/7/12/48427799012203294996640565770072566130465660n-17523009301901089058451.jpg',
-    'https://images2.thanhnien.vn/528068263637045248/2025/7/12/48427799012203294996640565770072566130465660n-17523009301901089058451.jpg',
-    'https://images2.thanhnien.vn/528068263637045248/2025/7/12/48427799012203294996640565770072566130465660n-17523009301901089058451.jpg',
-    'https://images2.thanhnien.vn/528068263637045248/2025/7/12/48427799012203294996640565770072566130465660n-17523009301901089058451.jpg'
-  ];
-
+export function userProductDetail(product) {
+  const imageSources = ref([]);
   const currentIndex = ref(0);
   const isManualScroll = ref(false);
   const scrollArea = ref(null);
   const isModalOpen = ref(false);
   const isMobile = ref(window.innerWidth <= 768);
   const modalWrapper = ref(null);
-
   let mobileSwiper = null;
   let modalSwiper = null;
+  let isUnmounting = false;
 
-  const scrollToImage = (index) => {
-    const target = document.getElementById('img' + index);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      currentIndex.value = index;
-      isManualScroll.value = true;
-      setTimeout(() => (isManualScroll.value = false), 500);
+  // Hàm cập nhật imageSources
+  const updateImageSources = () => {
+    if (product.value?.variants?.length) {
+      const uniqueImages = new Set(
+        product.value.variants
+          .filter((v) => v.imageName && v.imageName.trim() !== '')
+          .map((v) => `http://localhost:8080/images/${v.imageName}`)
+      );
+      imageSources.value = [...uniqueImages];
+      console.log('Đã cập nhật imageSources:', imageSources.value);
+    } else {
+      imageSources.value = ['/default.jpg'];
+      console.log('Không tìm thấy variants, sử dụng ảnh mặc định');
     }
   };
+
+  // Theo dõi thay đổi của product
+  watch(product, () => {
+    console.log('Product changed:', product.value);
+    updateImageSources();
+  }, { immediate: true });
+
+  // Theo dõi imageSources để khởi tạo lại Swiper trên mobile
+  watch(imageSources, () => {
+    if (isMobile.value) {
+      nextTick(() => {
+        initMobileSwiper();
+      });
+    }
+  });
+
+  const scrollToImage = (index) => {
+  const area = scrollArea.value;
+  const target = document.getElementById('img' + index);
+
+  if (area && target) {
+    const offsetTop = target.offsetTop;
+    area.scrollTo({
+      top: offsetTop,
+      behavior: 'smooth',
+    });
+
+    currentIndex.value = index;
+    isManualScroll.value = true;
+    setTimeout(() => (isManualScroll.value = false), 500);
+  }
+};
 
   const handleScroll = () => {
     if (isManualScroll.value || !scrollArea.value) return;
@@ -45,30 +81,17 @@ export function userProductDetail() {
     currentIndex.value = activeIndex;
   };
 
- const openCurrentGallery = () => {
-  console.log('Mở gallery, isModalOpen:', isModalOpen.value);
-  isModalOpen.value = true;
+  const openCurrentGallery = debounce(() => {
+    console.log('Mở gallery, isModalOpen:', isModalOpen.value);
+    isModalOpen.value = true;
 
-  nextTick(() => {
-    setTimeout(() => {
+    nextTick(() => {
       const modal = document.getElementById('galleryModal');
       const swiperContainer = document.querySelector('.pd-modal-swiper');
       const swiperWrapper = document.querySelector('.pd-modal-swiper .swiper-wrapper');
 
-      if (!modal) {
-        console.error('Không tìm thấy phần tử modal');
-        return;
-      }
-      if (!swiperContainer || !swiperWrapper) {
-        console.error('Không tìm thấy container Swiper hoặc swiper-wrapper');
-        return;
-      }
-      if (!imageSources.length) {
-        console.error('imageSources rỗng hoặc không hợp lệ');
-        return;
-      }
-      if (swiperWrapper.children.length === 0) {
-        console.error('Không có slide nào được render trong swiper-wrapper');
+      if (!modal || !swiperContainer || !swiperWrapper || !imageSources.value.length || swiperWrapper.children.length === 0) {
+        console.error('Không thể khởi tạo modalSwiper do thiếu phần tử hoặc dữ liệu');
         return;
       }
 
@@ -77,7 +100,7 @@ export function userProductDetail() {
       if (modalSwiper) {
         try {
           modalSwiper.destroy(true, true);
-          console.log('modalSwiper trước đó đã bị hủy');
+          console.log('Đã hủy modalSwiper trước đó');
         } catch (error) {
           console.error('Lỗi khi hủy modalSwiper:', error);
         }
@@ -87,12 +110,13 @@ export function userProductDetail() {
       try {
         modalSwiper = new Swiper('.pd-modal-swiper', {
           initialSlide: currentIndex.value,
-          loop: imageSources.length > 1,
+          loop: imageSources.value.length > 1,
           slidesPerView: 1,
           slidesPerGroup: 1,
           navigation: {
             nextEl: '.pd-modal-swiper-next',
             prevEl: '.pd-modal-swiper-prev',
+            disabledClass: 'swiper-button-disabled',
           },
           pagination: {
             el: '.pd-modal-swiper-pagination',
@@ -100,48 +124,59 @@ export function userProductDetail() {
           },
           on: {
             init: () => {
-              console.log('Modal Swiper khởi tạo thành công');
-              console.log('Số lượng slides:', modalSwiper?.slides?.length || 0);
-              console.log('Slides:', modalSwiper?.slides);
-              modalSwiper.update();
+              console.log('Khởi tạo Modal Swiper thành công');
+              console.log('Số lượng slide:', swiperWrapper.children.length);
+              if (modalSwiper) {
+                modalSwiper.update();
+              }
             },
             slideChange: () => {
-              if (modalSwiper && !modalSwiper.destroyed) {
-                console.log('Modal Swiper thay đổi slide đến:', modalSwiper.realIndex);
-                currentIndex.value = modalSwiper.realIndex;
-              } else {
-                console.error('modalSwiper không tồn tại hoặc đã bị hủy trong slideChange');
+              if (!modalSwiper || modalSwiper.destroyed || isUnmounting) {
+                console.warn('modalSwiper không tồn tại, đã bị hủy, hoặc component đang unmount');
+                return;
               }
+              console.log('Modal Swiper chuyển đến slide:', modalSwiper.realIndex);
+              currentIndex.value = modalSwiper.realIndex;
             },
           },
         });
-        console.log('modalSwiper instance:', modalSwiper);
+        console.log('Instance modalSwiper:', modalSwiper);
       } catch (error) {
-        console.error('Lỗi khi khởi tạo modalSwiper:', error);
+        console.error('Lỗi khởi tạo modalSwiper:', error);
       }
-    }, 100); // Thêm timeout 100ms để đảm bảo DOM sẵn sàng
-  });
-};
+    });
+  }, 300);
 
-const initMobileSwiper = () => {
-  if (mobileSwiper) {
-    mobileSwiper.destroy(true, true);
-    mobileSwiper = null;
-  }
-  mobileSwiper = new Swiper('.pd-mobile-swiper-core', {
-    loop: imageSources.length > 1,
-    pagination: {
-      el: '.pd-mobile-swiper-pagination',
-      clickable: true,
-    },
-    on: {
-      init: () => console.log('Mobile Swiper đã khởi tạo'),
-      slideChange: () => {
-        currentIndex.value = mobileSwiper.realIndex;
+  const initMobileSwiper = () => {
+    if (mobileSwiper) {
+      mobileSwiper.destroy(true, true);
+      mobileSwiper = null;
+    }
+    if (imageSources.value.length === 0) {
+      console.warn('No images available for mobile Swiper');
+      return;
+    }
+    mobileSwiper = new Swiper('.pd-mobile-swiper-core', {
+      loop: imageSources.value.length > 1,
+      pagination: {
+        el: '.pd-mobile-swiper-pagination',
+        clickable: true,
       },
-    },
-  });
-};
+      on: {
+        init: () => {
+          console.log('Mobile Swiper initialized');
+          mobileSwiper.update();
+        },
+        slideChange: () => {
+          if (!mobileSwiper || mobileSwiper.destroyed || isUnmounting) {
+            console.warn('mobileSwiper không tồn tại, đã bị hủy, hoặc component đang unmount');
+            return;
+          }
+          currentIndex.value = mobileSwiper.realIndex;
+        },
+      },
+    });
+  };
 
   const closeGallery = (e) => {
     if (e.target.id === 'galleryModal' || e.target.classList.contains('pd-modal-close-btn')) {
@@ -149,8 +184,8 @@ const initMobileSwiper = () => {
     }
   };
 
-  const swiperSlidePrev = () => mobileSwiper?.slidePrev();
-  const swiperSlideNext = () => mobileSwiper?.slideNext();
+  const swiperSlidePrev = debounce(() => mobileSwiper?.slidePrev(), 300);
+  const swiperSlideNext = debounce(() => mobileSwiper?.slideNext(), 300);
 
   onMounted(() => {
     if (!isMobile.value && scrollArea.value) {
@@ -166,19 +201,30 @@ const initMobileSwiper = () => {
   });
 
   onBeforeUnmount(() => {
-  console.log('Đang dọn dẹp các instance Swiper');
-  if (scrollArea.value) {
-    scrollArea.value.removeEventListener('scroll', handleScroll);
-  }
-  if (mobileSwiper) {
-    mobileSwiper.destroy(true, true);
-    mobileSwiper = null;
-  }
-  if (modalSwiper) {
-    modalSwiper.destroy(true, true);
-    modalSwiper = null;
-  }
-});
+    console.log('Dọn dẹp các instance Swiper');
+    isUnmounting = true;
+    if (scrollArea.value) {
+      scrollArea.value.removeEventListener('scroll', handleScroll);
+    }
+    if (mobileSwiper) {
+      try {
+        mobileSwiper.destroy(true, true);
+        console.log('Đã hủy Mobile Swiper');
+      } catch (error) {
+        console.error('Lỗi khi hủy mobileSwiper:', error);
+      }
+      mobileSwiper = null;
+    }
+    if (modalSwiper) {
+      try {
+        modalSwiper.destroy(true, true);
+        console.log('Đã hủy Modal Swiper');
+      } catch (error) {
+        console.error('Lỗi khi hủy modalSwiper:', error);
+      }
+      modalSwiper = null;
+    }
+  });
 
   return {
     imageSources,
@@ -191,6 +237,7 @@ const initMobileSwiper = () => {
     openCurrentGallery,
     closeGallery,
     swiperSlidePrev,
-    swiperSlideNext
+    swiperSlideNext,
+    updateImageSources,
   };
 }
