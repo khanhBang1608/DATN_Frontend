@@ -3,7 +3,10 @@
     <nav class="custom-breadcrumb container">
       <router-link to="/" class="custom-breadcrumb-link">Trang chủ</router-link>
       <span class="custom-breadcrumb-separator">/</span>
-      <router-link to="/order-history" class="custom-breadcrumb-link custom-breadcrumb-current">
+      <router-link
+        to="/order-history"
+        class="custom-breadcrumb-link custom-breadcrumb-current"
+      >
         Quản lý đơn hàng
       </router-link>
     </nav>
@@ -129,7 +132,10 @@
               </span>
             </td>
             <td>
-              <button class="order-management-action-btn view" @click="viewOrder(order.orderId)">
+              <button
+                class="order-management-action-btn view"
+                @click="viewOrder(order.orderId)"
+              >
                 <i class="bi bi-eye me-1"></i> Xem
               </button>
               <button
@@ -167,18 +173,29 @@
           <h4 class="section-title">Thông tin đơn hàng</h4>
           <div class="order-info-grid">
             <p><strong>Ngày đặt:</strong> {{ formatDate(selectedOrder.orderDate) }}</p>
-            <p><strong>Tổng tiền:</strong> {{ formatPrice(selectedOrder.totalAmount) }}</p>
+            <p>
+              <strong>Tổng tiền:</strong> {{ formatPrice(selectedOrder.totalAmount) }}
+            </p>
             <p>
               <strong>Trạng thái:</strong>
               <span :class="getStatusClass(selectedOrder.status)">
                 {{ getStatusText(selectedOrder.status) }}
               </span>
             </p>
-            <p><strong>Số điện thoại:</strong> {{ selectedOrder.address.split(' - ')[0] }}</p>
-            <p><strong>Địa chỉ:</strong> {{ selectedOrder.address.split(' - ')[1] }}</p>
-            <p><strong>Phương thức thanh toán:</strong> {{ selectedOrder.paymentMethod }}</p>
-            <p><strong>Phí vận chuyển:</strong> {{ formatPrice(selectedOrder.shippingFee) }}</p>
-            <p><strong>Giảm giá:</strong> {{ formatPrice(selectedOrder.discountAmount) }}</p>
+            <p>
+              <strong>Số điện thoại:</strong> {{ selectedOrder.address.split(" - ")[0] }}
+            </p>
+            <p><strong>Địa chỉ:</strong> {{ selectedOrder.address.split(" - ")[1] }}</p>
+            <p>
+              <strong>Phương thức thanh toán:</strong> {{ selectedOrder.paymentMethod }}
+            </p>
+            <p>
+              <strong>Phí vận chuyển:</strong>
+              {{ formatPrice(selectedOrder.shippingFee) }}
+            </p>
+            <p>
+              <strong>Giảm giá:</strong> {{ formatPrice(selectedOrder.discountAmount) }}
+            </p>
           </div>
         </div>
         <div class="order-items-section">
@@ -202,7 +219,9 @@
                 <p class="mb-0">Giá: {{ formatPrice(item.price) }}</p>
               </div>
               <div class="order-item-actions ms-auto">
-                <div class="fw-bold mb-2">{{ formatPrice(item.price * item.quantity) }}</div>
+                <div class="fw-bold mb-2">
+                  {{ formatPrice(item.price * item.quantity) }}
+                </div>
                 <button
                   v-if="selectedOrder.status === 3 && !item.reviewed"
                   class="order-management-action-btn review"
@@ -260,10 +279,15 @@
                     <option value="video">Video</option>
                   </select>
                 </div>
-                <div v-if="reviewTypes[item.orderDetailId] !== 'text'" class="form-group mb-3">
+                <div
+                  v-if="reviewTypes[item.orderDetailId] !== 'text'"
+                  class="form-group mb-3"
+                >
                   <label
                     >Tải lên
-                    {{ reviewTypes[item.orderDetailId] === 'image' ? 'hình ảnh' : 'video' }}</label
+                    {{
+                      reviewTypes[item.orderDetailId] === "image" ? "hình ảnh" : "video"
+                    }}</label
                   >
                   <input
                     type="file"
@@ -291,7 +315,7 @@
                   </div>
                 </div>
                 <button
-                  class="btn btn-primary"
+                  class="btn btn-primary order-management-btn"
                   @click="submitReview(item.orderDetailId, item.productName)"
                 >
                   Gửi đánh giá
@@ -306,22 +330,27 @@
 </template>
 
 <script>
-import { getUserOrders, getOrderDetails, cancelOrder, requestReturn } from '@/api/user/orderAPI'
-import { createReview, checkReviewsForOrderDetails } from '@/api/user/reviewAPI'
-import { useToast } from 'vue-toastification'
-import axios from 'axios'
+import {
+  getUserOrders,
+  getOrderDetails,
+  cancelOrder,
+  requestReturn,
+} from "@/api/user/orderAPI";
+import { createReview, checkReviewsForOrderDetails } from "@/api/user/reviewAPI";
+import { useToast } from "vue-toastification";
+import axios from "axios";
 
-const toast = useToast()
+const toast = useToast();
 export async function getProductIdByVariantId(variantId) {
-  const res = await axios.get(`/api/public/variants/${variantId}/product-id`)
-  return res.data.productId
+  const res = await axios.get(`/api/public/variants/${variantId}/product-id`);
+  return res.data.productId;
 }
 export default {
   data() {
     return {
-      selectedDate: '',
+      selectedDate: "",
       orders: [],
-      selectedStatus: '',
+      selectedStatus: "",
       selectedOrder: null,
       showOrderModal: false,
       loading: false,
@@ -331,7 +360,7 @@ export default {
       reviewTypes: {}, // Lưu loại đánh giá cho từng orderDetailId
       filePreviews: {}, // Lưu preview URL cho từng orderDetailId
       mediaFiles: {}, // Lưu file gốc cho từng orderDetailId
-    }
+    };
   },
   computed: {
     filteredOrders() {
@@ -345,224 +374,239 @@ export default {
           cancelled: 5,
           refund: 6,
           rejected: 7,
-        }
+        };
 
         const matchesStatus =
-          !this.selectedStatus || order.status === statusMap[this.selectedStatus]
+          !this.selectedStatus || order.status === statusMap[this.selectedStatus];
 
         const matchesDate =
           !this.selectedDate ||
-          new Date(order.orderDate).toISOString().slice(0, 10) === this.selectedDate
+          new Date(order.orderDate).toISOString().slice(0, 10) === this.selectedDate;
 
-        return matchesStatus && matchesDate
-      })
+        return matchesStatus && matchesDate;
+      });
     },
   },
 
   methods: {
     async requestReturn(orderId) {
       try {
-        await requestReturn(orderId)
+        await requestReturn(orderId);
         this.orders = this.orders.map((order) =>
-          order.orderId === orderId ? { ...order, status: 4 } : order,
-        )
-        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${orderId}`)
+          order.orderId === orderId ? { ...order, status: 4 } : order
+        );
+        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${orderId}`);
       } catch (error) {
-        toast.error(error.message || 'Gửi yêu cầu trả hàng thất bại.')
+        toast.error(error.message || "Gửi yêu cầu trả hàng thất bại.");
       }
     },
 
     formatPrice(price) {
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-      }).format(price)
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(price);
     },
     formatDate(date) {
-      return new Date(date).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
+      return new Date(date).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
     },
     getStatusText(status) {
       const statusMap = {
-        0: 'Chờ xác nhận',
-        1: 'Chờ lấy hàng',
-        2: 'Chờ giao hàng',
-        3: 'Đã giao',
-        4: 'Yêu cầu trả hàng',
-        5: 'Đã hủy',
-        6: 'Trả hàng',
-        7: 'Đã từ chối',
-      }
-      return statusMap[status] || 'Không xác định'
+        0: "Chờ xác nhận",
+        1: "Chờ lấy hàng",
+        2: "Chờ giao hàng",
+        3: "Đã giao",
+        4: "Yêu cầu trả hàng",
+        5: "Đã hủy",
+        6: "Trả hàng",
+        7: "Đã từ chối",
+      };
+      return statusMap[status] || "Không xác định";
     },
     getStatusClass(status) {
       return {
-        'status status-pending': status === 0,
-        'status status-taking': status === 1,
-        'status status-processing': status === 2,
-        'status status-delivered': status === 3,
-        'status status-return-requested': status === 4,
-        'status status-cancelled': status === 5,
-        'status status-refunded': status === 6,
-        'status status-rejected': status === 7,
-      }
+        "status status-pending": status === 0,
+        "status status-taking": status === 1,
+        "status status-processing": status === 2,
+        "status status-delivered": status === 3,
+        "status status-return-requested": status === 4,
+        "status status-cancelled": status === 5,
+        "status status-refunded": status === 6,
+        "status status-rejected": status === 7,
+      };
     },
 
     async fetchOrders() {
-      this.loading = true
+      this.loading = true;
       try {
-        this.orders = await getUserOrders()
-        console.log('Đơn hàng từ API:', this.orders)
+        this.orders = await getUserOrders();
+        console.log("Đơn hàng từ API:", this.orders);
         const orderDetailIds = this.orders
           .filter((order) => order.status === 3)
-          .flatMap((order) => order.orderDetails.map((item) => item.orderDetailId))
+          .flatMap((order) => order.orderDetails.map((item) => item.orderDetailId));
         if (orderDetailIds.length > 0) {
           try {
-            const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds)
-            console.log('Trạng thái đánh giá:', reviewStatus)
+            const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
+            console.log("Trạng thái đánh giá:", reviewStatus);
             this.orders = this.orders.map((order) => ({
               ...order,
               orderDetails: order.orderDetails.map((item) => ({
                 ...item,
                 reviewed: reviewStatus[item.orderDetailId] || false,
               })),
-            }))
+            }));
           } catch (error) {
-            console.error('Lỗi khi kiểm tra trạng thái đánh giá:', error)
-            toast.error('Không thể kiểm tra trạng thái đánh giá.')
+            console.error("Lỗi khi kiểm tra trạng thái đánh giá:", error);
+            toast.error("Không thể kiểm tra trạng thái đánh giá.");
           }
         }
-        toast.success('Tải danh sách đơn hàng thành công!')
+        toast.success("Tải danh sách đơn hàng thành công!");
       } catch (error) {
-        console.error('Lỗi khi tải đơn hàng:', error)
-        toast.error(error.message || 'Không thể tải danh sách đơn hàng.')
+        console.error("Lỗi khi tải đơn hàng:", error);
+        toast.error(error.message || "Không thể tải danh sách đơn hàng.");
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     async viewOrder(orderId) {
       try {
-        this.selectedOrder = await getOrderDetails(orderId)
+        this.selectedOrder = await getOrderDetails(orderId);
         for (const item of this.selectedOrder.orderDetails) {
           try {
-            const res = await getProductIdByVariantId(item.productVariantId)
-            item.productId = res // res là productId (nếu backend trả về trực tiếp)
+            const res = await getProductIdByVariantId(item.productVariantId);
+            item.productId = res; // res là productId (nếu backend trả về trực tiếp)
           } catch (e) {
-            console.error(`Không lấy được productId cho variant ${item.productVariantId}`)
+            console.error(
+              `Không lấy được productId cho variant ${item.productVariantId}`
+            );
           }
         }
 
-        const orderDetailIds = this.selectedOrder.orderDetails.map((item) => item.orderDetailId)
+        const orderDetailIds = this.selectedOrder.orderDetails.map(
+          (item) => item.orderDetailId
+        );
         if (orderDetailIds.length > 0 && this.selectedOrder.status === 3) {
-          const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds)
-          console.log('Trạng thái đánh giá cho selectedOrder:', reviewStatus)
+          const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
+          console.log("Trạng thái đánh giá cho selectedOrder:", reviewStatus);
           this.selectedOrder = {
             ...this.selectedOrder,
             orderDetails: this.selectedOrder.orderDetails.map((item) => ({
               ...item,
               reviewed: reviewStatus[item.orderDetailId] || false,
             })),
-          }
+          };
         }
-        this.showOrderModal = true
-        this.activeReviewCollapse = null
-        this.reviewRatings = {}
-        this.reviewComments = {}
-        this.reviewTypes = {}
-        this.filePreviews = {}
-        this.mediaFiles = {}
-        toast.success(`Xem chi tiết đơn hàng #${orderId}`)
+        this.showOrderModal = true;
+        this.activeReviewCollapse = null;
+        this.reviewRatings = {};
+        this.reviewComments = {};
+        this.reviewTypes = {};
+        this.filePreviews = {};
+        this.mediaFiles = {};
+        toast.success(`Xem chi tiết đơn hàng #${orderId}`);
       } catch (error) {
-        toast.error(error.message || 'Không thể xem chi tiết đơn hàng.')
+        toast.error(error.message || "Không thể xem chi tiết đơn hàng.");
       }
     },
     async cancelOrder(orderId) {
       try {
-        await cancelOrder(orderId)
-        this.orders = this.orders.map((o) => (o.orderId === orderId ? { ...o, status: 5 } : o))
-        toast.success(`Đã hủy đơn hàng #${orderId}`)
+        await cancelOrder(orderId);
+        this.orders = this.orders.map((o) =>
+          o.orderId === orderId ? { ...o, status: 5 } : o
+        );
+        toast.success(`Đã hủy đơn hàng #${orderId}`);
       } catch (error) {
-        toast.error(error.message || 'Hủy đơn hàng thất bại.')
+        toast.error(error.message || "Hủy đơn hàng thất bại.");
       }
     },
     toggleReviewCollapse(orderDetailId) {
-      this.activeReviewCollapse = this.activeReviewCollapse === orderDetailId ? null : orderDetailId
+      this.activeReviewCollapse =
+        this.activeReviewCollapse === orderDetailId ? null : orderDetailId;
       if (this.activeReviewCollapse) {
-        this.reviewRatings[orderDetailId] = 0
-        this.reviewComments[orderDetailId] = ''
-        this.reviewTypes[orderDetailId] = 'text'
-        this.filePreviews[orderDetailId] = null
-        this.mediaFiles[orderDetailId] = null
+        this.reviewRatings[orderDetailId] = 0;
+        this.reviewComments[orderDetailId] = "";
+        this.reviewTypes[orderDetailId] = "text";
+        this.filePreviews[orderDetailId] = null;
+        this.mediaFiles[orderDetailId] = null;
       }
     },
     setReviewRating(orderDetailId, rating) {
-      this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: rating }
+      this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: rating };
     },
     handleFileUpload(event, orderDetailId) {
-      const file = event.target.files[0]
-      if (!file) return
+      const file = event.target.files[0];
+      if (!file) return;
 
-      const maxSize = 5 * 1024 * 1024 // 5MB
-      const imageTypes = ['image/jpeg', 'image/png', 'image/gif']
-      const videoTypes = ['video/mp4', 'video/webm', 'video/ogg']
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      const imageTypes = ["image/jpeg", "image/png", "image/gif"];
+      const videoTypes = ["video/mp4", "video/webm", "video/ogg"];
 
       if (file.size > maxSize) {
-        toast.error('File quá lớn! Vui lòng chọn file dưới 5MB.')
-        return
+        toast.error("File quá lớn! Vui lòng chọn file dưới 5MB.");
+        return;
       }
 
-      if (this.reviewTypes[orderDetailId] === 'image' && !imageTypes.includes(file.type)) {
-        toast.error('Vui lòng chọn file hình ảnh (jpg, png, gif)!')
-        return
+      if (
+        this.reviewTypes[orderDetailId] === "image" &&
+        !imageTypes.includes(file.type)
+      ) {
+        toast.error("Vui lòng chọn file hình ảnh (jpg, png, gif)!");
+        return;
       }
 
-      if (this.reviewTypes[orderDetailId] === 'video' && !videoTypes.includes(file.type)) {
-        toast.error('Vui lòng chọn file video (mp4, webm, ogg)!')
-        return
+      if (
+        this.reviewTypes[orderDetailId] === "video" &&
+        !videoTypes.includes(file.type)
+      ) {
+        toast.error("Vui lòng chọn file video (mp4, webm, ogg)!");
+        return;
       }
 
       // Lưu file gốc để gửi FormData
-      this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: file }
+      this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: file };
 
       // Tạo preview
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onload = () => {
-        this.filePreviews = { ...this.filePreviews, [orderDetailId]: reader.result }
-      }
-      reader.readAsDataURL(file)
+        this.filePreviews = { ...this.filePreviews, [orderDetailId]: reader.result };
+      };
+      reader.readAsDataURL(file);
     },
     async submitReview(orderDetailId, productName) {
       if (!this.reviewRatings[orderDetailId]) {
-        toast.error('Vui lòng chọn số sao đánh giá')
-        return
+        toast.error("Vui lòng chọn số sao đánh giá");
+        return;
       }
       if (!this.reviewComments[orderDetailId]?.trim()) {
-        toast.error('Vui lòng nhập bình luận')
-        return
+        toast.error("Vui lòng nhập bình luận");
+        return;
       }
-      if (this.reviewTypes[orderDetailId] !== 'text' && !this.mediaFiles[orderDetailId]) {
+      if (this.reviewTypes[orderDetailId] !== "text" && !this.mediaFiles[orderDetailId]) {
         toast.error(
-          `Vui lòng tải lên ${this.reviewTypes[orderDetailId] === 'image' ? 'hình ảnh' : 'video'}`,
-        )
-        return
+          `Vui lòng tải lên ${
+            this.reviewTypes[orderDetailId] === "image" ? "hình ảnh" : "video"
+          }`
+        );
+        return;
       }
 
       try {
-        const formData = new FormData()
-        formData.append('rating', this.reviewRatings[orderDetailId])
-        formData.append('comment', this.reviewComments[orderDetailId])
-        formData.append('orderDetailId', orderDetailId)
-        if (this.reviewTypes[orderDetailId] !== 'text') {
-          formData.append('media', this.mediaFiles[orderDetailId])
-          formData.append('reviewType', this.reviewTypes[orderDetailId])
+        const formData = new FormData();
+        formData.append("rating", this.reviewRatings[orderDetailId]);
+        formData.append("comment", this.reviewComments[orderDetailId]);
+        formData.append("orderDetailId", orderDetailId);
+        if (this.reviewTypes[orderDetailId] !== "text") {
+          formData.append("media", this.mediaFiles[orderDetailId]);
+          formData.append("reviewType", this.reviewTypes[orderDetailId]);
         } else {
-          formData.append('reviewType', 'text')
+          formData.append("reviewType", "text");
         }
 
-        await createReview(formData)
+        await createReview(formData);
 
         // Cập nhật trạng thái reviewed trong orders và selectedOrder
         this.orders = this.orders.map((o) =>
@@ -570,23 +614,27 @@ export default {
             ? {
                 ...o,
                 orderDetails: o.orderDetails.map((item) =>
-                  item.orderDetailId === orderDetailId ? { ...item, reviewed: true } : item,
+                  item.orderDetailId === orderDetailId
+                    ? { ...item, reviewed: true }
+                    : item
                 ),
               }
-            : o,
-        )
+            : o
+        );
         this.selectedOrder = {
           ...this.selectedOrder,
           orderDetails: this.selectedOrder.orderDetails.map((item) =>
-            item.orderDetailId === orderDetailId ? { ...item, reviewed: true } : item,
+            item.orderDetailId === orderDetailId ? { ...item, reviewed: true } : item
           ),
-        }
+        };
 
         // Gọi lại checkReviewsForOrderDetails để đồng bộ với backend
-        const orderDetailIds = this.selectedOrder.orderDetails.map((item) => item.orderDetailId)
+        const orderDetailIds = this.selectedOrder.orderDetails.map(
+          (item) => item.orderDetailId
+        );
         if (orderDetailIds.length > 0) {
-          const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds)
-          console.log('Trạng thái đánh giá sau khi gửi:', reviewStatus)
+          const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
+          console.log("Trạng thái đánh giá sau khi gửi:", reviewStatus);
           this.orders = this.orders.map((o) =>
             o.orderId === this.selectedOrder.orderId
               ? {
@@ -596,53 +644,53 @@ export default {
                     reviewed: reviewStatus[item.orderDetailId] || false,
                   })),
                 }
-              : o,
-          )
+              : o
+          );
           this.selectedOrder = {
             ...this.selectedOrder,
             orderDetails: this.selectedOrder.orderDetails.map((item) => ({
               ...item,
               reviewed: reviewStatus[item.orderDetailId] || false,
             })),
-          }
+          };
         }
 
         // Reset collapse và dữ liệu form
-        this.activeReviewCollapse = null
-        this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: 0 }
-        this.reviewComments = { ...this.reviewComments, [orderDetailId]: '' }
-        this.reviewTypes = { ...this.reviewTypes, [orderDetailId]: 'text' }
-        this.filePreviews = { ...this.filePreviews, [orderDetailId]: null }
-        this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: null }
+        this.activeReviewCollapse = null;
+        this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: 0 };
+        this.reviewComments = { ...this.reviewComments, [orderDetailId]: "" };
+        this.reviewTypes = { ...this.reviewTypes, [orderDetailId]: "text" };
+        this.filePreviews = { ...this.filePreviews, [orderDetailId]: null };
+        this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: null };
 
-        toast.success(`Đã gửi đánh giá cho sản phẩm ${productName}`)
+        toast.success(`Đã gửi đánh giá cho sản phẩm ${productName}`);
       } catch (error) {
-        toast.error(error.message || 'Gửi đánh giá thất bại.')
+        toast.error(error.message || "Gửi đánh giá thất bại.");
       }
     },
     handleImageError(event) {
-      event.target.src = 'https://via.placeholder.com/50?text=No+Image'
+      event.target.src = "https://via.placeholder.com/50?text=No+Image";
     },
     closeOrderModal() {
-      this.showOrderModal = false
-      this.selectedOrder = null
-      this.activeReviewCollapse = null
-      this.reviewRatings = {}
-      this.reviewComments = {}
-      this.reviewTypes = {}
-      this.filePreviews = {}
-      this.mediaFiles = {}
+      this.showOrderModal = false;
+      this.selectedOrder = null;
+      this.activeReviewCollapse = null;
+      this.reviewRatings = {};
+      this.reviewComments = {};
+      this.reviewTypes = {};
+      this.filePreviews = {};
+      this.mediaFiles = {};
     },
   },
   mounted() {
-    if (!localStorage.getItem('token')) {
-      toast.error('Vui lòng đăng nhập để xem đơn hàng.')
-      this.$router.push('/login')
+    if (!localStorage.getItem("token")) {
+      toast.error("Vui lòng đăng nhập để xem đơn hàng.");
+      this.$router.push("/login");
     } else {
-      this.fetchOrders()
+      this.fetchOrders();
     }
   },
-}
+};
 </script>
 
 <style src="@/assets/css/order-management.css"></style>
