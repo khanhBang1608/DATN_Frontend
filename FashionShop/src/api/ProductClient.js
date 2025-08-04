@@ -3,7 +3,10 @@ import axios from 'axios';
 const API_BASE = 'http://localhost:8080/api/public';
 
 // ✅ API công khai – KHÔNG cần token
-export const getAllProducts = () => axios.get(`${API_BASE}/products`);
+export const getAllProducts = (page = 0, size = 8) =>
+  axios.get(`${API_BASE}/products`, {
+    params: { page, size },
+  });
 
 export const getProductDetail = (productId) => axios.get(`${API_BASE}/products/${productId}`);
 
