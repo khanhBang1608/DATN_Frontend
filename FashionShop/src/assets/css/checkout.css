@@ -32,7 +32,10 @@
     color: #6c757d;
     font-size: 15px;
 }
-
+.small-text {
+  font-size: 0.875rem; /* tương đương fs-6 của Bootstrap */
+  line-height: 1.25rem;
+}
 /* Sản phẩm trong tóm tắt đơn hàng */
 .checkout-product {
     display: flex;

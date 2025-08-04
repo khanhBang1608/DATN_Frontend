@@ -585,25 +585,24 @@ export default {
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-bold">Mã giảm giá:</label>
-              <select
-                class="form-select"
-                v-model="selectedDiscount"
-                @change="applyDiscount"
-              >
-                <option
-                  v-for="d in validDiscounts"
-                  :key="d.discountId"
-                  :value="d"
-                >
-                  {{ d.discountCode }} - Giảm {{ d.discountPercent }}% (Tối đa
-                  {{ formatPrice(d.maxDiscountAmount || 0) }}) - Số lượng:
-                  {{ d.quantityLimit }}
-                </option>
-              </select>
+  <label class="form-label fw-bold">Mã giảm giá:</label>
+  <select
+    class="form-select small-text"
+    v-model="selectedDiscount"
+    @change="applyDiscount"
+  >
+    <option
+      v-for="d in validDiscounts"
+      :key="d.discountId"
+      :value="d"
+    >
+      {{ d.discountCode }} | {{ d.discountPercent }}% tối đa {{ formatPrice(d.maxDiscountAmount || 0) }} | đơn từ {{ formatPrice(d.minOrderAmount) }} | còn {{ d.quantityLimit }}
+    </option>
+  </select>
 
-              <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
-            </div>
+  <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
+</div>
+
 
             <div class="checkout-subtotal d-flex justify-content-between mb-2">
               <span>Tạm tính</span>
