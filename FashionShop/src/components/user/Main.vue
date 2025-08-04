@@ -100,6 +100,30 @@
               </a>
             </div>
           </template>
+          <nav aria-label="Pagination sản phẩm mới nhất">
+            <ul class="pagination justify-content-center mt-3">
+              <li class="page-item" :class="{ disabled: newestPage === 0 }">
+                <button class="page-link" @click="fetchTopNewestProducts(newestPage - 1)">
+                  &laquo; Trước
+                </button>
+              </li>
+
+              <li class="page-item disabled">
+                <span class="page-link">
+                  Trang {{ newestPage + 1 }} / {{ newestTotalPages }}
+                </span>
+              </li>
+
+              <li
+                class="page-item"
+                :class="{ disabled: newestPage + 1 >= newestTotalPages }"
+              >
+                <button class="page-link" @click="fetchTopNewestProducts(newestPage + 1)">
+                  Sau &raquo;
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
@@ -424,18 +448,29 @@ const processProducts = async (products) => {
   }
 };
 
-// Hàm lấy sản phẩm mới nhất
-const fetchTopNewestProducts = async () => {
+const newestPage = ref(0);
+const newestTotalPages = ref(0);
+const newestPageSize = ref(4);
+
+const fetchTopNewestProducts = async (page = 0) => {
   try {
-    const response = await axios.get("/api/public/products/top10");
-    topNewestProducts.value = await processProducts(
-      response.data.filter(
-        (product) =>
-          product.variants &&
-          product.variants.length > 0 &&
-          product.variants[0]?.price !== undefined
-      )
+    const response = await axios.get("/api/public/products/top10", {
+      params: {
+        page,
+        size: newestPageSize.value,
+      },
+    });
+
+    const filtered = response.data.content.filter(
+      (product) =>
+        product.variants &&
+        product.variants.length > 0 &&
+        product.variants[0]?.price !== undefined
     );
+
+    topNewestProducts.value = await processProducts(filtered);
+    newestPage.value = response.data.number;
+    newestTotalPages.value = response.data.totalPages;
   } catch (error) {
     console.error("Lỗi khi lấy sản phẩm mới nhất:", error);
   }
