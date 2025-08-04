@@ -41,6 +41,15 @@ const favoriteCount = ref(0);
 const selectedColorId = ref(null);
 const selectedSizeId = ref(null);
 const relatedProducts = ref([]);
+const relatedPage = ref(0);
+const relatedTotalPages = ref(1);
+
+const goToPage = (page) => {
+  if (page >= 0 && page < relatedTotalPages.value) {
+    relatedPage.value = page;
+    fetchRelatedProducts();
+  }
+};
 
 const handleToggleFavorite = async () => {
   try {
@@ -265,8 +274,7 @@ onMounted(async () => {
       const countRes = await getFavoriteCount(id);
       favoriteCount.value = countRes.data.favoriteCount;
 
-      const resRelated = await getRelatedProducts(id, data.categoryId);
-      const related = resRelated.data;
+      const related = fetchRelatedProducts();
 
       relatedProducts.value = await Promise.all(
         related.map(async (prod) => {
@@ -333,6 +341,87 @@ onMounted(async () => {
     console.error("Lỗi khi tải sản phẩm:", error);
   }
 });
+const fetchRelatedProducts = async () => {
+  try {
+    const resRelated = await getRelatedProducts(
+      product.value.categoryId,
+      product.value.productId,
+      relatedPage.value,
+      4
+    );
+
+    const related = resRelated.data.content || [];
+    relatedTotalPages.value = resRelated.data.totalPages || 1;
+
+    const promos = await promotionApi.getActivePromotions();
+    const promotionMap = new Map();
+    promos.forEach((promo) => {
+      promo.productPromotions.forEach((pp) => {
+        promotionMap.set(pp.productVariantId, promo);
+      });
+    });
+
+    const token = localStorage.getItem("token");
+
+    relatedProducts.value = await Promise.all(
+      related.map(async (prod) => {
+        let minVariant = prod.variants.reduce(
+          (min, v) =>
+            (v.discountedPrice ?? v.price) < (min.discountedPrice ?? min.price) ? v : min,
+          prod.variants[0]
+        );
+
+        const promo = promotionMap.get(minVariant.productVariantId);
+        if (promo) {
+          const discountPercent = promo.discountAmount || 0;
+          const originalPrice = minVariant.price;
+          const discountedPrice = originalPrice * (1 - discountPercent / 100);
+          minVariant = {
+            ...minVariant,
+            originalPrice: originalPrice,
+            discountedPrice: Math.round(discountedPrice),
+            discountPercent: discountPercent,
+          };
+        } else {
+          minVariant = {
+            ...minVariant,
+            originalPrice: minVariant.price,
+            discountedPrice: minVariant.price,
+            discountPercent: 0,
+          };
+        }
+
+        const rating = await fetchAverageRating(prod.productId);
+        prod.averageRating = rating.data;
+
+        const soldResponse = await axios.get(
+          `/api/public/products/${prod.productId}/sold-count`
+        );
+        prod.soldCount = soldResponse.data.soldCount || 0;
+
+        prod.viewCount = 0;
+        if (token) {
+          try {
+            const viewResponse = await axios.get("/api/user/product-views/recent", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const viewItem = viewResponse.data.find(
+              (view) => view.product?.[0]?.productId === prod.productId
+            );
+            prod.viewCount = viewItem ? viewItem.product[0].viewCount || 0 : 0;
+          } catch (error) {
+            console.error("Lỗi khi lấy lượt xem:", error);
+          }
+        }
+
+        prod.variants = [minVariant, ...prod.variants.filter((v) => v !== minVariant)];
+        return prod;
+      })
+    );
+  } catch (err) {
+    console.error("Lỗi khi tải sản phẩm liên quan:", err);
+  }
+};
 </script>
 
 <template>
@@ -629,6 +718,54 @@ onMounted(async () => {
             <i class="bi bi-cart me-1"></i>{{ item.soldCount || 0 }} sản phẩm
           </div>
         </RouterLink>
+      </div>
+      <div class="d-flex justify-content-center mt-3" v-if="relatedTotalPages > 1">
+        <!-- Trang đầu -->
+        <button
+          class="btn btn-outline-primary me-1"
+          :disabled="relatedPage === 0"
+          @click="goToPage(0)"
+        >
+          «
+        </button>
+
+        <!-- Trang trước -->
+        <button
+          class="btn btn-outline-primary me-2"
+          :disabled="relatedPage === 0"
+          @click="goToPage(relatedPage - 1)"
+        >
+          <
+        </button>
+
+        <!-- Danh sách số trang -->
+        <button
+          v-for="page in relatedTotalPages"
+          :key="page"
+          class="btn me-1"
+          :class="relatedPage === page - 1 ? 'btn-primary' : 'btn-outline-primary'"
+          @click="goToPage(page - 1)"
+        >
+          {{ page }}
+        </button>
+
+        <!-- Trang sau -->
+        <button
+          class="btn btn-outline-primary me-1"
+          :disabled="relatedPage >= relatedTotalPages - 1"
+          @click="goToPage(relatedPage + 1)"
+        >
+          >
+        </button>
+
+        <!-- Trang cuối -->
+        <button
+          class="btn btn-outline-primary"
+          :disabled="relatedPage >= relatedTotalPages - 1"
+          @click="goToPage(relatedTotalPages - 1)"
+        >
+          »
+        </button>
       </div>
     </div>
   </div>

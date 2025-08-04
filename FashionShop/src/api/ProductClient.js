@@ -22,11 +22,13 @@ export const getVariantByColorAndSize = (productId, colorId, sizeId = null) => {
 export const getProductOptions = (productId) =>
   axios.get(`${API_BASE}/products/${productId}/options`);
 
-export const getRelatedProducts = (categoryId, excludeProductId) =>
+export const getRelatedProducts = (categoryId, excludeProductId, page = 0, size = 4) =>
   axios.get(`${API_BASE}/products/related`, {
     params: {
       categoryId,
-      excludeProductId
+      excludeProductId,
+      page,
+      size
     }
   });
 
