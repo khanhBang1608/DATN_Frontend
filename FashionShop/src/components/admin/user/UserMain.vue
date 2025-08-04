@@ -2,13 +2,6 @@
   <div class="card p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="mb-0">👤 Quản lý Tài khoản</h2>
-      <!-- <button
-        class="btn btn-primary"
-        data-bs-toggle="modal"
-        data-bs-target="#addUserModal"
-      >
-        + Thêm tài khoản
-      </button> -->
     </div>
     <div class="table-responsive">
       <table
@@ -60,10 +53,12 @@
 
             <td>{{ formatDate(user.createdAt) }}</td>
             <td class="text-center">
-              <!-- <button class="btn btn-sm btn-warning m-1" @click="openEditStatus(user)">
-                ✏️ Sửa
-              </button> -->
-              <button class="btn btn-sm btn-info m-1">📍 Địa chỉ</button>
+              <button
+                class="btn btn-sm btn-info m-1"
+                @click="goToUserAddresses(user.id, user.name)"
+              >
+                <i class="bi bi-eye-fill me-1"></i> Xem Địa chỉ
+              </button>
             </td>
           </tr>
         </tbody>
@@ -74,6 +69,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import axios from "axios";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
@@ -81,6 +77,14 @@ import "izitoast/dist/css/iziToast.min.css";
 const token = localStorage.getItem("token");
 const users = ref([]);
 const errorMessage = ref("");
+const router = useRouter();
+
+const goToUserAddresses = (userId, userName) => {
+  router.push({
+    path: `/admin/users/${userId}/addresses`,
+    query: { name: userName },
+  });
+};
 
 const fetchUsers = async () => {
   try {

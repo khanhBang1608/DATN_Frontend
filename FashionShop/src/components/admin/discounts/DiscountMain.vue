@@ -185,7 +185,7 @@
                 Đóng
               </button>
               <button type="submit" class="btn btn-success">
-                {{ isEdit ? "Cập nhập" : "Thêm mới" }}
+                {{ isEdit ? "Cập nhật" : "Thêm mới" }}
               </button>
             </div>
           </form>
@@ -305,10 +305,25 @@ const saveDiscount = async () => {
     await fetchDiscounts();
   } catch (err) {
     if (err.response && err.response.status === 400 && Array.isArray(err.response.data)) {
-      err.response.data.forEach((e) => {
+      const filteredErrors = isEdit.value
+        ? err.response.data.filter((e) => !e.includes("startDate"))
+        : err.response.data;
+      filteredErrors.forEach((e) => {
         const [field, msg] = e.split(": ");
         errors.value[field] = msg;
       });
+      if (filteredErrors.length > 0) {
+        iziToast.error({ title: "Lỗi", message: "Vui lòng kiểm tra lại thông tin!" });
+      } else if (isEdit.value) {
+        // Nếu không có lỗi sau khi lọc (trong chế độ sửa), vẫn cho phép lưu
+        closeModal();
+        await fetchDiscounts();
+        iziToast.success({
+          title: "Thành công",
+          message: "Cập nhật thành công!",
+          position: "topRight",
+        });
+      }
     } else {
       iziToast.error({ title: "Lỗi", message: "Có lỗi xảy ra khi lưu." });
     }

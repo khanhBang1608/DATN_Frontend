@@ -32,11 +32,12 @@ function goLogout() {
         </li>
         <li>
           <i class="fas fa-users fa-fw"></i>
-          <a href="/admin/user" class="user-li">Người dùng</a>
+          <router-link to="/admin/user">Người dùng</router-link>
+          <!-- <a href="/admin/user" class="user-li">Người dùng</a>
           <ul class="side-nav-dropdown">
             <li><router-link to="/admin/user">Danh sách người dùng</router-link></li>
             <li><a href="#">Quản lí quyền</a></li>
-          </ul>
+          </ul> -->
         </li>
         <li>
           <i class="fas fa-bolt fa-fw"></i>

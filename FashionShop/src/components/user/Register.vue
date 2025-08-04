@@ -1,68 +1,96 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, onMounted } from "vue";
+import axios from "axios";
+import { useRouter, useRoute } from "vue-router";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
-const router = useRouter()
+const router = useRouter();
 
 onMounted(() => {
-  const emailFromSession = sessionStorage.getItem("verifiedEmail")
+  const emailFromSession = sessionStorage.getItem("verifiedEmail");
   if (emailFromSession) {
-    form.value.email = emailFromSession
+    form.value.email = emailFromSession;
   } else {
-    // Nếu không có email → quay lại trang OTP
-    router.replace("/register/otp")
+    router.replace("/register/otp");
+    iziToast.warning({
+      title: "Thông báo",
+      message: "Vui lòng xác thực email trước khi đăng ký.",
+      position: "topRight",
+    });
   }
-})
 
-axios.defaults.withCredentials = true
+  // Xóa backdrop nếu còn sót
+  const backdrop = document.querySelector(".modal-backdrop");
+  if (backdrop) backdrop.remove();
+
+  // Khôi phục khả năng cuộn
+  document.body.style.overflow = "auto";
+  document.documentElement.style.overflow = "auto";
+});
+
+axios.defaults.withCredentials = true;
 
 // --- Register Form Logic ---
-const submitted = ref(false)
+const submitted = ref(false);
 
 const form = ref({
-  fullName: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
+  fullName: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
   agree: false,
-})
+});
 
 const errors = ref({
-  fullName: '',
-  password: '',
-  confirmPassword: '',
+  fullName: "",
+  password: "",
+  confirmPassword: "",
   agree: false,
-})
+});
 
 const passwordMismatch = computed(
   () => form.value.password !== form.value.confirmPassword
-)
+);
 
 async function handleSubmit() {
-  submitted.value = true
+  submitted.value = true;
+
   if (!form.value.email) {
-    alert('Vui lòng xác thực email trước khi đăng ký.')
-    return
+    iziToast.error({
+      title: "Lỗi",
+      message: "Vui lòng xác thực email trước khi đăng ký.",
+      position: "topRight",
+    });
+    return;
   }
 
-  const formEl = document.querySelector('form')
-  if (!formEl.checkValidity() || passwordMismatch.value) return
+  const formEl = document.querySelector("form");
+  if (!formEl.checkValidity() || passwordMismatch.value) return;
 
   try {
-    const res = await axios.post('http://localhost:8080/api/register', form.value, {
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const res = await axios.post("http://localhost:8080/api/register", form.value, {
+      headers: { "Content-Type": "application/json" },
+    });
 
-    alert('Tạo tài khoản thành công!')
-    sessionStorage.removeItem("verifiedEmail") // ✅ xoá email sau khi dùng xong
-    router.push('/login').then(() => window.location.reload())
+    iziToast.success({
+      title: "Thành công",
+      message: "Tạo tài khoản thành công!",
+      position: "topRight",
+    });
+
+    sessionStorage.removeItem("verifiedEmail");
+    router.push("/login").then(() => window.location.reload());
   } catch (err) {
-    const resErrors = err.response?.data
-    if (resErrors && typeof resErrors === 'object') {
-      Object.assign(errors.value, resErrors)
+    const resErrors = err.response?.data;
+    if (resErrors && typeof resErrors === "object") {
+      Object.assign(errors.value, resErrors);
     } else {
-      alert('Đăng ký thất bại. Vui lòng thử lại.')
+      iziToast.error({
+        title: "Lỗi",
+        message: "Đăng ký thất bại. Vui lòng thử lại.",
+        position: "topRight",
+      });
     }
   }
 }
@@ -106,7 +134,9 @@ async function handleSubmit() {
             <div class="invalid-feedback">Nhập địa chỉ email hợp lệ</div>
           </div> -->
           <input type="hidden" v-model="form.email" />
-          <p class="text-muted mb-3">Email đã xác thực: <strong>{{ form.email }}</strong></p>
+          <p class="text-muted mb-3">
+            Email đã xác thực: <strong>{{ form.email }}</strong>
+          </p>
 
           <!-- Mật khẩu -->
           <div class="mb-3">

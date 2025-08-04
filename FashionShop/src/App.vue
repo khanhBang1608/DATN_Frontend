@@ -3,29 +3,29 @@ import { RouterLink, RouterView } from "vue-router";
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 
-const router = useRouter();
+// const router = useRouter();
 
-// ✅ Hàm kiểm tra token hết hạn
-function isTokenValid() {
-  const token = localStorage.getItem("token");
-  const expiresAt = localStorage.getItem("tokenExpiresAt");
+// // ✅ Hàm kiểm tra token hết hạn
+// function isTokenValid() {
+//   const token = localStorage.getItem("token");
+//   const expiresAt = localStorage.getItem("tokenExpiresAt");
 
-  if (!token || !expiresAt) return false;
+//   if (!token || !expiresAt) return false;
 
-  return Date.now() < parseInt(expiresAt);
-}
+//   return Date.now() < parseInt(expiresAt);
+// }
 
-onMounted(() => {
-  if (!isTokenValid()) {
-    // ✅ Xóa token, role và thời gian nếu hết hạn
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    localStorage.removeItem("tokenExpiresAt");
+// onMounted(() => {
+//   if (!isTokenValid()) {
+//     // ✅ Xóa token, role và thời gian nếu hết hạn
+//     localStorage.removeItem("token");
+//     localStorage.removeItem("role");
+//     localStorage.removeItem("tokenExpiresAt");
 
-    // ✅ Chuyển hướng về trang đăng nhập
-    router.push("/login");
-  }
-});
+//     // ✅ Chuyển hướng về trang đăng nhập
+//     router.push("/login");
+//   }
+// });
 </script>
 
 <template>

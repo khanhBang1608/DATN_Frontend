@@ -8,14 +8,14 @@ import Review from '@/views/admin/ReviewView.vue'
 import Order from '@/views/admin/OrderView.vue'
 import Category from '@/views/CategoryView.vue'
 import User from '@/views/UserView.vue'
+import UserAddress from '@/views/admin/UserAddressView.vue'
 import Product from '@/views/admin/ProductView.vue'
 import Color from '@/views/admin/ColorView.vue'
 import size from '@/views/admin/SizeView.vue'
-import ProductFrom from '@/views/admin/ProductFormViews.vue'
+// import ProductFrom from '@/views/admin/ProductFormViews.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
-import OtpFormView from '../views/OtpFormView.vue'
 import OrderManagementView from '../views/OrderManagementView.vue'
 import ReviewHistoryView from '../views/ReviewHistoryView.vue'
 import CartView from '../views/CartView.vue'
@@ -26,7 +26,6 @@ import AccountView from '../views/AccountView.vue'
 import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
-import DiscountForm from '../components/admin/discounts/DiscountModal.vue'
 import ProductVariantList from '@/components/admin/product/ProductVariantMain.vue'
 import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
 import ProductPromotions from '@/components/admin/promotions/ProductPromotions.vue'
@@ -63,11 +62,6 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView,
-    },
-    {
-      path: '/register/otp',
-      name: 'registerOtp',
-      component: OtpFormView,
     },
     {
       path: '/user/order-management',
@@ -177,16 +171,6 @@ const router = createRouter({
           name: 'Discount',
           component: Discount,
         },
-                {
-          path: 'discount/form',
-          name: 'discountForm',
-          component: DiscountForm,
-        },
-        {
-          path: 'form/:id',
-          name: 'discountFormUpdate',
-          component: DiscountForm,
-        },
         {
           path: 'promotion',
           name: 'Promotion',
@@ -211,11 +195,6 @@ const router = createRouter({
           path: 'attribute/sizes',
           name: 'size',
           component: size,
-        },
-        {
-          path: 'product/form',
-          name: 'ProductFrom',
-          component: ProductFrom,
         },
         {
           path: 'product/:id/variants',
@@ -261,46 +240,62 @@ const router = createRouter({
           path: 'user',
           name: 'User',
           component: User,
-        }
+        },
+         {
+          path: '/admin/users/:id/addresses',
+          name: 'UserAddress',
+          component: UserAddress,
+        },
       ],
     },
   ],
 })
 //  Hàm lấy thông tin user từ localStorage
+// Hàm lấy role người dùng
 function getUserRole() {
   try {
-    const role = (localStorage.getItem("role"));
-    return role ?? null;
+    return localStorage.getItem("role") ?? null;
   } catch {
     return null;
   }
 }
 
+// Hàm kiểm tra token hết hạn
+function isTokenExpired() {
+  const expiresAt = localStorage.getItem("tokenExpiresAt");
+  return !expiresAt || Date.now() > Number(expiresAt);
+}
+
 // Navigation Guard kiểm tra phân quyền truy cập
 router.beforeEach((to, from, next) => {
-  const role = getUserRole(); // 0 = Admin, 1 = User
-  const isLoggedIn = role !== null;
+  const role = getUserRole(); // "0" = Admin, "1" = User
+  const isLoggedIn = role !== null && !isTokenExpired();
 
-  // Nếu chưa đăng nhập
+  // Nếu token hết hạn -> xóa localStorage và điều hướng đến login
+  if (isTokenExpired()) {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("tokenExpiresAt");
+    localStorage.removeItem("user");
+  }
+
+  // Chưa đăng nhập hoặc token hết hạn
   if (!isLoggedIn) {
     if (to.path.startsWith("/admin") || to.path.startsWith("/user")) {
       return next("/login");
     } else {
-      return next(); // Cho vào các trang public
+      return next(); // Cho phép vào trang public
     }
   }
 
-  // Nếu đã đăng nhập
-  if (role === 0 && to.path.startsWith("/user")) {
-    // Admin không được vào trang user
-    return next("/login");
+  // Đã đăng nhập nhưng phân quyền sai
+  if (role === "0" && to.path.startsWith("/user")) {
+    return next("/login"); // Admin không vào trang user
+  }
+  if (role === "1" && to.path.startsWith("/admin")) {
+    return next("/login"); // User không vào trang admin
   }
 
-  if (role === 1 && to.path.startsWith("/admin")) {
-    // User không được vào trang admin
-    return next("/login");
-  }
-
-  return next(); // Các trường hợp còn lại được phép
+  next(); // Hợp lệ, cho phép vào
 });
 export default router

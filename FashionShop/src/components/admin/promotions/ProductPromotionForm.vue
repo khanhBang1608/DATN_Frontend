@@ -11,7 +11,7 @@ const promotionId = route.params.promotionId;
 const id = route.params.id;
 
 const allProducts = ref([]);
-const selectedProductId = ref(""); // Chỉ chọn 1 sản phẩm
+const selectedProductId = ref("");
 const allVariantsMap = ref({});
 const selectedVariants = ref({});
 const errors = reactive({
@@ -153,7 +153,7 @@ const submitPromotionVariants = async () => {
         .flat()
         .find((v) => v.productVariantId === parseInt(variantId));
       if (variant && value.promotionQuantity > variant.stock) {
-        errors.variants[variantId] = `Số lượng vượt tồn kho (${variant.stock})`;
+        errors.variants[variantId] = `Số lượng vượt tồn kho (${variant.stock}).`;
         continue;
       }
 
@@ -181,21 +181,23 @@ const submitPromotionVariants = async () => {
         `http://localhost:8080/api/admin/product-promotions/${id}`,
         item,
         {
-          headers: { Authorization: `Bearer ${token}` },
-          "Content-Type": "application/json",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         }
       );
       if (!response.data) {
-        errors.variants[item.productVariantId] = "Đã có khuyến mãi trùng thời gian.";
+        const variant = Object.values(allVariantsMap.value)
+          .flat()
+          .find((v) => v.productVariantId === item.productVariantId);
+        errors.variants[item.productVariantId] = `Biến thể ${variant.colorName} - ${variant.sizeName} đã tồn tại trong một chương trình khuyến mãi khác có thời gian trùng lặp.`;
         return;
       }
+      showSuccess("Cập nhật khuyến mãi thành công!");
     } else {
       const response = await axios.post(
         `http://localhost:8080/api/admin/product-promotions`,
         selectedList,
         {
-          headers: { Authorization: `Bearer ${token}` },
-          "Content-Type": "application/json",
+          headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         }
       );
 
@@ -205,10 +207,16 @@ const submitPromotionVariants = async () => {
         (item) => !savedVariantIds.includes(item.productVariantId)
       );
 
-      failedVariants.forEach((item) => {
-        errors.variants[item.productVariantId] =
-          "Không thể lưu do trùng thời gian khuyến mãi.";
-      });
+      if (failedVariants.length > 0) {
+        failedVariants.forEach((item) => {
+          const variant = Object.values(allVariantsMap.value)
+            .flat()
+            .find((v) => v.productVariantId === item.productVariantId);
+          errors.variants[item.productVariantId] = `Biến thể ${variant.colorName} - ${variant.sizeName} đã tồn tại trong một chương trình khuyến mãi khác có thời gian trùng lặp.`;
+        });
+        return;
+      }
+      showSuccess("Thêm khuyến mãi thành công!");
     }
   } catch (err) {
     console.error("Lỗi khi lưu khuyến mãi:", err);
@@ -220,12 +228,11 @@ const getProductName = (productId) => {
   const product = allProducts.value.find((p) => p.productId == productId);
   return product ? product.name : "Không rõ";
 };
+
 const deleteError = (variantId) => {
   if (errors.variants[variantId]) {
     delete errors.variants[variantId];
   }
-
-  // Nếu không còn lỗi nào trong variants => xóa lỗi tổng quát
   if (Object.keys(errors.variants).length === 0) {
     errors.variantsGlobal = "";
   }
@@ -270,7 +277,6 @@ const deleteError = (variantId) => {
               v-model="selectedVariants[variant.productVariantId].checked"
               @change="deleteError(variant.productVariantId)"
             />
-
             <label class="form-check-label" :for="'variant-' + variant.productVariantId">
               <strong>Màu:</strong> {{ variant.colorName || "Không có" }} -
               <strong>Size:</strong> {{ variant.sizeName || "Không có" }} -
@@ -289,12 +295,9 @@ const deleteError = (variantId) => {
               min="0"
               :max="variant.stock"
               class="form-control"
-              v-model.number="
-                selectedVariants[variant.productVariantId].promotionQuantity
-              "
+              v-model.number="selectedVariants[variant.productVariantId].promotionQuantity"
               @input="deleteError(variant.productVariantId)"
             />
-
             <div
               v-if="errors.variants[variant.productVariantId]"
               class="text-danger mt-1"

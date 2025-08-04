@@ -734,7 +734,7 @@
   margin-top: 12px;
 }
 
-.btn.btn-primary {
+.order-management-btn {
   background-color: #000;
   border: 2px solid #000;
   color: #fff;
@@ -744,7 +744,7 @@
   transition: all 0.2s ease;
 }
 
-.btn.btn-primary:hover {
+.order-management-btn:hover {
   background-color: #fff;
   color: #000;
   border-color: #000;

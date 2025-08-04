@@ -1,4 +1,3 @@
-<!-- src/views/admin/ProductPromotions.vue -->
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -40,7 +39,7 @@ const saveUpdatedQuantity = async () => {
   if (!Number.isInteger(quantity))
     errors.value.quantityLimit = "Số lượng sản phẩm khuyến mãi phải là số nguyên!";
   else if (quantity <= 0)
-    errors.value.quantityLimit = "Số lượng sản phẩm khuyến mãi phải lớn hơn > 0";
+    errors.value.quantityLimit = "Số lượng sản phẩm khuyến mãi phải lớn hơn 0";
   else if (quantity > maxStock)
     errors.value.quantityLimit = `Số lượng sản phẩm khuyến mãi phải <= ${maxStock}`;
 
@@ -181,7 +180,6 @@ const saveAddPromotion = async () => {
   }
 
   const selectedList = [];
-  // Trong saveAddPromotion
   for (const [variantId, val] of Object.entries(selectedVariants.value)) {
     if (val.checked) {
       selectedList.push({
@@ -191,10 +189,36 @@ const saveAddPromotion = async () => {
     }
   }
 
+  if (selectedList.length === 0) {
+    errorsAdd.global = "Vui lòng chọn ít nhất một biến thể.";
+    return;
+  }
+
   try {
-    await axios.post(`http://localhost:8080/api/admin/product-promotions`, selectedList, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axios.post(
+      `http://localhost:8080/api/admin/product-promotions`,
+      selectedList,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const savedVariants = response.data;
+    const savedVariantIds = savedVariants.map((item) => item.productVariantId);
+    const failedVariants = selectedList.filter(
+      (item) => !savedVariantIds.includes(item.productVariantId)
+    );
+
+    if (failedVariants.length > 0) {
+      failedVariants.forEach((item) => {
+        const variant = Object.values(allVariantsMap.value)
+          .flat()
+          .find((v) => v.productVariantId === item.productVariantId);
+        errorsAdd.variants[item.productVariantId] = `Biến thể ${variant.colorName} - ${variant.sizeName} đã tồn tại trong một chương trình khuyến mãi khác có thời gian trùng lặp.`;
+      });
+      return;
+    }
+
     await fetchPromotions();
     await fetchVariantDetails();
     showAddModal.value = false;
@@ -203,8 +227,12 @@ const saveAddPromotion = async () => {
       message: "Thêm mới thành công!",
       position: "topRight",
     });
-  } catch {
-    iziToast.error({ title: "Lỗi", message: "Thêm thất bại", position: "topRight" });
+  } catch (err) {
+    iziToast.error({
+      title: "Lỗi",
+      message: "Thêm thất bại. Vui lòng thử lại.",
+      position: "topRight",
+    });
   }
 };
 
@@ -224,6 +252,7 @@ onMounted(async () => {
   await fetchVariantDetails();
   await fetchAllProducts();
 });
+
 const getProductName = (productId) => {
   const product = allProducts.value.find((p) => p.productId == productId);
   return product ? product.name : "Không rõ";
@@ -356,6 +385,9 @@ const getProductName = (productId) => {
                 />
                 {{ variant.colorName }} - {{ variant.sizeName }} - Tồn kho:
                 {{ variant.stock }}
+              </div>
+              <div v-if="errorsAdd.variants[variant.productVariantId]" class="text-danger mt-1">
+                {{ errorsAdd.variants[variant.productVariantId] }}
               </div>
             </div>
 
