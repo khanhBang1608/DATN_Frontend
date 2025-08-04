@@ -154,10 +154,10 @@
 }
 
 /* Xóa hoàn toàn viền focus xanh */
-button:focus,
+/* button:focus,
 .btn:focus,
 .btn:focus-visible,
-.btn-check:focus+.btn,
+.btn-check:focus+.btn, */
 .form-control:focus,
 .form-control:focus-visible,
 input:focus,
@@ -171,3 +171,11 @@ select.form-control:focus {
     box-shadow: none !important;
     border-color: #ccc !important;
 }
+
+/* .modal-backdrop {
+    display: none !important;
+}
+.modal-backdrop.fade.show {
+    opacity: 0 !important;
+    transition: opacity 0.15s linear;
+} */

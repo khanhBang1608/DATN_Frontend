@@ -12,11 +12,10 @@ import UserAddress from '@/views/admin/UserAddressView.vue'
 import Product from '@/views/admin/ProductView.vue'
 import Color from '@/views/admin/ColorView.vue'
 import size from '@/views/admin/SizeView.vue'
-import ProductFrom from '@/views/admin/ProductFormViews.vue'
+// import ProductFrom from '@/views/admin/ProductFormViews.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
-import OtpFormView from '../views/OtpFormView.vue'
 import OrderManagementView from '../views/OrderManagementView.vue'
 import ReviewHistoryView from '../views/ReviewHistoryView.vue'
 import CartView from '../views/CartView.vue'
@@ -27,7 +26,6 @@ import AccountView from '../views/AccountView.vue'
 import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
-import DiscountForm from '../components/admin/discounts/DiscountModal.vue'
 import ProductVariantList from '@/components/admin/product/ProductVariantMain.vue'
 import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
 import ProductPromotions from '@/components/admin/promotions/ProductPromotions.vue'
@@ -64,11 +62,6 @@ const router = createRouter({
       path: '/register',
       name: 'register',
       component: RegisterView,
-    },
-    {
-      path: '/register/otp',
-      name: 'registerOtp',
-      component: OtpFormView,
     },
     {
       path: '/user/order-management',
@@ -178,16 +171,6 @@ const router = createRouter({
           name: 'Discount',
           component: Discount,
         },
-                {
-          path: 'discount/form',
-          name: 'discountForm',
-          component: DiscountForm,
-        },
-        {
-          path: 'form/:id',
-          name: 'discountFormUpdate',
-          component: DiscountForm,
-        },
         {
           path: 'promotion',
           name: 'Promotion',
@@ -212,11 +195,6 @@ const router = createRouter({
           path: 'attribute/sizes',
           name: 'size',
           component: size,
-        },
-        {
-          path: 'product/form',
-          name: 'ProductFrom',
-          component: ProductFrom,
         },
         {
           path: 'product/:id/variants',
