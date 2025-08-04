@@ -94,11 +94,36 @@
                   >
                 </div>
                 <div class="sold-count text-muted" style="font-size: 14px">
-                  <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản phẩm
+                  <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản
+                  phẩm
                 </div>
               </a>
             </div>
           </template>
+          <nav aria-label="Pagination sản phẩm mới nhất">
+            <ul class="pagination justify-content-center mt-3">
+              <li class="page-item" :class="{ disabled: newestPage === 0 }">
+                <button class="page-link" @click="fetchTopNewestProducts(newestPage - 1)">
+                  &laquo; Trước
+                </button>
+              </li>
+
+              <li class="page-item disabled">
+                <span class="page-link">
+                  Trang {{ newestPage + 1 }} / {{ newestTotalPages }}
+                </span>
+              </li>
+
+              <li
+                class="page-item"
+                :class="{ disabled: newestPage + 1 >= newestTotalPages }"
+              >
+                <button class="page-link" @click="fetchTopNewestProducts(newestPage + 1)">
+                  Sau &raquo;
+                </button>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
@@ -129,7 +154,7 @@
       </div>
     </section>
 
-    <!-- Top 50 sản phẩm bán chạy -->
+    <!-- Top sản phẩm bán chạy có phân trang -->
     <div class="product-content-wrapper">
       <div class="container mt-5">
         <h3 class="text-center mb-4 fw-bold">TOP SẢN PHẨM BÁN CHẠY NHẤT</h3>
@@ -197,16 +222,55 @@
                       "
                     ></i>
                   </span>
-                  <span class="ms-1 text-muted"
-                    >({{ product.averageRating?.toFixed(1) || "0.0" }})</span
-                  >
+                  <span class="ms-1 text-muted">
+                    ({{ product.averageRating?.toFixed(1) || "0.0" }})
+                  </span>
                 </div>
                 <div class="sold-count text-muted" style="font-size: 14px">
-                  <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản phẩm
+                  <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản
+                  phẩm
                 </div>
               </a>
             </div>
           </template>
+        </div>
+        <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
+          <nav>
+            <ul class="pagination">
+              <li class="page-item" :class="{ disabled: currentPage === 0 }">
+                <a
+                  class="page-link"
+                  href="#"
+                  @click.prevent="fetchTopBestSellingProducts(currentPage - 1)"
+                >
+                  &laquo;
+                </a>
+              </li>
+              <li
+                class="page-item"
+                v-for="page in totalPages"
+                :key="page"
+                :class="{ active: currentPage === page - 1 }"
+              >
+                <a
+                  class="page-link"
+                  href="#"
+                  @click.prevent="fetchTopBestSellingProducts(page - 1)"
+                >
+                  {{ page }}
+                </a>
+              </li>
+              <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
+                <a
+                  class="page-link"
+                  href="#"
+                  @click.prevent="fetchTopBestSellingProducts(currentPage + 1)"
+                >
+                  &raquo;
+                </a>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
@@ -384,18 +448,29 @@ const processProducts = async (products) => {
   }
 };
 
-// Hàm lấy sản phẩm mới nhất
-const fetchTopNewestProducts = async () => {
+const newestPage = ref(0);
+const newestTotalPages = ref(0);
+const newestPageSize = ref(4);
+
+const fetchTopNewestProducts = async (page = 0) => {
   try {
-    const response = await axios.get("/api/public/products/top10");
-    topNewestProducts.value = await processProducts(
-      response.data.filter(
-        (product) =>
-          product.variants &&
-          product.variants.length > 0 &&
-          product.variants[0]?.price !== undefined
-      )
+    const response = await axios.get("/api/public/products/top10", {
+      params: {
+        page,
+        size: newestPageSize.value,
+      },
+    });
+
+    const filtered = response.data.content.filter(
+      (product) =>
+        product.variants &&
+        product.variants.length > 0 &&
+        product.variants[0]?.price !== undefined
     );
+
+    topNewestProducts.value = await processProducts(filtered);
+    newestPage.value = response.data.number;
+    newestTotalPages.value = response.data.totalPages;
   } catch (error) {
     console.error("Lỗi khi lấy sản phẩm mới nhất:", error);
   }
@@ -438,22 +513,42 @@ const fetchRecentViews = async () => {
   }
 };
 
-// Hàm lấy top 50 sản phẩm bán chạy
-const fetchTopBestSellingProducts = async () => {
+const currentPage = ref(0);
+const totalPages = ref(0);
+const pageSize = ref(4);
+
+const fetchTopBestSellingProducts = async (page = 0) => {
   try {
-    const response = await axios.get("/api/public/top50-products");
-    topBestSellingProducts.value = await processProducts(
-      response.data.filter(
+    const response = await axios.get("/api/public/top50-products", {
+      params: { page, size: pageSize.value }, // <-- sửa lại ở đây
+    });
+
+    const processed = await processProducts(
+      response.data.content.filter(
         (product) =>
           product.variants &&
           product.variants.length > 0 &&
           product.variants[0]?.price !== undefined
       )
     );
+
+    topBestSellingProducts.value = processed;
+    currentPage.value = response.data.number;
+    totalPages.value = response.data.totalPages;
   } catch (error) {
-    console.error("Lỗi khi lấy top 50 sản phẩm bán chạy:", error);
+    console.error("Lỗi khi lấy sản phẩm bán chạy:", error);
   }
 };
+
+import { computed } from "vue";
+
+const chunkedBestSellingProducts = computed(() => {
+  const chunks = [];
+  for (let i = 0; i < topBestSellingProducts.value.length; i += 4) {
+    chunks.push(topBestSellingProducts.value.slice(i, i + 4));
+  }
+  return chunks;
+});
 
 // onMounted hook
 onMounted(async () => {
