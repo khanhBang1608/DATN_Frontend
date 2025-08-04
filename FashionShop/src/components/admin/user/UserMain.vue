@@ -64,6 +64,27 @@
         </tbody>
       </table>
     </div>
+    <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
+      <button
+        class="btn btn-outline-secondary me-2"
+        :disabled="currentPage === 0"
+        @click="fetchUsers(currentPage - 1)"
+      >
+        &laquo; Trang trước
+      </button>
+
+      <span class="mx-2 align-self-center">
+        Trang {{ currentPage + 1 }} / {{ totalPages }}
+      </span>
+
+      <button
+        class="btn btn-outline-secondary ms-2"
+        :disabled="currentPage >= totalPages - 1"
+        @click="fetchUsers(currentPage + 1)"
+      >
+        Trang sau &raquo;
+      </button>
+    </div>
   </div>
 </template>
 
@@ -86,15 +107,21 @@ const goToUserAddresses = (userId, userName) => {
   });
 };
 
-const fetchUsers = async () => {
+const totalPages = ref(0);
+const currentPage = ref(0);
+
+const fetchUsers = async (page = 0) => {
   try {
-    const res = await axios.get("http://localhost:8080/api/admin/users", {
+    const res = await axios.get(`http://localhost:8080/api/admin/users?page=${page}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
       withCredentials: true,
     });
-    users.value = res.data;
+
+    users.value = res.data.users;
+    totalPages.value = res.data.totalPages;
+    currentPage.value = res.data.currentPage;
   } catch (err) {
     const message =
       "Không thể tải danh sách người dùng: " + (err.response?.data || err.message);
