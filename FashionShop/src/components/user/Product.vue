@@ -87,10 +87,21 @@ const processProducts = async (products) => {
 };
 
 // Hàm lấy tất cả sản phẩm
-const fetchProducts = async () => {
+const currentPage = ref(0);
+const totalPages = ref(0);
+const pageSize = ref(8);
+
+const fetchProducts = async (page = 0, size = pageSize.value) => {
   try {
-    const res = await getAllProducts();
-    products.value = await processProducts(res.data);
+    const res = await getAllProducts(page, size);
+    const data = res.data;
+
+    const processed = await processProducts(data.content || []);
+    products.value = processed;
+
+    totalPages.value = data.totalPages;
+    currentPage.value = data.number;
+
     handleSort(sortOption.value);
   } catch (err) {
     console.error("Lỗi khi tải sản phẩm:", err);
@@ -165,14 +176,20 @@ const handleSort = (option) => {
   products.value = sortedProducts;
 };
 
+const goToPage = async (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    await fetchProducts(page);
+  }
+};
+
 // onMounted hook
 onMounted(async () => {
   if (searchKeyword.value) {
     await handleSearch();
   } else {
-    await fetchProducts();
+    await fetchProducts(currentPage.value);
   }
-  await fetchSimilarProducts(); // Gọi hàm lấy sản phẩm tương tự
+  await fetchSimilarProducts();
   await nextTick();
   setupFilterSidebar();
 });
@@ -354,102 +371,40 @@ watch(
                   >
                 </div>
                 <div class="sold-count text-muted" style="font-size: 14px">
-                  <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản phẩm
+                  <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản
+                  phẩm
                 </div>
               </a>
             </div>
           </template>
         </div>
         <ul class="pagination mt-3">
-          <li class="pagination-item pagination-active">1</li>
-          <li class="pagination-item">2</li>
-          <li class="pagination-item">3</li>
-          <li class="pagination-item pagination-disabled">...</li>
-          <li class="pagination-item">15</li>
-          <li class="pagination-item pagination-arrow">&gt;</li>
-        </ul>
-      </div>
-    </div>
+          <li
+            class="pagination-item pagination-arrow"
+            :class="{ 'pagination-disabled': currentPage === 0 }"
+            @click="goToPage(currentPage - 1)"
+          >
+            &lt;
+          </li>
 
-    <!-- Phần sản phẩm tương tự -->
-    <div class="product-content-wrapper">
-      <div class="container mt-5">
-        <h3 class="text-center mb-4 fw-bold">SẢN PHẨM TƯƠNG TỰ</h3>
-        <div class="row g-3">
-          <template v-for="product in similarProducts" :key="product.productId">
-            <div
-              v-if="product.variants && product.variants.length > 0"
-              class="col-6 col-sm-6 col-md-4 col-lg-3"
-            >
-              <a
-                href="#"
-                class="product-link"
-                @click.prevent="handleProductClick(product.productId)"
-              >
-                <div class="product-item">
-                  <span class="discount-badge" v-if="product.discount">
-                    -{{ product.discount }}%
-                  </span>
-                  <img
-                    :src="
-                      product.variants[0]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[0].imageName}`
-                        : '/default.jpg'
-                    "
-                    class="img-fluid img-default"
-                    :alt="`${product.name} Hover`"
-                  />
-                  <img
-                    :src="
-                      product.variants[1]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[1].imageName}`
-                        : '/default.jpg'
-                    "
-                    class="img-fluid img-hover"
-                    :alt="`${product.name} Hover`"
-                  />
-                </div>
-                <div class="product-name">{{ product.name }}</div>
-                <div>
-                  <span class="discounted-price">
-                    {{
-                      product.variants[0]?.price
-                        ? product.variants[0].price.toLocaleString()
-                        : "0"
-                    }}₫
-                  </span>
-                  <span
-                    class="original-price"
-                    v-if="
-                      product.originalPrice &&
-                      product.originalPrice > product.variants[0]?.price
-                    "
-                  >
-                    {{ product.originalPrice.toLocaleString() }}₫
-                  </span>
-                </div>
-                <div class="product-rating">
-                  <span v-for="i in 5" :key="i">
-                    <i
-                      class="bi"
-                      :class="
-                        i <= Math.round(product.averageRating || 0)
-                          ? 'bi-star-fill text-warning'
-                          : 'bi-star text-muted'
-                      "
-                    ></i>
-                  </span>
-                  <span class="ms-1 text-muted"
-                    >({{ product.averageRating?.toFixed(1) || "0.0" }})</span
-                  >
-                </div>
-                <div class="sold-count text-muted" style="font-size: 14px">
-                  <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản phẩm
-                </div>
-              </a>
-            </div>
-          </template>
-        </div>
+          <li
+            v-for="page in totalPages"
+            :key="page"
+            class="pagination-item"
+            :class="{ 'pagination-active': page - 1 === currentPage }"
+            @click="goToPage(page - 1)"
+          >
+            {{ page }}
+          </li>
+
+          <li
+            class="pagination-item pagination-arrow"
+            :class="{ 'pagination-disabled': currentPage === totalPages - 1 }"
+            @click="goToPage(currentPage + 1)"
+          >
+            &gt;
+          </li>
+        </ul>
       </div>
     </div>
   </main>

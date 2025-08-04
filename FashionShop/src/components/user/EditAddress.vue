@@ -79,15 +79,15 @@
             <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Tỉnh/Thành phố *</label>
               <select
-                class="form-select address-form-select"
-                v-model="form.provinceId"
-                @change="
-                  () => {
-                    loadDistricts();
-                    clearFieldError('provinceId');
-                  }
-                "
-              >
+                  class="form-select address-form-select"
+                  v-model="form.provinceId"
+                  @change="
+                    () => {
+                      loadDistricts(); // không truyền true => sẽ reset districtId + wardId
+                      clearFieldError('provinceId');
+                    }
+                  "
+                >
                 <option value="">Tỉnh/Thành</option>
                 <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
                   {{ p.ProvinceName }}
@@ -263,10 +263,14 @@ async function loadProvinces() {
   provinces.value = data.data || [];
 }
 
-async function loadDistricts() {
+async function loadDistricts(keepOld = false) {
   wards.value = [];
-  form.districtId = "";
-  form.wardId = "";
+  if (!keepOld) {
+    form.districtId = "";
+    form.wardId = "";
+  }
+   if (!form.provinceId) return;
+
   const res = await fetch(
     "https://online-gateway.ghn.vn/shiip/public-api/master-data/district",
     {
@@ -278,6 +282,7 @@ async function loadDistricts() {
   const data = await res.json();
   districts.value = data.data || [];
 }
+
 
 async function loadWards() {
   const res = await fetch(
@@ -353,21 +358,34 @@ async function submitForm() {
   }
 }
 
-function loadEditData() {
+async function loadEditData() {
   const stored = localStorage.getItem("editAddress");
   if (!stored) return;
 
   const data = JSON.parse(stored);
-  Object.assign(form, data);
+  
+  form.customerName = data.customerName || "";
+  form.phone = data.phone || "";
+  form.address = data.address || "";
+  form.provinceId = data.provinceId || "";
+
+  await loadDistricts(true); 
+  form.districtId = data.districtId || "";
+
+  await loadWards(); 
+  form.wardId = data.wardId || "";
+
+  form.defaultAddress = data.defaultAddress || false;
 }
 
-onMounted(async () => {
-  await loadProvinces();
-  loadEditData();
 
-  if (form.provinceId) await loadDistricts();
-  if (form.districtId) await loadWards();
+
+
+onMounted(async () => {
+  await loadProvinces();     // ✅ Bây giờ dùng được await
+  await loadEditData();
 });
+
 </script>
 
 <style scoped>
