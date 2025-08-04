@@ -185,7 +185,7 @@
                 Đóng
               </button>
               <button type="submit" class="btn btn-success">
-                {{ isEdit ? "Cập nhật" : "Thêm mới" }}
+                {{ isEdit ? "Cập nhập" : "Thêm mới" }}
               </button>
             </div>
           </form>
@@ -268,6 +268,16 @@ const closeModal = () => {
 
 const saveDiscount = async () => {
   errors.value = {};
+
+  // Kiểm tra ngày bắt đầu khi thêm mới
+  if (!isEdit.value) {
+    const today = new Date().toISOString().split("T")[0];
+    if (form.value.startDate && form.value.startDate < today) {
+      errors.value.startDate = "Ngày bắt đầu phải từ hôm nay trở đi";
+      return;
+    }
+  }
+
   try {
     const config = {
       headers: {
@@ -305,25 +315,10 @@ const saveDiscount = async () => {
     await fetchDiscounts();
   } catch (err) {
     if (err.response && err.response.status === 400 && Array.isArray(err.response.data)) {
-      const filteredErrors = isEdit.value
-        ? err.response.data.filter((e) => !e.includes("startDate"))
-        : err.response.data;
-      filteredErrors.forEach((e) => {
+      err.response.data.forEach((e) => {
         const [field, msg] = e.split(": ");
         errors.value[field] = msg;
       });
-      if (filteredErrors.length > 0) {
-        iziToast.error({ title: "Lỗi", message: "Vui lòng kiểm tra lại thông tin!" });
-      } else if (isEdit.value) {
-        // Nếu không có lỗi sau khi lọc (trong chế độ sửa), vẫn cho phép lưu
-        closeModal();
-        await fetchDiscounts();
-        iziToast.success({
-          title: "Thành công",
-          message: "Cập nhật thành công!",
-          position: "topRight",
-        });
-      }
     } else {
       iziToast.error({ title: "Lỗi", message: "Có lỗi xảy ra khi lưu." });
     }

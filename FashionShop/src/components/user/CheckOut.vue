@@ -60,6 +60,11 @@ export default {
     toggleIcon() {
       return this.isMobileOrderVisible ? "bi-chevron-up" : "bi-chevron-down";
     },
+    validDiscounts() {
+      return this.discountList.filter(
+        (d) => d.quantityLimit !== 0 && this.subtotal >= (d.minOrderAmount || 0)
+      );
+    },
   },
 
   watch: {
@@ -114,10 +119,9 @@ export default {
       const discount = this.selectedDiscount;
       if (!discount) return;
 
+      // Kiểm tra số tiền tối thiểu, nếu không đủ thì ẩn mã giảm giá
       if (this.subtotal < (discount.minOrderAmount || 0)) {
-        this.discountError = `Cần mua tối thiểu ${this.formatPrice(
-          discount.minOrderAmount
-        )} để dùng mã này.`;
+        this.selectedDiscount = null; // Ẩn mã giảm giá
         return;
       }
 
@@ -472,7 +476,7 @@ export default {
               />
             </div>
             <div class="mb-3">
-              <h5>Họ tên người nhận :</h5>
+              <h5>Số điện thoại :</h5>
               <input
                 type="text"
                 class="form-control"
@@ -588,14 +592,13 @@ export default {
                 @change="applyDiscount"
               >
                 <option
-                  v-for="d in discountList"
+                  v-for="d in validDiscounts"
                   :key="d.discountId"
                   :value="d"
-                  :disabled="d.quantityLimit === 0"
                 >
                   {{ d.discountCode }} - Giảm {{ d.discountPercent }}% (Tối đa
                   {{ formatPrice(d.maxDiscountAmount || 0) }}) - Số lượng:
-                  {{ d.quantityLimit === 0 ? "0" : d.quantityLimit }}
+                  {{ d.quantityLimit }}
                 </option>
               </select>
 
