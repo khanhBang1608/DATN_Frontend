@@ -130,19 +130,19 @@ export default {
       try {
         const fullAddress = `${this.form.phone} - ${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`
 
-        if (this.paymentMethod === 'COD') {
-          const orderData = {
-            address: fullAddress,
-            paymentMethod: this.paymentMethod,
-            discountCode: this.discountCode || null,
-            discountAmount: this.discountAmount || 0,
-            orderDetails: this.cartDetails.map((item) => ({
-              productVariantId: item.productVariantId,
-              quantity: item.quantity,
-              price: item.discountedPrice || item.price,
-            })),
-          }
+        const orderData = {
+          address: fullAddress,
+          paymentMethod: this.paymentMethod,
+          discountCode: this.discountCode || null,
+          discountAmount: this.discountAmount || 0,
+          orderDetails: this.cartDetails.map((item) => ({
+            productVariantId: item.productVariantId,
+            quantity: item.quantity,
+            price: item.discountedPrice || item.price,
+          })),
+        }
 
+        if (this.paymentMethod === 'COD') {
           const response = await createOrder(orderData)
           await clearCart()
 
@@ -150,16 +150,9 @@ export default {
           this.$router.push('/user/order-management')
         } else if (this.paymentMethod === 'VNPAY') {
           const total = this.total
-
-          const res = await axios.get('/api/user/payment/create', {
-            params: { total },
-            headers: {
-              Authorization: 'Bearer ' + localStorage.getItem('token'),
-            },
-          })
-
           const tempOrderData = {
             address: fullAddress,
+            email: this.form.email || 'default@example.com', // Ensure email is included
             paymentMethod: this.paymentMethod,
             paymentStatus: 1,
             discountCode: this.discountCode || null,
@@ -170,7 +163,18 @@ export default {
               price: item.discountedPrice || item.price,
             })),
           }
+
+          // Save to localStorage
           localStorage.setItem('pendingOrder', JSON.stringify(tempOrderData))
+
+          // Lưu email vào orderInfo
+          const orderInfo = `email=${encodeURIComponent(tempOrderData.email)}`
+          const res = await axios.get('/api/user/payment/create', {
+            params: { total, orderInfo },
+            headers: {
+              Authorization: 'Bearer ' + localStorage.getItem('token'),
+            },
+          })
           window.location.href = res.data.paymentUrl
         }
       } catch (error) {
@@ -180,6 +184,7 @@ export default {
         this.loading = false
       }
     },
+
     async fetchAddresses() {
       try {
         const res = await axios.get('/api/user/address/list', {
@@ -189,7 +194,6 @@ export default {
         })
         this.addressList = res.data
 
-        // Nếu không có địa chỉ nào, chuyển đến trang thêm địa chỉ
         if (this.addressList.length === 0) {
           this.$toast.warning('Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước.')
           this.$router.push('/user/address')
@@ -198,11 +202,11 @@ export default {
         console.error('Lỗi khi lấy địa chỉ:', err)
       }
     },
+
     onSelectAddress() {
       const selected = this.addressList.find((a) => a.addressId === this.selectedAddressId)
       if (!selected) return
 
-      // Fill vào form
       this.form.fullName = selected.customerName
       this.form.phone = selected.phone
       this.form.address = selected.address
@@ -211,14 +215,11 @@ export default {
       this.form.ward = selected.wardName
     },
   },
-
   mounted() {
-    // Load danh sách tỉnh
     axios.get('https://provinces.open-api.vn/api/p/').then((res) => {
       this.provinces = res.data
     })
 
-    // Load danh sách mã giảm giá
     getDiscount()
       .then((res) => {
         this.discountList = res
@@ -227,10 +228,8 @@ export default {
         this.discountError = 'Không thể tải mã giảm giá.'
       })
 
-    // Load danh sách địa chỉ đã lưu
     this.fetchAddresses()
 
-    // Kiểm tra đăng nhập và giỏ hàng
     if (!localStorage.getItem('token')) {
       toast.error('Vui lòng đăng nhập để tiếp tục.')
       this.$router.push('/login')
@@ -242,11 +241,27 @@ export default {
         toast.error('Không tìm thấy thông tin giỏ hàng.')
         this.$router.push('/user/cart')
       }
+
+      // Fetch user email from profile API
+      axios
+        .get('/api/user/profile', {
+          headers: {
+            Authorization: 'Bearer ' + localStorage.getItem('token'),
+          },
+        })
+        .then((res) => {
+          this.form.email = res.data.email || ''
+        })
+        .catch((err) => {
+          console.error('Lỗi khi lấy thông tin người dùng:', err)
+          toast.error('Không thể lấy thông tin người dùng.')
+        })
     }
   },
 }
 </script>
 
+<!-- Template giữ nguyên -->
 <template>
   <div class="checkout-container container">
     <div class="row g-0">
@@ -358,8 +373,8 @@ export default {
                   :key="address.addressId"
                   :value="address.addressId"
                 >
-                  {{ address.customerName }} -
-                  {{ address.fullAddress || address.address }} - {{ address.phone }}
+                  {{ address.customerName }} - {{ address.fullAddress || address.address }} -
+                  {{ address.phone }}
                 </option>
               </select>
 
@@ -383,7 +398,7 @@ export default {
               />
             </div>
             <div class="mb-3">
-              <h5>Họ tên người nhận :</h5>
+              <h5>Số điện thoại :</h5>
               <input
                 type="text"
                 class="form-control"
