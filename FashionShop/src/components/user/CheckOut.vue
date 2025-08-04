@@ -60,6 +60,11 @@ export default {
     toggleIcon() {
       return this.isMobileOrderVisible ? "bi-chevron-up" : "bi-chevron-down";
     },
+    validDiscounts() {
+      return this.discountList.filter(
+        (d) => d.quantityLimit !== 0 && this.subtotal >= (d.minOrderAmount || 0)
+      );
+    },
   },
 
   watch: {
@@ -114,10 +119,9 @@ export default {
       const discount = this.selectedDiscount;
       if (!discount) return;
 
+      // Kiểm tra số tiền tối thiểu, nếu không đủ thì ẩn mã giảm giá
       if (this.subtotal < (discount.minOrderAmount || 0)) {
-        this.discountError = `Cần mua tối thiểu ${this.formatPrice(
-          discount.minOrderAmount
-        )} để dùng mã này.`;
+        this.selectedDiscount = null; // Ẩn mã giảm giá
         return;
       }
 
@@ -129,63 +133,64 @@ export default {
       toast.success(`Áp dụng mã ${this.discountCode} thành công!`);
     },
 
-async calculateShippingFee() {
-  if (!this.selectedAddressId || this.cartDetails.length === 0) return;
+    async calculateShippingFee() {
+      if (!this.selectedAddressId || this.cartDetails.length === 0) return;
 
-  // Tạm tính khối lượng đơn hàng
-  const weight = this.cartDetails.reduce(
-    (total, item) => total + item.weight * item.quantity,
-    0
-  ) || 500;
+      // Tạm tính khối lượng đơn hàng
+      const weight =
+        this.cartDetails.reduce(
+          (total, item) => total + item.weight * item.quantity,
+          0
+        ) || 500;
 
-  // Các kích thước mặc định (nên lấy từ DB sản phẩm nếu có)
-  const length = 20;
-  const width = 15;
-  const height = 10;
+      // Các kích thước mặc định (nên lấy từ DB sản phẩm nếu có)
+      const length = 20;
+      const width = 15;
+      const height = 10;
 
-  try {
-    // Gọi API backend để tính phí ship
-    const response = await getShippingFee({
-      addressId: Number(this.selectedAddressId),
-      weight,
-      length,
-      width,
-      height,
-      insuranceValue: this.subtotal,
-    });
+      try {
+        // Gọi API backend để tính phí ship
+        const response = await getShippingFee({
+          addressId: Number(this.selectedAddressId),
+          weight,
+          length,
+          width,
+          height,
+          insuranceValue: this.subtotal,
+        });
 
-    console.log("✅ Phản hồi từ API phí vận chuyển:", response);
+        console.log("✅ Phản hồi từ API phí vận chuyển:", response);
 
-    if (response && response.data && typeof response.data.total === "number") {
-      this.shippingFee = response.data.total;
-    } else {
-      console.warn("⚠️ Không tìm thấy 'total' trong phản hồi. Dùng mặc định 10000");
-      this.shippingFee = 10000;
-    }
-  } catch (err) {
-    console.error("❌ Không thể tính phí vận chuyển:");
+        if (response && response.data && typeof response.data.total === "number") {
+          this.shippingFee = response.data.total;
+        } else {
+          console.warn("⚠️ Không tìm thấy 'total' trong phản hồi. Dùng mặc định 10000");
+          this.shippingFee = 10000;
+        }
+      } catch (err) {
+        console.error("❌ Không thể tính phí vận chuyển:");
 
-    // Ghi chi tiết nếu là lỗi từ response GHN
-    if (err.response && err.response.data) {
-      console.error("Mã lỗi:", err.response.data.code);
-      console.error("Thông báo:", err.response.data.message);
-      console.error("Chi tiết:", err.response.data.data);
-    } else {
-      console.error(err);
-    }
+        // Ghi chi tiết nếu là lỗi từ response GHN
+        if (err.response && err.response.data) {
+          console.error("Mã lỗi:", err.response.data.code);
+          console.error("Thông báo:", err.response.data.message);
+          console.error("Chi tiết:", err.response.data.data);
+        } else {
+          console.error(err);
+        }
 
-    // Dùng mặc định khi lỗi
-    this.shippingFee = 80000;
-  }
+        // Dùng mặc định khi lỗi
+        this.shippingFee = 80000;
+      }
 
-  // Log thông tin gửi đi để tiện debug
-  console.log("📦 Gọi tính phí với:", {
-    addressId: this.selectedAddressId,
-    weight,
-    insuranceValue: this.subtotal,
-    dimensions: { length, width, height }
-  });
-},
+      // Log thông tin gửi đi để tiện debug
+      console.log("📦 Gọi tính phí với:", {
+        addressId: this.selectedAddressId,
+        weight,
+        insuranceValue: this.subtotal,
+        dimensions: { length, width, height },
+      });
+    },
 
     async placeOrder() {
       if (this.cartDetails.length === 0) {
@@ -412,6 +417,13 @@ async calculateShippingFee() {
       <!-- Form thông tin giao hàng -->
       <div class="col-md-7 border-end bg-white px-4 py-3">
         <div class="checkout-form-container">
+          <div class="checkout-logo mb-4 ms-4">
+            <img
+              src="@/assets/img/logo-brand.png"
+              alt="L'hex Logo"
+              style="height: 48px"
+            />
+          </div>
           <nav class="checkout-breadcrumb mb-3">
             <router-link to="/cart" class="text-muted text-decoration-none"
               >Giỏ hàng</router-link
@@ -422,7 +434,6 @@ async calculateShippingFee() {
 
           <div class="checkout-header">
             <h2>Thông tin giao hàng</h2>
-            <p>Bạn đã có tài khoản? <router-link to="/login">Đăng nhập</router-link></p>
           </div>
 
           <form class="checkout-form" @submit.prevent="placeOrder">
@@ -465,7 +476,7 @@ async calculateShippingFee() {
               />
             </div>
             <div class="mb-3">
-              <h5>Họ tên người nhận :</h5>
+              <h5>Số điện thoại :</h5>
               <input
                 type="text"
                 class="form-control"
@@ -518,7 +529,7 @@ async calculateShippingFee() {
                     v-model="paymentMethod"
                   />
                   <img
-                    src="https://cdn-icons-png.flaticon.com/128/196/196565.png"
+                    src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTp1v7T287-ikP1m7dEUbs2n1SbbLEqkMd1ZA&s"
                     alt="VNPAY"
                     width="24"
                   />
@@ -581,14 +592,13 @@ async calculateShippingFee() {
                 @change="applyDiscount"
               >
                 <option
-                  v-for="d in discountList"
+                  v-for="d in validDiscounts"
                   :key="d.discountId"
                   :value="d"
-                  :disabled="d.quantityLimit === 0"
                 >
                   {{ d.discountCode }} - Giảm {{ d.discountPercent }}% (Tối đa
                   {{ formatPrice(d.maxDiscountAmount || 0) }}) - Số lượng:
-                  {{ d.quantityLimit === 0 ? "0" : d.quantityLimit }}
+                  {{ d.quantityLimit }}
                 </option>
               </select>
 
