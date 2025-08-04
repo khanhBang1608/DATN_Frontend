@@ -356,6 +356,44 @@
               </a>
             </div>
           </template>
+          <!-- Pagination for Recent Viewed Products -->
+          <nav class="mt-4 d-flex justify-content-center" v-if="recentTotalPages > 1">
+            <ul class="pagination mb-0">
+              <li class="page-item" :class="{ disabled: recentPage === 0 }">
+                <a
+                  class="page-link"
+                  href="#"
+                  @click.prevent="goToRecentPage(recentPage - 1)"
+                >
+                  Previous
+                </a>
+              </li>
+
+              <li
+                v-for="page in recentTotalPages"
+                :key="page"
+                class="page-item"
+                :class="{ active: recentPage === page - 1 }"
+              >
+                <a class="page-link" href="#" @click.prevent="goToRecentPage(page - 1)">
+                  {{ page }}
+                </a>
+              </li>
+
+              <li
+                class="page-item"
+                :class="{ disabled: recentPage === recentTotalPages - 1 }"
+              >
+                <a
+                  class="page-link"
+                  href="#"
+                  @click.prevent="goToRecentPage(recentPage + 1)"
+                >
+                  Next
+                </a>
+              </li>
+            </ul>
+          </nav>
         </div>
       </div>
     </div>
@@ -477,39 +515,56 @@ const fetchTopNewestProducts = async (page = 0) => {
 };
 
 // Hàm lấy sản phẩm đã xem gần đây
-const fetchRecentViews = async () => {
+const recentPage = ref(0);
+const recentTotalPages = ref(0);
+const recentPageSize = ref(4); // số sản phẩm/ trang
+
+const fetchRecentViews = async (page = 0) => {
   try {
     const token = localStorage.getItem("token");
     if (!token) return;
 
     const response = await axios.get("/api/user/product-views/recent", {
       headers: { Authorization: `Bearer ${token}` },
+      params: {
+        page,
+        size: recentPageSize.value,
+      },
     });
 
-    if (Array.isArray(response.data)) {
-      const seen = new Map();
-      response.data.forEach((item) => {
-        const product = item.product?.[0];
-        const variant = product?.variants?.[0];
-        if (
-          product?.productId &&
-          !seen.has(product.productId) &&
-          product.variants &&
-          product.variants.length > 0 &&
-          variant?.price !== undefined
-        ) {
-          seen.set(product.productId, {
-            productId: product.productId,
-            name: product.name,
-            variants: [variant],
-            viewCount: product.viewCount || 0,
-          });
-        }
-      });
-      recentViewedProducts.value = await processProducts(Array.from(seen.values()));
-    }
+    const productDTOs = response.data.content || [];
+
+    const seen = new Map();
+    productDTOs.forEach((item) => {
+      const product = item.product?.[0];
+      const variant = product?.variants?.[0];
+
+      if (
+        product?.productId &&
+        !seen.has(product.productId) &&
+        product.variants?.length > 0 &&
+        variant?.price !== undefined
+      ) {
+        seen.set(product.productId, {
+          productId: product.productId,
+          name: product.name,
+          variants: [variant],
+          viewCount: product.viewCount || 0,
+        });
+      }
+    });
+
+    recentViewedProducts.value = await processProducts(Array.from(seen.values()));
+    recentPage.value = response.data.number;
+    recentTotalPages.value = response.data.totalPages;
   } catch (error) {
     console.error("Lỗi khi lấy sản phẩm đã xem gần đây:", error);
+  }
+};
+
+const goToRecentPage = async (page) => {
+  if (page >= 0 && page < recentTotalPages.value) {
+    await fetchRecentViews(page);
   }
 };
 
