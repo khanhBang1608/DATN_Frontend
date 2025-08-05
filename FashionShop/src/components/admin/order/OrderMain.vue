@@ -88,8 +88,8 @@
         <tbody>
           <tr v-for="order in filteredOrders" :key="order.orderId">
             <td>{{ order.orderId }}</td>
-            <td>{{ order.userFullName || 'Không xác định' }}</td>
-            <td>{{ new Date(order.orderDate).toLocaleDateString('vi-VN') }}</td>
+            <td>{{ order.userFullName || "Không xác định" }}</td>
+            <td>{{ new Date(order.orderDate).toLocaleDateString("vi-VN") }}</td>
             <td>{{ extractAddress(order.address) }}</td>
             <td>{{ extractPhone(order.address) }}</td>
             <td>{{ formatPrice(order.totalAmount) }}</td>
@@ -99,7 +99,8 @@
                 'text-warning': order.status === 0,
                 'text-info': order.status === 1 || order.status === 2,
                 'text-success': order.status === 3 || order.status === 6,
-                'text-danger': order.status === 4 || order.status === 5 || order.status === 7,
+                'text-danger':
+                  order.status === 4 || order.status === 5 || order.status === 7,
               }"
             >
               {{ orderStatus(order.status) }}
@@ -121,17 +122,38 @@
           </tr>
         </tbody>
       </table>
+      <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
+        <button
+          class="btn btn-outline-secondary me-2"
+          :disabled="currentPage === 0"
+          @click="fetchOrders(currentPage - 1)"
+        >
+          &laquo;
+        </button>
+
+        <span class="mx-2 align-self-center">
+          Trang {{ currentPage + 1 }} / {{ totalPages }}
+        </span>
+
+        <button
+          class="btn btn-outline-secondary ms-2"
+          :disabled="currentPage >= totalPages - 1"
+          @click="fetchOrders(currentPage + 1)"
+        >
+           &raquo;
+        </button>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { getAllOrders, getOrderById, updateOrder } from '@/api/admin/orderAPI'
-import Datepicker from 'vue3-datepicker'
-import { useToast } from 'vue-toastification'
+import { getAllOrders, getOrderById, updateOrder } from "@/api/admin/orderAPI";
+import Datepicker from "vue3-datepicker";
+import { useToast } from "vue-toastification";
 
 export default {
-  name: 'OrderMain',
+  name: "OrderMain",
   components: { Datepicker },
   data() {
     return {
@@ -142,125 +164,135 @@ export default {
         status: [],
         startDate: null,
         endDate: null,
-        userFullName: '',
+        userFullName: "",
+        totalPages: 0,
+        currentPage: 0,
       },
       statusOptions: [
-        'Chờ xác nhận', // 0
-        'Chờ lấy hàng', // 1
-        'Chờ giao hàng', // 2
-        'Đã giao', // 3
-        'Yêu cầu trả hàng', // 4
-        'Đã hủy', // 5
-        'Trả hàng đã duyệt', // 6
-        'Từ chối trả hàng', // 7 -> CÁI NÀY MÀY VIẾT CHƯA CHẮC CHẮN
+        "Chờ xác nhận", // 0
+        "Chờ lấy hàng", // 1
+        "Chờ giao hàng", // 2
+        "Đã giao", // 3
+        "Yêu cầu trả hàng", // 4
+        "Đã hủy", // 5
+        "Trả hàng đã duyệt", // 6
+        "Từ chối trả hàng", // 7 -> CÁI NÀY MÀY VIẾT CHƯA CHẮC CHẮN
       ],
 
       toast: useToast(),
-    }
+    };
   },
   methods: {
     extractPhone(address) {
-      return address?.split(' - ')[0] || 'Không xác định'
+      return address?.split(" - ")[0] || "Không xác định";
     },
     extractAddress(address) {
-      return address?.split(' - ')[1] || address
+      return address?.split(" - ")[1] || address;
     },
 
     formatPrice(price) {
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-      }).format(price)
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(price);
     },
     orderStatus(status) {
-      return this.statusOptions[status] || 'Không xác định'
+      return this.statusOptions[status] || "Không xác định";
     },
-    async fetchOrders() {
-      this.loading = true
+    async fetchOrders(pageNum = 0) {
+      this.loading = true;
       try {
-        this.orders = await getAllOrders()
-        this.applyFilters()
-        this.toast.success('Tải đơn hàng thành công!')
+        const res = await getAllOrders(pageNum, 10);
+        this.orders = res.content;
+        this.totalPages = res.totalPages;
+        this.currentPage = res.currentPage || pageNum;
+        // page.value = this.currentPage;
+        this.applyFilters();
+        this.toast.success("Tải đơn hàng thành công!");
       } catch (err) {
-        if (err.message.includes('Access denied')) {
-          this.toast.error('Bạn không có quyền truy cập. Vui lòng đăng nhập tài khoản admin.')
-          this.$router.push('/login')
+        if (err.message.includes("Access denied")) {
+          this.toast.error(
+            "Bạn không có quyền truy cập. Vui lòng đăng nhập tài khoản admin."
+          );
+          this.$router.push("/login");
         } else {
-          this.toast.error('Không thể tải danh sách đơn hàng.')
+          this.toast.error("Không thể tải danh sách đơn hàng.");
         }
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
     applyFilters() {
-      let result = [...this.orders]
+      let result = [...this.orders];
 
       if (this.filters.status.length > 0) {
-        result = result.filter((o) => this.filters.status.includes(o.status))
+        result = result.filter((o) => this.filters.status.includes(o.status));
       }
 
       if (this.filters.startDate && this.filters.endDate) {
-        const start = new Date(this.filters.startDate)
-        const end = new Date(this.filters.endDate)
-        end.setHours(23, 59, 59, 999)
+        const start = new Date(this.filters.startDate);
+        const end = new Date(this.filters.endDate);
+        end.setHours(23, 59, 59, 999);
         result = result.filter((o) => {
-          const orderDate = new Date(o.orderDate)
-          return orderDate >= start && orderDate <= end
-        })
+          const orderDate = new Date(o.orderDate);
+          return orderDate >= start && orderDate <= end;
+        });
       }
 
       if (this.filters.userFullName.trim()) {
-        const search = this.filters.userFullName.trim().toLowerCase()
-        result = result.filter((o) => (o.userFullName || '').toLowerCase().includes(search))
+        const search = this.filters.userFullName.trim().toLowerCase();
+        result = result.filter((o) =>
+          (o.userFullName || "").toLowerCase().includes(search)
+        );
       }
 
       // ✅ Sort theo trạng thái tăng dần
-      result.sort((a, b) => a.status - b.status)
+      result.sort((a, b) => a.status - b.status);
 
-      this.filteredOrders = result
+      this.filteredOrders = result;
     },
     clearFilters() {
       this.filters = {
         status: [],
         startDate: null,
         endDate: null,
-        userFullName: '',
-      }
-      this.applyFilters()
-      this.toast.info('Đã xóa tất cả bộ lọc.')
+        userFullName: "",
+      };
+      this.applyFilters();
+      this.toast.info("Đã xóa tất cả bộ lọc.");
     },
     viewOrder(orderId) {
-      this.$emit('view-order', orderId)
+      this.$emit("view-order", orderId);
     },
     async cancelOrder(orderId) {
-      if (!confirm('Bạn có chắc muốn hủy đơn hàng này?')) return
-      this.loading = true
+      if (!confirm("Bạn có chắc muốn hủy đơn hàng này?")) return;
+      this.loading = true;
       try {
-        const order = await getOrderById(orderId)
+        const order = await getOrderById(orderId);
         if (order.status !== 0) {
-          this.toast.warning('Chỉ có thể hủy đơn hàng ở trạng thái "Chờ xác nhận".')
-          return
+          this.toast.warning('Chỉ có thể hủy đơn hàng ở trạng thái "Chờ xác nhận".');
+          return;
         }
-        await updateOrder(orderId, { ...order, status: 5 })
-        await this.fetchOrders()
-        this.toast.success('Đơn hàng đã được hủy.')
-        this.$emit('order-updated')
+        await updateOrder(orderId, { ...order, status: 5 });
+        await this.fetchOrders();
+        this.toast.success("Đơn hàng đã được hủy.");
+        this.$emit("order-updated");
       } catch (err) {
-        this.toast.error(err.message || 'Lỗi khi hủy đơn hàng.')
+        this.toast.error(err.message || "Lỗi khi hủy đơn hàng.");
       } finally {
-        this.loading = false
+        this.loading = false;
       }
     },
   },
   mounted() {
-    if (!localStorage.getItem('token')) {
-      this.toast.error('Vui lòng đăng nhập tài khoản admin.')
-      this.$router.push('/login')
+    if (!localStorage.getItem("token")) {
+      this.toast.error("Vui lòng đăng nhập tài khoản admin.");
+      this.$router.push("/login");
     } else {
-      this.fetchOrders()
+      this.fetchOrders();
     }
   },
-}
+};
 </script>
 
 <style scoped>
