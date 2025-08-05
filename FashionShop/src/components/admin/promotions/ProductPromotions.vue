@@ -143,7 +143,7 @@ const selectedVariants = ref({});
 const errorsAdd = reactive({ products: "", variants: {}, global: "" });
 
 const fetchAllProducts = async () => {
-  const res = await axios.get("http://localhost:8080/api/admin/products", {
+  const res = await axios.get("http://localhost:8080/api/admin/productss", {
     headers: { Authorization: `Bearer ${token}` },
   });
   allProducts.value = res.data;
