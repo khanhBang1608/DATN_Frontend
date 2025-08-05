@@ -89,7 +89,7 @@ const fetchPromotions = async () => {
     totalPages.value = res.data.totalPages;
     totalItems.value = res.data.totalItems;
 
-    await fetchVariantDetails(); // Đảm bảo luôn fetch lại chi tiết biến thể
+    await fetchVariantDetails();
   } catch (err) {
     iziToast.error({
       title: "Lỗi",
@@ -154,6 +154,8 @@ const deletePromotion = async (id) => {
 const showAdd = () => {
   showAddModal.value = true;
   errorsAdd.products = "";
+  errorsAdd.global = "";
+  successMessage.value = "";
   selectedProductId.value = "";
   selectedVariants.value = {};
 };
@@ -163,6 +165,7 @@ const selectedProductId = ref("");
 const allVariantsMap = ref({});
 const selectedVariants = ref({});
 const errorsAdd = reactive({ products: "", variants: {}, global: "" });
+const successMessage = ref("");
 
 const fetchAllProducts = async () => {
   const res = await axios.get("http://localhost:8080/api/admin/productss", {
@@ -195,6 +198,7 @@ const saveAddPromotion = async () => {
   errorsAdd.products = "";
   errorsAdd.variants = {};
   errorsAdd.global = "";
+  successMessage.value = "";
 
   if (!selectedProductId.value) {
     errorsAdd.products = "Vui lòng chọn sản phẩm";
@@ -231,6 +235,16 @@ const saveAddPromotion = async () => {
       (item) => !savedVariantIds.includes(item.productVariantId)
     );
 
+    if (savedVariants.length > 0) {
+      const successVariantNames = savedVariants.map((item) => {
+        const variant = Object.values(allVariantsMap.value)
+          .flat()
+          .find((v) => v.productVariantId === item.productVariantId);
+        return `${variant.colorName} - ${variant.sizeName}`;
+      });
+      successMessage.value = `Đã thêm thành công các biến thể: ${successVariantNames.join(", ")}`;
+    }
+
     if (failedVariants.length > 0) {
       failedVariants.forEach((item) => {
         const variant = Object.values(allVariantsMap.value)
@@ -262,6 +276,8 @@ const saveAddPromotion = async () => {
 
 const closeAddModal = () => {
   showAddModal.value = false;
+  successMessage.value = "";
+  window.location.reload(); // Reload the page when closing the modal
 };
 
 const getImageUrl = (imageName) => {
@@ -408,6 +424,7 @@ const getProductName = (productId) => {
                 () => {
                   errorsAdd.products = '';
                   errorsAdd.global = '';
+                  successMessage = '';
                   fetchVariantsByProductId(selectedProductId);
                 }
               "
@@ -427,7 +444,10 @@ const getProductName = (productId) => {
             <label class="form-label fw-semibold">
               Biến thể của sản phẩm: {{ getProductName(selectedProductId) }}
             </label>
-
+            <!-- Success message for added variants -->
+            <div v-if="successMessage" class="alert alert-success mt-2">
+              {{ successMessage }}
+            </div>
             <div
               v-if="allVariantsMap[selectedProductId]?.length"
               v-for="variant in allVariantsMap[selectedProductId]"
