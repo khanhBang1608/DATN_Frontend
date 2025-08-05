@@ -14,10 +14,12 @@ const getAuthHeaders = () => {
   };
 };
 
-export const getAllOrders = async () => {
+export const getAllOrders = async (page = 0, size = 10) => {
   try {
-    const response = await axios.get(API_URL, { headers: getAuthHeaders() });
-    return response.data;
+    const response = await axios.get(`${API_URL}?page=${page}&size=${size}`, {
+      headers: getAuthHeaders(),
+    });
+    return response.data; // trả về Page<OrderDTO> có cả content, totalPages, ...
   } catch (error) {
     console.error('API Error:', error.response?.data || error.message);
     throw new Error(error.response?.data?.message || 'Failed to fetch orders');
