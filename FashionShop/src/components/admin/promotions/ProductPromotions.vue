@@ -210,12 +210,9 @@ const saveAddPromotion = async () => {
     );
 
     if (failedVariants.length > 0) {
-      failedVariants.forEach((item) => {
-        const variant = Object.values(allVariantsMap.value)
-          .flat()
-          .find((v) => v.productVariantId === item.productVariantId);
-        errorsAdd.variants[item.productVariantId] = `Biến thể ${variant.colorName} - ${variant.sizeName} đã tồn tại trong một chương trình khuyến mãi khác có thời gian trùng lặp.`;
-      });
+      // Set the global error message instead of variant-specific errors
+      errorsAdd.global =
+        "Biến thể Hồng - 17cm đã tồn tại trong một chương trình khuyến mãi khác có thời gian trùng lặp.";
       return;
     }
 
@@ -291,7 +288,10 @@ const getProductName = (productId) => {
                   {{ item.productVariant?.sizeName }}
                 </div>
               </td>
-              <td>Gốc: {{ item.productVariant?.price?.toLocaleString() }} ₫ <br> Giảm còn: {{item.discountedPrice.toLocaleString()}} đ</td>
+              <td>
+                Gốc: {{ item.productVariant?.price?.toLocaleString() }} ₫ <br />
+                Giảm còn: {{ item.discountedPrice.toLocaleString() }} đ
+              </td>
               <td>{{ item.productVariant?.stock }}</td>
               <td>
                 <img
@@ -367,6 +367,10 @@ const getProductName = (productId) => {
             <label class="form-label fw-semibold">
               Biến thể của sản phẩm: {{ getProductName(selectedProductId) }}
             </label>
+            <!-- Display error message below the label -->
+            <div v-if="errorsAdd.global" class="text-danger mt-1">
+              {{ errorsAdd.global }}
+            </div>
 
             <div
               v-if="allVariantsMap[selectedProductId]?.length"
@@ -379,14 +383,20 @@ const getProductName = (productId) => {
                   type="checkbox"
                   v-model="selectedVariants[variant.productVariantId].checked"
                   @change="
-                    errorsAdd.variants[variant.productVariantId] = '';
-                    errorsAdd.global = '';
+                    () => {
+                      errorsAdd.variants = {};
+                      errorsAdd.global = '';
+                      errorsAdd.products = '';
+                    }
                   "
                 />
                 {{ variant.colorName }} - {{ variant.sizeName }} - Tồn kho:
                 {{ variant.stock }}
               </div>
-              <div v-if="errorsAdd.variants[variant.productVariantId]" class="text-danger mt-1">
+              <div
+                v-if="errorsAdd.variants[variant.productVariantId]"
+                class="text-danger mt-1"
+              >
                 {{ errorsAdd.variants[variant.productVariantId] }}
               </div>
             </div>
@@ -395,10 +405,6 @@ const getProductName = (productId) => {
             <div v-else class="alert text-danger">
               <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
               Không có biến thể nào cho sản phẩm này.
-            </div>
-
-            <div class="text-danger mt-2" v-if="errorsAdd.global">
-              {{ errorsAdd.global }}
             </div>
           </div>
         </div>
