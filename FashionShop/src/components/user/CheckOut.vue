@@ -232,6 +232,7 @@ export default {
 
           const tempOrderData = {
             address: fullAddress,
+            email: this.form.email || 'default@example.com', // Ensure email is included
             paymentMethod: this.paymentMethod,
             paymentStatus: 1,
             discountCode: this.discountCode || null,
@@ -287,7 +288,6 @@ export default {
       this.calculateShippingFee();
     },
   },
-
   mounted() {
     axios.get("https://provinces.open-api.vn/api/p/").then((res) => {
       this.provinces = res.data;
@@ -320,6 +320,7 @@ export default {
 };
 </script>
 
+<!-- Template giữ nguyên -->
 <template>
   <div class="checkout-container container">
     <div class="row g-0">
@@ -451,8 +452,8 @@ export default {
                   :key="address.addressId"
                   :value="address.addressId"
                 >
-                  {{ address.customerName }} -
-                  {{ address.fullAddress || address.address }} - {{ address.phone }}
+                  {{ address.customerName }} - {{ address.fullAddress || address.address }} -
+                  {{ address.phone }}
                 </option>
               </select>
 

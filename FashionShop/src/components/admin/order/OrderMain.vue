@@ -105,9 +105,11 @@
               {{ orderStatus(order.status) }}
             </td>
             <td class="text-center">
-              <button class="btn btn-primary btn-sm me-2" @click="viewOrder(order.orderId)">
-                Xem
-              </button>
+              <router-link
+                :to="`/admin/order/${order.orderId}`"
+                class="btn btn-primary btn-sm me-2"
+                >Xem</router-link
+              >
               <button
                 v-if="order.status === 0"
                 class="btn btn-danger btn-sm"
@@ -211,6 +213,9 @@ export default {
         const search = this.filters.userFullName.trim().toLowerCase()
         result = result.filter((o) => (o.userFullName || '').toLowerCase().includes(search))
       }
+
+      // ✅ Sort theo trạng thái tăng dần
+      result.sort((a, b) => a.status - b.status)
 
       this.filteredOrders = result
     },
