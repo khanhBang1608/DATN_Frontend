@@ -67,20 +67,42 @@ const saveUpdatedQuantity = async () => {
   }
 };
 
-// ======================== LIST + VARIANT ========================
+const currentPage = ref(0);
+const pageSize = ref(5);
+const totalPages = ref(1);
+const totalItems = ref(0);
+
 const fetchPromotions = async () => {
   try {
     const res = await axios.get(
       `http://localhost:8080/api/admin/product-promotions/promotion/${promotionId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: currentPage.value,
+          size: pageSize.value,
+        },
+      }
     );
-    promotions.value = res.data;
+
+    promotions.value = res.data.items;
+    totalPages.value = res.data.totalPages;
+    totalItems.value = res.data.totalItems;
+
+    await fetchVariantDetails(); // Đảm bảo luôn fetch lại chi tiết biến thể
   } catch (err) {
     iziToast.error({
       title: "Lỗi",
       message: "Không thể tải danh sách",
       position: "topRight",
     });
+  }
+};
+
+const handlePageChange = (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    currentPage.value = page;
+    fetchPromotions();
   }
 };
 
@@ -214,7 +236,9 @@ const saveAddPromotion = async () => {
         const variant = Object.values(allVariantsMap.value)
           .flat()
           .find((v) => v.productVariantId === item.productVariantId);
-        errorsAdd.variants[item.productVariantId] = `Biến thể ${variant.colorName} - ${variant.sizeName} đã tồn tại trong một chương trình khuyến mãi khác có thời gian trùng lặp.`;
+        errorsAdd.variants[
+          item.productVariantId
+        ] = `Biến thể ${variant.colorName} - ${variant.sizeName} đã tồn tại trong một chương trình khuyến mãi khác có thời gian trùng lặp.`;
       });
       return;
     }
@@ -273,7 +297,7 @@ const getProductName = (productId) => {
         <table class="table table-hover align-middle text-light custom-table">
           <thead>
             <tr>
-              <th>ID</th>
+              <th>STT</th>
               <th>Biến thể sản phẩm</th>
               <th>Giá</th>
               <th>Tồn kho</th>
@@ -282,8 +306,8 @@ const getProductName = (productId) => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in promotions" :key="item.id">
-              <td>{{ item.id }}</td>
+            <tr v-for="(item, index) in promotions" :key="item.id">
+              <td>{{ index + 1 }}</td>
               <td>
                 <div>
                   ID: {{ item.productVariant?.productVariantId }} <br />
@@ -291,7 +315,10 @@ const getProductName = (productId) => {
                   {{ item.productVariant?.sizeName }}
                 </div>
               </td>
-              <td>Gốc: {{ item.productVariant?.price?.toLocaleString() }} ₫ <br> Giảm còn: {{item.discountedPrice.toLocaleString()}} đ</td>
+              <td>
+                Gốc: {{ item.productVariant?.price?.toLocaleString() }} ₫ <br />
+                Giảm còn: {{ item.discountedPrice.toLocaleString() }} ₫
+              </td>
               <td>{{ item.productVariant?.stock }}</td>
               <td>
                 <img
@@ -320,6 +347,39 @@ const getProductName = (productId) => {
             </tr>
           </tbody>
         </table>
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center align-items-center mt-3 text-white">
+          <!-- Previous Button -->
+          <button
+            class="btn btn-sm btn-outline-light me-2"
+            :disabled="currentPage === 0"
+            @click="handlePageChange(currentPage - 1)"
+          >
+            &lt;
+          </button>
+
+          <!-- Page Numbers -->
+          <span v-for="page in totalPages" :key="page" class="mx-1">
+            <button
+              class="btn btn-sm"
+              :class="
+                page - 1 === currentPage ? 'btn-light text-dark' : 'btn-outline-light'
+              "
+              @click="handlePageChange(page - 1)"
+            >
+              {{ page }}
+            </button>
+          </span>
+
+          <!-- Next Button -->
+          <button
+            class="btn btn-sm btn-outline-light ms-2"
+            :disabled="currentPage + 1 >= totalPages"
+            @click="handlePageChange(currentPage + 1)"
+          >
+            &gt;
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -386,7 +446,10 @@ const getProductName = (productId) => {
                 {{ variant.colorName }} - {{ variant.sizeName }} - Tồn kho:
                 {{ variant.stock }}
               </div>
-              <div v-if="errorsAdd.variants[variant.productVariantId]" class="text-danger mt-1">
+              <div
+                v-if="errorsAdd.variants[variant.productVariantId]"
+                class="text-danger mt-1"
+              >
                 {{ errorsAdd.variants[variant.productVariantId] }}
               </div>
             </div>
