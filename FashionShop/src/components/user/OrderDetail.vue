@@ -1,0 +1,323 @@
+<template>
+  <div v-if="order" class="container mt-4">
+    <h3 class="text-center mb-4">Chi tiết đơn hàng #{{ order.orderId }}</h3>
+    <div class="order-info-section mb-4">
+      <h4 class="section-title">Thông tin đơn hàng</h4>
+      <div class="order-info-grid">
+        <p><strong>Ngày đặt:</strong> {{ formatDate(order.orderDate) }}</p>
+        <p><strong>Tổng tiền:</strong> {{ formatPrice(order.totalAmount) }}</p>
+        <p>
+          <strong>Trạng thái:</strong>
+          <span :class="getStatusClass(order.status)">
+            {{ getStatusText(order.status) }}
+          </span>
+        </p>
+        <p><strong>Số điện thoại:</strong> {{ order.address?.split(' - ')[0] }}</p>
+        <p><strong>Địa chỉ:</strong> {{ order.address?.split(' - ')[1] }}</p>
+        <p><strong>Phương thức thanh toán:</strong> {{ order.paymentMethod }}</p>
+        <p>
+          <strong>Trạng thái thanh toán:</strong>
+          <span :class="getPaymentStatusClass(order.paymentStatus)">
+            {{ getPaymentStatusText(order.paymentStatus) }}
+          </span>
+        </p>
+
+        <p><strong>Phí vận chuyển:</strong> {{ formatPrice(order.shippingFee) }}</p>
+        <p><strong>Giảm giá:</strong> {{ formatPrice(order.discountAmount) }}</p>
+      </div>
+    </div>
+
+    <div class="order-items-section">
+      <h4 class="section-title">Sản phẩm</h4>
+      <div v-for="item in order.orderDetails" :key="item.orderDetailId" class="order-item-card">
+        <div class="d-flex align-items-center">
+          <img
+            :src="`http://localhost:8080/images/${item.imageUrl}`"
+            :alt="item.productName"
+            class="order-item-image me-3"
+            @error="handleImageError"
+          />
+          <div class="order-item-details flex-grow-1">
+            <p class="mb-0 fw-bold">{{ item.productName }}</p>
+            <p class="mb-0">Size: {{ item.size }} | Màu: {{ item.color }}</p>
+            <p class="mb-0">Số lượng: {{ item.quantity }}</p>
+            <p class="mb-0">Giá: {{ formatPrice(item.price) }}</p>
+          </div>
+          <div class="order-item-actions ms-auto">
+            <div class="fw-bold mb-2">{{ formatPrice(item.price * item.quantity) }}</div>
+            <button
+              v-if="order.status === 3 && !item.reviewed"
+              class="order-management-action-btn review"
+              @click="toggleReviewCollapse(item.orderDetailId)"
+            >
+              <i class="bi bi-star-fill me-1"></i> Đánh giá
+            </button>
+            <router-link
+              :to="`/product-detail/${item.productId}`"
+              class="order-management-action-btn buy-again"
+            >
+              <i class="bi bi-cart-plus me-1"></i> Mua lại
+            </router-link>
+          </div>
+        </div>
+
+        <!-- Collapse review -->
+        <div
+          v-if="order.status === 3 && !item.reviewed"
+          class="collapse mt-3"
+          :id="`review-collapse-${item.orderDetailId}`"
+          :class="{ show: activeReviewCollapse === item.orderDetailId }"
+        >
+          <div class="review-form card p-3">
+            <h5>Đánh giá sản phẩm {{ item.productName }}</h5>
+            <div class="form-group mb-3">
+              <label>Điểm đánh giá</label>
+              <div class="review-stars">
+                <i
+                  v-for="n in 5"
+                  :key="n"
+                  :class="[
+                    'bi',
+                    n <= (reviewRatings[item.orderDetailId] || 0)
+                      ? 'bi-star-fill filled'
+                      : 'bi-star',
+                    'review-star',
+                  ]"
+                  @click="setReviewRating(item.orderDetailId, n)"
+                ></i>
+              </div>
+            </div>
+
+            <div class="form-group mb-3">
+              <label>Bình luận</label>
+              <textarea
+                v-model="reviewComments[item.orderDetailId]"
+                class="form-control"
+                placeholder="Nhập bình luận của bạn"
+              ></textarea>
+            </div>
+
+            <div class="form-group mb-3">
+              <label>Loại đánh giá</label>
+              <select v-model="reviewTypes[item.orderDetailId]" class="form-control">
+                <option value="text">Chỉ văn bản</option>
+                <option value="image">Hình ảnh</option>
+                <option value="video">Video</option>
+              </select>
+            </div>
+
+            <div v-if="reviewTypes[item.orderDetailId] !== 'text'" class="form-group mb-3">
+              <label
+                >Upload
+                {{ reviewTypes[item.orderDetailId] === 'image' ? 'hình ảnh' : 'video' }}</label
+              >
+              <input
+                type="file"
+                class="form-control"
+                :accept="reviewTypes[item.orderDetailId] === 'image' ? 'image/*' : 'video/*'"
+                @change="handleFileUpload($event, item.orderDetailId)"
+              />
+              <div v-if="filePreviews[item.orderDetailId]" class="file-preview mt-2">
+                <img
+                  v-if="reviewTypes[item.orderDetailId] === 'image'"
+                  :src="filePreviews[item.orderDetailId]"
+                  class="img-fluid"
+                />
+                <video
+                  v-else
+                  :src="filePreviews[item.orderDetailId]"
+                  controls
+                  class="img-fluid"
+                ></video>
+              </div>
+            </div>
+
+            <button
+              class="btn btn-primary order-management-btn"
+              @click="submitReview(item.orderDetailId, item.productName)"
+            >
+              Gửi đánh giá
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div v-else class="text-center mt-5">
+    <p>Đang tải chi tiết đơn hàng...</p>
+  </div>
+</template>
+
+<script>
+import { getOrderDetails } from '@/api/user/orderAPI'
+import { createReview, checkReviewsForOrderDetails } from '@/api/user/reviewAPI'
+import { useToast } from 'vue-toastification'
+import axios from 'axios'
+
+const toast = useToast()
+
+export async function getProductIdByVariantId(variantId) {
+  const res = await axios.get(`/api/public/variants/${variantId}/product-id`)
+  return res.data.productId
+}
+
+export default {
+  data() {
+    return {
+      order: null,
+      activeReviewCollapse: null,
+      reviewRatings: {},
+      reviewComments: {},
+      reviewTypes: {},
+      filePreviews: {},
+      mediaFiles: {},
+    }
+  },
+  async mounted() {
+    const orderId = this.$route.params.id
+    try {
+      const data = await getOrderDetails(orderId)
+      for (const item of data.orderDetails) {
+        const productId = await getProductIdByVariantId(item.productVariantId)
+        item.productId = productId
+      }
+
+      const ids = data.orderDetails.map((i) => i.orderDetailId)
+      const reviewMap = await checkReviewsForOrderDetails(ids)
+
+      data.orderDetails = data.orderDetails.map((item) => ({
+        ...item,
+        reviewed: reviewMap[item.orderDetailId] || false,
+      }))
+
+      this.order = data
+    } catch (e) {
+      toast.error('Không thể tải chi tiết đơn hàng.')
+    }
+  },
+  methods: {
+    formatPrice(price) {
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
+    },
+    formatDate(date) {
+      return new Date(date).toLocaleDateString('vi-VN')
+    },
+    getStatusText(status) {
+      const map = {
+        0: 'Chờ xác nhận',
+        1: 'Chờ lấy hàng',
+        2: 'Chờ giao hàng',
+        3: 'Đã giao',
+        4: 'Yêu cầu trả hàng',
+        5: 'Đã hủy',
+        6: 'Trả hàng',
+        7: 'Đã từ chối',
+      }
+      return map[status] || 'Không xác định'
+    },
+    getStatusClass(status) {
+      return {
+        'status status-pending': status === 0,
+        'status status-taking': status === 1,
+        'status status-processing': status === 2,
+        'status status-delivered': status === 3,
+        'status status-return-requested': status === 4,
+        'status status-cancelled': status === 5,
+        'status status-refunded': status === 6,
+        'status status-rejected': status === 7,
+      }
+    },
+    getPaymentStatusText(status) {
+      const map = {
+        0: 'Chưa thanh toán',
+        1: 'Đã thanh toán',
+        2: 'Thanh toán thất bại',
+        3: 'Đang xử lý',
+      }
+      return map[status] || 'Không xác định'
+    },
+    getPaymentStatusClass(status) {
+      return {
+        'status status-unpaid': status === 0,
+        'status status-paid': status === 1,
+        'status status-failed': status === 2,
+        'status status-processing': status === 3,
+      }
+    },
+    toggleReviewCollapse(id) {
+      this.activeReviewCollapse = this.activeReviewCollapse === id ? null : id
+
+      if (this.activeReviewCollapse) {
+        this.reviewRatings[id] = 0
+        this.reviewComments[id] = ''
+        this.reviewTypes[id] = 'text'
+        this.filePreviews[id] = null
+        this.mediaFiles[id] = null
+
+        this.$nextTick(() => {
+          const el = document.getElementById(`review-collapse-${id}`)
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        })
+      }
+    },
+    setReviewRating(id, rating) {
+      this.reviewRatings[id] = rating
+    },
+    handleFileUpload(event, id) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      const maxSize = 5 * 1024 * 1024
+      if (file.size > maxSize) {
+        toast.error('File quá lớn! Vui lòng chọn file dưới 5MB.')
+        return
+      }
+
+      this.mediaFiles[id] = file
+
+      const reader = new FileReader()
+      reader.onload = () => {
+        this.filePreviews[id] = reader.result
+      }
+      reader.readAsDataURL(file)
+    },
+    async submitReview(id, productName) {
+      if (!this.reviewRatings[id]) return toast.error('Vui lòng chọn số sao.')
+      if (!this.reviewComments[id]?.trim()) return toast.error('Vui lòng nhập bình luận.')
+
+      if (this.reviewTypes[id] !== 'text' && !this.mediaFiles[id]) {
+        return toast.error('Vui lòng tải lên media.')
+      }
+
+      try {
+        const form = new FormData()
+        form.append('rating', this.reviewRatings[id])
+        form.append('comment', this.reviewComments[id])
+        form.append('orderDetailId', id)
+        form.append('reviewType', this.reviewTypes[id])
+        if (this.reviewTypes[id] !== 'text') {
+          form.append('media', this.mediaFiles[id])
+        }
+
+        await createReview(form)
+        this.order.orderDetails = this.order.orderDetails.map((i) =>
+          i.orderDetailId === id ? { ...i, reviewed: true } : i,
+        )
+
+        this.toggleReviewCollapse(id)
+        toast.success(`Đã gửi đánh giá cho ${productName}`)
+      } catch (e) {
+        toast.error('Gửi đánh giá thất bại.')
+      }
+    },
+    handleImageError(e) {
+      e.target.src = 'https://via.placeholder.com/50?text=No+Image'
+    },
+  },
+}
+</script>
+
+<style src="@/assets/css/order-management.css"></style>

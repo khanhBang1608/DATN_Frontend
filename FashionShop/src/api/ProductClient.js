@@ -3,7 +3,10 @@ import axios from 'axios';
 const API_BASE = 'http://localhost:8080/api/public';
 
 // ✅ API công khai – KHÔNG cần token
-export const getAllProducts = () => axios.get(`${API_BASE}/products`);
+export const getAllProducts = (page = 0, size = 8) =>
+  axios.get(`${API_BASE}/products`, {
+    params: { page, size },
+  });
 
 export const getProductDetail = (productId) => axios.get(`${API_BASE}/products/${productId}`);
 
@@ -19,11 +22,13 @@ export const getVariantByColorAndSize = (productId, colorId, sizeId = null) => {
 export const getProductOptions = (productId) =>
   axios.get(`${API_BASE}/products/${productId}/options`);
 
-export const getRelatedProducts = (categoryId, excludeProductId) =>
+export const getRelatedProducts = (categoryId, excludeProductId, page = 0, size = 4) =>
   axios.get(`${API_BASE}/products/related`, {
     params: {
       categoryId,
-      excludeProductId
+      excludeProductId,
+      page,
+      size
     }
   });
 

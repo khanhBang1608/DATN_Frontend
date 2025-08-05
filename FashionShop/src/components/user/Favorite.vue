@@ -67,7 +67,7 @@
                       {{ getOriginalPrice(item)?.toLocaleString() }}₫
                     </span>
                   </div>
-                  <div class="view-count text-muted" style="font-size: 14px">
+<div class="view-count text-muted" style="font-size: 14px">
                     <i class="bi bi-eye me-1"></i>{{ item.product.viewCount || 0
                     }}<i class="bi bi-bag-check me-1 ms-3"></i
                     >{{ item.product.soldCount || 0 }} sản phẩm
@@ -154,7 +154,7 @@ const loadFavorites = async () => {
         if (!variant) return item;
 
         // Handle promotions
-        const promo = promotionMap.get(variant.productVariantId);
+const promo = promotionMap.get(variant.productVariantId);
         if (promo) {
           const discountPercent = promo.discountAmount || 0;
           const originalPrice = variant.price;
@@ -241,7 +241,7 @@ const handleProductClick = async (productId) => {
     }
     router.push(`/product-detail/${productId}`);
   } catch (error) {
-    console.error("Lỗi khi ghi nhận lượt xem:", error);
+console.error("Lỗi khi ghi nhận lượt xem:", error);
     router.push(`/product-detail/${productId}`);
   }
 };

@@ -12,15 +12,44 @@ import promotionApi from "@/api/PromotionClien";
 import { toggleFavorite, checkFavorite } from "@/api/user/FavoriteAPI";
 import { addToCart } from "@/api/user/cartAPI";
 import axios from "axios";
+import { userProductDetail } from "@/assets/js/userProductDetail";
+
+// iziToast
+import "izitoast/dist/css/iziToast.min.css";
+import iziToast from "izitoast";
+
+const product = ref({ variants: [] });
+const {
+  imageSources,
+  currentIndex,
+  isModalOpen,
+  isMobile,
+  scrollArea,
+  modalWrapper,
+  scrollToImage,
+  openCurrentGallery,
+  closeGallery,
+  swiperSlidePrev,
+  swiperSlideNext,
+  updateImageSources,
+} = userProductDetail(product);
 
 const router = useRouter();
 const route = useRoute();
 const isFavorite = ref(false);
 const favoriteCount = ref(0);
-const product = ref({ variants: [] });
 const selectedColorId = ref(null);
 const selectedSizeId = ref(null);
 const relatedProducts = ref([]);
+const relatedPage = ref(0);
+const relatedTotalPages = ref(1);
+
+const goToPage = (page) => {
+  if (page >= 0 && page < relatedTotalPages.value) {
+    relatedPage.value = page;
+    fetchRelatedProducts();
+  }
+};
 
 const handleToggleFavorite = async () => {
   try {
@@ -74,27 +103,56 @@ const selectedVariant = computed(() => {
 const handleAddToCart = async () => {
   const token = localStorage.getItem("token");
   if (!token) {
-    alert("⚠️ Bạn cần đăng nhập để thêm vào giỏ hàng.");
+    iziToast.warning({
+      title: "Cảnh báo",
+      message: "Bạn cần đăng nhập để thêm vào giỏ hàng.",
+      position: "topRight",
+    });
     router.push("/login");
     return;
   }
 
-  if (!selectedColorId.value || !selectedSizeId.value) {
-    alert("⚠️ Vui lòng chọn đầy đủ màu sắc và kích thước.");
+  if (!selectedColorId.value) {
+    iziToast.warning({
+      title: "Thiếu màu sắc",
+      message: "Vui lòng chọn màu sắc trước.",
+      position: "topRight",
+    });
+    return;
+  }
+
+  if (!selectedSizeId.value) {
+    iziToast.warning({
+      title: "Thiếu kích thước",
+      message: "Vui lòng chọn kích thước trước.",
+      position: "topRight",
+    });
     return;
   }
 
   const variant = selectedVariant.value;
   if (!variant) {
-    alert("❌ Không tìm thấy biến thể phù hợp.");
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không tìm thấy biến thể phù hợp.",
+      position: "topRight",
+    });
     return;
   }
 
   try {
     await addToCart(variant.productVariantId, 1);
-    alert("✅ Sản phẩm đã được thêm vào giỏ hàng!");
+    iziToast.success({
+      title: "Thành công",
+      message: "Sản phẩm đã được thêm vào giỏ hàng!",
+      position: "topRight",
+    });
   } catch (error) {
-    alert("❌ Thêm vào giỏ hàng thất bại: " + (error.message || "Lỗi không xác định"));
+    iziToast.error({
+      title: "Thất bại",
+      message: "Thêm vào giỏ hàng thất bại: " + (error.message || "Lỗi không xác định"),
+      position: "topRight",
+    });
     console.error(error);
   }
 };
@@ -110,17 +168,33 @@ const uniqueColors = computed(() => {
   });
 });
 
-const uniqueSizes = computed(() => {
+const allSizes = computed(() => {
   const seen = new Set();
-  return product.value.variants.filter((v) => {
-    if (selectedColorId.value && v.colorId !== selectedColorId.value) return false;
-    if (!seen.has(v.sizeId)) {
-      seen.add(v.sizeId);
-      return true;
-    }
-    return false;
-  });
+  return product.value.variants
+    .map((v) => ({ sizeId: v.sizeId, sizeName: v.sizeName }))
+    .filter((v) => {
+      if (!seen.has(v.sizeId)) {
+        seen.add(v.sizeId);
+        return true;
+      }
+      return false;
+    });
 });
+
+const uniqueSizes = computed(() => {
+  if (!selectedColorId.value) return allSizes.value;
+  return allSizes.value.map((size) => ({
+    sizeId: size.sizeId,
+    sizeName: size.sizeName,
+  }));
+});
+
+const hasStock = (sizeId) => {
+  const variant = product.value.variants.find(
+    (v) => v.colorId === selectedColorId.value && v.sizeId === sizeId
+  );
+  return variant ? variant.stock > 0 : false;
+};
 
 const displayedStock = computed(() => {
   if (selectedVariant.value) {
@@ -138,6 +212,15 @@ onMounted(async () => {
     const id = route.params.id;
     const res = await getProductDetail(id);
     const data = res.data;
+
+    product.value = { ...data, variants: data.variants || [] };
+    if (product.value.variants.length > 0) {
+      const firstColorId = product.value.variants[0].colorId;
+      selectedColorId.value = firstColorId;
+    }
+
+    console.log("Dữ liệu sản phẩm:", product.value);
+    console.log("imageSources sau khi tải:", imageSources.value);
 
     const promos = await promotionApi.getActivePromotions();
     const promotionMap = new Map();
@@ -169,7 +252,9 @@ onMounted(async () => {
       };
     });
 
-    // Fetch sold count for the main product
+    updateImageSources();
+    console.log("imageSources sau khi cập nhật lại:", imageSources.value);
+
     const soldResponse = await axios.get(`/api/public/products/${id}/sold-count`);
     data.soldCount = soldResponse.data.soldCount || 0;
 
@@ -189,13 +274,15 @@ onMounted(async () => {
       const countRes = await getFavoriteCount(id);
       favoriteCount.value = countRes.data.favoriteCount;
 
-      const resRelated = await getRelatedProducts(id, data.categoryId);
-      const related = resRelated.data;
+      const related = fetchRelatedProducts();
 
       relatedProducts.value = await Promise.all(
         related.map(async (prod) => {
-          let minVariant = prod.variants.reduce((min, v) =>
-            (v.discountedPrice ?? v.price) < (min.discountedPrice ?? min.price) ? v : min,
+          let minVariant = prod.variants.reduce(
+            (min, v) =>
+              (v.discountedPrice ?? v.price) < (min.discountedPrice ?? min.price)
+                ? v
+                : min,
             prod.variants[0]
           );
 
@@ -220,15 +307,14 @@ onMounted(async () => {
             };
           }
 
-          // Fetch average rating
           const rating = await fetchAverageRating(prod.productId);
           prod.averageRating = rating.data;
 
-          // Fetch sold count
-          const soldResponse = await axios.get(`/api/public/products/${prod.productId}/sold-count`);
+          const soldResponse = await axios.get(
+            `/api/public/products/${prod.productId}/sold-count`
+          );
           prod.soldCount = soldResponse.data.soldCount || 0;
 
-          // Fetch view count
           prod.viewCount = 0;
           if (token) {
             try {
@@ -255,6 +341,87 @@ onMounted(async () => {
     console.error("Lỗi khi tải sản phẩm:", error);
   }
 });
+const fetchRelatedProducts = async () => {
+  try {
+    const resRelated = await getRelatedProducts(
+      product.value.categoryId,
+      product.value.productId,
+      relatedPage.value,
+      4
+    );
+
+    const related = resRelated.data.content || [];
+    relatedTotalPages.value = resRelated.data.totalPages || 1;
+
+    const promos = await promotionApi.getActivePromotions();
+    const promotionMap = new Map();
+    promos.forEach((promo) => {
+      promo.productPromotions.forEach((pp) => {
+        promotionMap.set(pp.productVariantId, promo);
+      });
+    });
+
+    const token = localStorage.getItem("token");
+
+    relatedProducts.value = await Promise.all(
+      related.map(async (prod) => {
+        let minVariant = prod.variants.reduce(
+          (min, v) =>
+            (v.discountedPrice ?? v.price) < (min.discountedPrice ?? min.price) ? v : min,
+          prod.variants[0]
+        );
+
+        const promo = promotionMap.get(minVariant.productVariantId);
+        if (promo) {
+          const discountPercent = promo.discountAmount || 0;
+          const originalPrice = minVariant.price;
+          const discountedPrice = originalPrice * (1 - discountPercent / 100);
+          minVariant = {
+            ...minVariant,
+            originalPrice: originalPrice,
+            discountedPrice: Math.round(discountedPrice),
+            discountPercent: discountPercent,
+          };
+        } else {
+          minVariant = {
+            ...minVariant,
+            originalPrice: minVariant.price,
+            discountedPrice: minVariant.price,
+            discountPercent: 0,
+          };
+        }
+
+        const rating = await fetchAverageRating(prod.productId);
+        prod.averageRating = rating.data;
+
+        const soldResponse = await axios.get(
+          `/api/public/products/${prod.productId}/sold-count`
+        );
+        prod.soldCount = soldResponse.data.soldCount || 0;
+
+        prod.viewCount = 0;
+        if (token) {
+          try {
+            const viewResponse = await axios.get("/api/user/product-views/recent", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            const viewItem = viewResponse.data.find(
+              (view) => view.product?.[0]?.productId === prod.productId
+            );
+            prod.viewCount = viewItem ? viewItem.product[0].viewCount || 0 : 0;
+          } catch (error) {
+            console.error("Lỗi khi lấy lượt xem:", error);
+          }
+        }
+
+        prod.variants = [minVariant, ...prod.variants.filter((v) => v !== minVariant)];
+        return prod;
+      })
+    );
+  } catch (err) {
+    console.error("Lỗi khi tải sản phẩm liên quan:", err);
+  }
+};
 </script>
 
 <template>
@@ -271,28 +438,51 @@ onMounted(async () => {
     <div class="row">
       <div class="col-md-6">
         <div class="product-detail-gallery">
-          <div class="product-detail-thumbnails" ref="thumbnailList"></div>
+          <div class="product-detail-thumbnails" v-if="!isMobile">
+            <img
+              v-for="(src, index) in imageSources"
+              :key="index"
+              :src="src"
+              :class="{ active: currentIndex === index }"
+              @click="scrollToImage(index)"
+              loading="lazy"
+            />
+          </div>
 
-          <div class="product-detail-scroll-wrapper position-relative">
+          <div class="product-detail-scroll-wrapper position-relative" v-if="!isMobile">
             <div class="product-detail-scroll-area" ref="scrollArea">
-              <div class="product-detail-large-images" ref="largeImagesContainer"></div>
+              <div class="product-detail-large-images">
+                <div
+                  v-for="(src, index) in imageSources"
+                  :key="index"
+                  class="product-detail-zoom-container"
+                >
+                  <img :src="src" :id="'img' + index" loading="lazy" />
+                </div>
+              </div>
             </div>
           </div>
 
           <div
             class="product-detail-fullscreen-icon d-flex justify-content-center"
+            v-if="!isMobile"
             @click="openCurrentGallery"
           >
             <i class="bi bi-arrows-fullscreen"></i>
           </div>
 
           <!-- Mobile Swiper -->
-          <div class="pd-mobile-swiper">
+          <div class="pd-mobile-swiper" v-if="isMobile">
             <div class="swiper pd-mobile-swiper-core">
-              <div
-                class="swiper-wrapper pd-mobile-swiper-wrapper"
-                ref="mobileSwiperWrapper"
-              ></div>
+              <div class="swiper-wrapper">
+                <div
+                  class="swiper-slide"
+                  v-for="(src, index) in imageSources"
+                  :key="index"
+                >
+                  <img :src="src" class="img-fluid" />
+                </div>
+              </div>
               <div class="swiper-pagination pd-mobile-swiper-pagination"></div>
             </div>
             <button class="pd-scroll-btn pd-scroll-left" @click="swiperSlidePrev">
@@ -326,39 +516,50 @@ onMounted(async () => {
 
         <!-- Màu sắc -->
         <div class="mb-4">
-          <div class="mb-1">
-            <div class="fw-semibold">Màu sắc:</div>
-            <div class="color-options-wrapper">
-              <div class="d-flex gap-2 flex-wrap" style="margin-left: 0">
-                <div
-                  v-for="(color, index) in uniqueColors"
-                  :key="index"
-                  class="color-option"
-                  :class="{ selected: selectedColorId === color.colorId }"
-                  @click="
-                    selectedColorId =
-                      selectedColorId === color.colorId ? null : color.colorId
-                  "
-                >
-                  <span class="color-name">{{ color.colorName }}</span>
-                  <span v-if="selectedColorId === color.colorId" class="check-mark"
-                    >✓</span
-                  >
-                </div>
-              </div>
+          <div class="fw-semibold mb-2">
+            Màu sắc:
+            <span v-if="selectedColorId">
+              {{
+                uniqueColors.find((color) => color.colorId === selectedColorId)
+                  ?.colorName || ""
+              }}
+            </span>
+          </div>
+
+          <div class="d-flex gap-2 py-2 flex-wrap">
+            <div
+              v-for="(color, index) in uniqueColors"
+              :key="index"
+              class="product-detail-color"
+              :class="{ active: selectedColorId === color.colorId }"
+              @click="
+                selectedColorId = selectedColorId === color.colorId ? null : color.colorId
+              "
+            >
+              {{ color.colorName }}
             </div>
           </div>
         </div>
 
         <!-- Kích thước -->
         <div class="mb-4">
-          <div class="fw-semibold mb-2">Kích thước:</div>
-          <div class="d-flex gap-2 py-2 flex-wrap">
+          <div class="fw-semibold mb-2">
+            Kích thước:
+            <span v-if="selectedSizeId">
+              {{
+                uniqueSizes.find((size) => size.sizeId === selectedSizeId)?.sizeName || ""
+              }}
+            </span>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
             <div
               v-for="(size, index) in uniqueSizes"
               :key="index"
               class="product-detail-size"
-              :class="{ active: selectedSizeId === size.sizeId }"
+              :class="{
+                active: selectedSizeId === size.sizeId,
+                disabled: !hasStock(size.sizeId),
+              }"
               @click="
                 selectedSizeId = selectedSizeId === size.sizeId ? null : size.sizeId
               "
@@ -370,11 +571,11 @@ onMounted(async () => {
         </div>
 
         <div class="mb-4">
-          <strong>Số lượng còn lại: </strong>
+          <strong>Tình trạng kho: </strong>
           <span v-if="selectedVariant">
-            {{ displayedStock }} sản phẩm (biến thể đã chọn)
+            Còn lại {{ displayedStock }} sản phẩm cho kích thước đã chọn
           </span>
-          <span v-else> {{ displayedStock }} sản phẩm (tổng toàn bộ biến thể) </span>
+          <span v-else> Tổng số lượng còn lại: {{ displayedStock }} sản phẩm </span>
         </div>
 
         <!-- Thêm vào giỏ -->
@@ -386,7 +587,7 @@ onMounted(async () => {
         </button>
 
         <!-- Yêu thích & Tìm -->
-        <div class="d-flex justify-content-between text-muted small fs-5 mt-2">
+        <div class="d-flex justify-content-between text-muted mt-2">
           <div @click="handleToggleFavorite" style="cursor: pointer">
             <i
               :class="isFavorite ? 'bi bi-heart-fill text-danger' : 'bi bi-heart me-1'"
@@ -473,7 +674,10 @@ onMounted(async () => {
               :alt="item.name"
             />
             <img
-              :src="getImageUrl(item.variants?.[1]?.imageName) || getImageUrl(item.variants?.[0]?.imageName)"
+              :src="
+                getImageUrl(item.variants?.[1]?.imageName) ||
+                getImageUrl(item.variants?.[0]?.imageName)
+              "
               class="img-fluid img-hover"
               :alt="item.name"
             />
@@ -515,63 +719,73 @@ onMounted(async () => {
           </div>
         </RouterLink>
       </div>
+      <div class="d-flex justify-content-center mt-3" v-if="relatedTotalPages > 1">
+        <!-- Trang đầu -->
+        <button
+          class="btn btn-outline-primary me-1"
+          :disabled="relatedPage === 0"
+          @click="goToPage(0)"
+        >
+          «
+        </button>
+
+        <!-- Trang trước -->
+        <button
+          class="btn btn-outline-primary me-2"
+          :disabled="relatedPage === 0"
+          @click="goToPage(relatedPage - 1)"
+        >
+          <
+        </button>
+
+        <!-- Danh sách số trang -->
+        <button
+          v-for="page in relatedTotalPages"
+          :key="page"
+          class="btn me-1"
+          :class="relatedPage === page - 1 ? 'btn-primary' : 'btn-outline-primary'"
+          @click="goToPage(page - 1)"
+        >
+          {{ page }}
+        </button>
+
+        <!-- Trang sau -->
+        <button
+          class="btn btn-outline-primary me-1"
+          :disabled="relatedPage >= relatedTotalPages - 1"
+          @click="goToPage(relatedPage + 1)"
+        >
+          >
+        </button>
+
+        <!-- Trang cuối -->
+        <button
+          class="btn btn-outline-primary"
+          :disabled="relatedPage >= relatedTotalPages - 1"
+          @click="goToPage(relatedTotalPages - 1)"
+        >
+          »
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- Swiper Modal -->
-  <div ref="galleryModal" id="galleryModal" @click="closeGallery">
+  <div id="galleryModal" v-show="isModalOpen" @click="closeGallery">
     <div class="pd-modal-slider">
       <div class="swiper pd-modal-swiper">
-        <div class="swiper-wrapper pd-modal-swiper-wrapper" ref="swiperWrapper"></div>
+        <div class="swiper-wrapper" ref="modalWrapper">
+          <div class="swiper-slide" v-for="(src, index) in imageSources" :key="index">
+            <img :src="src" :alt="'Hình ảnh gallery ' + index" loading="lazy" />
+          </div>
+        </div>
         <div class="swiper-button-next pd-modal-swiper-next"></div>
         <div class="swiper-button-prev pd-modal-swiper-prev"></div>
         <div class="swiper-pagination pd-modal-swiper-pagination"></div>
       </div>
-      <span class="pd-modal-close-btn" @click="closeGallery($event)">&times;</span>
+      <span class="pd-modal-close-btn" @click="closeGallery">&times;</span>
     </div>
   </div>
 </template>
-
-<style>
-.color-option {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 40px;
-  border: 0.5px solid #ddd;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-  padding: 5px;
-}
-
-.color-option:hover {
-  transform: scale(1.05);
-  border-color: #007bff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.color-option.selected {
-  border-color: #007bff;
-  background-color: #e7f0ff;
-}
-
-.color-name {
-  margin-right: 5px;
-}
-
-.check-mark {
-  color: #007bff;
-  font-weight: bold;
-}
-
-.color-options-wrapper {
-  margin-left: 0;
-}
-</style>
 
 <style src="@/assets/css/product-detail.css"></style>

@@ -11,7 +11,7 @@ const stats = ref({
   totalProducts: 0,
   totalOrders: 0,
   totalReviews: 0,
-  totalRevenue: 0
+  totalRevenue: 0,
 });
 
 const monthlyRevenue = ref([]);
@@ -21,8 +21,8 @@ const fetchDashboardStats = async () => {
   try {
     const res = await axios.get("/api/admin/dashboard/stats", {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     stats.value = res.data;
   } catch (error) {
@@ -33,8 +33,8 @@ const fetchMonthlyRevenue = async () => {
   try {
     const res = await axios.get("/api/admin/dashboard/stats/monthly-revenue", {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     monthlyRevenue.value = res.data;
     renderRevenueChart();
@@ -46,7 +46,6 @@ onMounted(() => {
   fetchDashboardStats();
   fetchMonthlyRevenue();
 });
-
 </script>
 <template>
   <div id="contents">
@@ -161,7 +160,7 @@ onMounted(() => {
           <div class="col-md">
             <div class="box success">
               <i class="fa fa-handshake-o"></i>
-              <h3>{{ stats.totalRevenue.toLocaleString('vi-VN') }}₫</h3>
+              <h3>{{ stats.totalRevenue.toLocaleString("vi-VN") }}₫</h3>
               <p class="lead">Doanh Thu</p>
             </div>
           </div>
@@ -170,4 +169,3 @@ onMounted(() => {
     </section>
   </div>
 </template>
-

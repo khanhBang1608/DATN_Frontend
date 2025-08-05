@@ -5,6 +5,25 @@ import initHeader from "@/assets/js/header.js";
 
 const isLoggedIn = ref(false);
 const router = useRouter();
+const userInfo = ref(null);
+import axios from "axios";
+
+async function fetchUserInfo() {
+  const token = localStorage.getItem("token");
+  if (!token) return;
+
+  try {
+    const response = await axios.get("http://localhost:8080/api/user/profile", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    userInfo.value = response.data;
+  } catch (error) {
+    console.error("Không thể lấy thông tin user:", error.response?.data || error.message);
+  }
+}
 
 function checkLoginStatus() {
   isLoggedIn.value = !!localStorage.getItem("token");
@@ -37,10 +56,11 @@ function handleUserIconClick() {
 
 onMounted(() => {
   checkLoginStatus();
+  fetchUserInfo(); // Gọi lấy tên khi load trang
 
-  // Không gọi initHeader ở đây vì chưa chắc DOM render đủ (khi isLoggedIn)
   window.addEventListener("storage", () => {
     checkLoginStatus();
+    fetchUserInfo();
   });
 });
 
@@ -91,9 +111,13 @@ function handleSearch() {
           <a href="/about" class="text-dark text-decoration-none me-3">Giới thiệu</a>
           <a href="/contact-us" class="text-dark text-decoration-none me-3">Liên hệ</a>
           <a href="/contact" class="text-dark text-decoration-none me-3">Chính sách</a>
-          <!-- <router-link to="/login" class="text-dark text-decoration-none me-3"
-            >Đăng nhập</router-link
-          > -->
+          <a
+            href="/user/profile"
+            class="text-dark text-decoration-none me-3 fw-bold"
+            v-if="userInfo"
+          >
+            <i class="bi bi-emoji-smile me-1"></i> {{ userInfo.name }}
+          </a>
         </div>
       </div>
     </div>

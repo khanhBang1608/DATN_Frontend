@@ -268,6 +268,16 @@ const closeModal = () => {
 
 const saveDiscount = async () => {
   errors.value = {};
+
+  // Kiểm tra ngày bắt đầu khi thêm mới
+  if (!isEdit.value) {
+    const today = new Date().toISOString().split("T")[0];
+    if (form.value.startDate && form.value.startDate < today) {
+      errors.value.startDate = "Ngày bắt đầu phải từ hôm nay trở đi";
+      return;
+    }
+  }
+
   try {
     const config = {
       headers: {

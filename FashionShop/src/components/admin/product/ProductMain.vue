@@ -25,14 +25,20 @@ const product = ref({
 });
 const categories = ref([]);
 
-const fetchProducts = async () => {
+const totalPages = ref(0);
+const currentPage = ref(0);
+
+const fetchProducts = async (page = 0) => {
   try {
-    const response = await axios.get("http://localhost:8080/api/admin/products", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    products.value = response.data;
+    const response = await axios.get(
+      `http://localhost:8080/api/admin/products?page=${page}&size=10`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    products.value = response.data.products;
+    totalPages.value = response.data.totalPages;
+    currentPage.value = response.data.currentPage;
   } catch (error) {
     console.error("Lỗi khi tải sản phẩm:", error);
   }
@@ -42,7 +48,7 @@ const fetchCategories = async () => {
   try {
     categories.value = await getAllCategories();
   } catch (error) {
-    console.error("❌ Không tải được danh mục:", error);
+    console.error("Không tải được danh mục:", error);
   }
 };
 
@@ -62,7 +68,7 @@ const openEditModal = async (id) => {
     product.value = await getProductById(id);
     showModal.value = true;
   } catch (error) {
-    console.error("❌ Lỗi khi tải sản phẩm:", error);
+    console.error("Lỗi khi tải sản phẩm:", error);
   }
 };
 
@@ -145,6 +151,12 @@ const formatDate = (dateStr) => {
 };
 
 onMounted(fetchProducts);
+
+const changePage = (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    fetchProducts(page);
+  }
+};
 </script>
 <template>
   <div class="card p-4">
@@ -209,6 +221,28 @@ onMounted(fetchProducts);
           </tr>
         </tbody>
       </table>
+      <nav class="mt-3 d-flex justify-content-center">
+        <ul class="pagination">
+          <li class="page-item" :class="{ disabled: currentPage === 0 }">
+            <button class="page-link" @click="changePage(currentPage - 1)">«</button>
+          </li>
+
+          <li
+            class="page-item"
+            v-for="page in totalPages"
+            :key="page"
+            :class="{ active: currentPage === page - 1 }"
+          >
+            <button class="page-link" @click="changePage(page - 1)">
+              {{ page }}
+            </button>
+          </li>
+
+          <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
+            <button class="page-link" @click="changePage(currentPage + 1)">»</button>
+          </li>
+        </ul>
+      </nav>
     </div>
   </div>
 

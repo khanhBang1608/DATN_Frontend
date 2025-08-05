@@ -1,8 +1,8 @@
 <script>
-import AdminSidebar from '@/components/admin/AdminSidebar.vue';
+import AdminSidebar from "@/components/admin/AdminSidebar.vue";
 
-import '@/assets/css/dashboard.css';
-import '@/assets/js/dashboard.js';
+import "@/assets/css/dashboard.css";
+import "@/assets/js/dashboard.js";
 
 export default {
   components: {
@@ -12,14 +12,12 @@ export default {
 </script>
 <template>
   <div class="admin-layout">
-      <AdminSidebar />
-      <div class="contents p-10">
-        <router-view />
-      </div>
+    <AdminSidebar />
+    <div class="contents p-10">
+      <router-view />
+    </div>
   </div>
 </template>
-
-
 
 <style scoped>
 .admin-layout {

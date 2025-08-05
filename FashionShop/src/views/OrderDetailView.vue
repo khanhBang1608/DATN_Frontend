@@ -1,14 +1,13 @@
 <script setup>
 import Header from '../components/user/Header.vue'
-import OtpForm from '../components/user/OtpForm.vue'
+import OrderDetailView from '../components/user/OrderDetail.vue'
 import Footer from '../components/user/Footer.vue'
 </script>
+
 <template>
   <main>
-      <Header />
-    <OtpForm/>
+    <Header />
+    <OrderDetailView />
     <Footer />
-
   </main>
 </template>
-

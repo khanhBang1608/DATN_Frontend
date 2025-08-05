@@ -29,3 +29,11 @@
   outline: none !important;
   box-shadow: none !important;
 }
+
+/* .modal-backdrop {
+    display: none !important;
+}
+.modal-backdrop.fade.show {
+    opacity: 0 !important;
+    transition: opacity 0.15s linear;
+} */

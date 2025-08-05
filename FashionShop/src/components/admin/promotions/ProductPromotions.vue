@@ -1,4 +1,3 @@
-<!-- src/views/admin/ProductPromotions.vue -->
 <script setup>
 import { ref, reactive, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
@@ -40,7 +39,7 @@ const saveUpdatedQuantity = async () => {
   if (!Number.isInteger(quantity))
     errors.value.quantityLimit = "Số lượng sản phẩm khuyến mãi phải là số nguyên!";
   else if (quantity <= 0)
-    errors.value.quantityLimit = "Số lượng sản phẩm khuyến mãi phải lớn hơn > 0";
+    errors.value.quantityLimit = "Số lượng sản phẩm khuyến mãi phải lớn hơn 0";
   else if (quantity > maxStock)
     errors.value.quantityLimit = `Số lượng sản phẩm khuyến mãi phải <= ${maxStock}`;
 
@@ -183,41 +182,43 @@ const saveAddPromotion = async () => {
   const selectedList = [];
   for (const [variantId, val] of Object.entries(selectedVariants.value)) {
     if (val.checked) {
-      if (!val.promotionQuantity || val.promotionQuantity <= 0) {
-        errorsAdd.variants[variantId] = "Số lượng sản phẩm khuyến mãi phải lớn hơn 0";
-        continue;
-      }
-
-      const variant = allVariantsMap.value[selectedProductId.value].find(
-        (v) => v.productVariantId == variantId
-      );
-      if (variant && val.promotionQuantity > variant.stock) {
-        errorsAdd.variants[variantId] = `Tối đa ${variant.stock}`;
-        continue;
-      }
-
       selectedList.push({
         productVariantId: parseInt(variantId),
         promotionId: parseInt(promotionId),
-        quantityLimit: val.promotionQuantity,
       });
     }
   }
 
   if (selectedList.length === 0) {
-    const anyChecked = Object.values(selectedVariants.value).some((v) => v.checked);
-    if (anyChecked) {
-      errorsAdd.global = "Vui lòng nhập số lượng hợp lệ cho các biến thể đã chọn";
-    } else {
-      errorsAdd.global = "Vui lòng chọn ít nhất 1 biến thể";
-    }
+    errorsAdd.global = "Vui lòng chọn ít nhất một biến thể.";
     return;
   }
 
   try {
-    await axios.post(`http://localhost:8080/api/admin/product-promotions`, selectedList, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const response = await axios.post(
+      `http://localhost:8080/api/admin/product-promotions`,
+      selectedList,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    const savedVariants = response.data;
+    const savedVariantIds = savedVariants.map((item) => item.productVariantId);
+    const failedVariants = selectedList.filter(
+      (item) => !savedVariantIds.includes(item.productVariantId)
+    );
+
+    if (failedVariants.length > 0) {
+      failedVariants.forEach((item) => {
+        const variant = Object.values(allVariantsMap.value)
+          .flat()
+          .find((v) => v.productVariantId === item.productVariantId);
+        errorsAdd.variants[item.productVariantId] = `Biến thể ${variant.colorName} - ${variant.sizeName} đã tồn tại trong một chương trình khuyến mãi khác có thời gian trùng lặp.`;
+      });
+      return;
+    }
+
     await fetchPromotions();
     await fetchVariantDetails();
     showAddModal.value = false;
@@ -226,8 +227,12 @@ const saveAddPromotion = async () => {
       message: "Thêm mới thành công!",
       position: "topRight",
     });
-  } catch {
-    iziToast.error({ title: "Lỗi", message: "Thêm thất bại", position: "topRight" });
+  } catch (err) {
+    iziToast.error({
+      title: "Lỗi",
+      message: "Thêm thất bại. Vui lòng thử lại.",
+      position: "topRight",
+    });
   }
 };
 
@@ -235,11 +240,19 @@ const closeAddModal = () => {
   showAddModal.value = false;
 };
 
+const getImageUrl = (imageName) => {
+  if (!imageName) {
+    return "http://localhost:8080/images/default.png";
+  }
+  return `http://localhost:8080/images/${imageName}`;
+};
+
 onMounted(async () => {
   await fetchPromotions();
   await fetchVariantDetails();
   await fetchAllProducts();
 });
+
 const getProductName = (productId) => {
   const product = allProducts.value.find((p) => p.productId == productId);
   return product ? product.name : "Không rõ";
@@ -261,20 +274,35 @@ const getProductName = (productId) => {
           <thead>
             <tr>
               <th>ID</th>
-              <th>ID - Biến thể sản phẩm</th>
-              <th>Giới hạn số lượng</th>
+              <th>Biến thể sản phẩm</th>
+              <th>Giá</th>
+              <th>Tồn kho</th>
+              <th>Ảnh</th>
               <th class="text-center">Hành động</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="item in promotions" :key="item.id">
               <td>{{ item.id }}</td>
-              <td>{{ item.productVariantId }}</td>
-              <td>{{ item.quantityLimit }}</td>
+              <td>
+                <div>
+                  ID: {{ item.productVariant?.productVariantId }} <br />
+                  Màu: {{ item.productVariant?.colorName }} - Size:
+                  {{ item.productVariant?.sizeName }}
+                </div>
+              </td>
+              <td>Gốc: {{ item.productVariant?.price?.toLocaleString() }} ₫ <br> Giảm còn: {{item.discountedPrice.toLocaleString()}} đ</td>
+              <td>{{ item.productVariant?.stock }}</td>
+              <td>
+                <img
+                  :src="getImageUrl(item.productVariant?.imageName)"
+                  alt="ảnh"
+                  width="50"
+                  height="50"
+                  style="object-fit: cover"
+                />
+              </td>
               <td class="text-center">
-                <button class="btn btn-sm btn-warning m-1" @click="openEditModal(item)">
-                  ✏️ Sửa
-                </button>
                 <button
                   class="btn btn-sm btn-danger m-1"
                   @click="deletePromotion(item.id)"
@@ -283,8 +311,9 @@ const getProductName = (productId) => {
                 </button>
               </td>
             </tr>
+
             <tr v-if="promotions.length === 0">
-              <td colspan="4" class="text-center text-white fs-5 py-4">
+              <td colspan="6" class="text-center text-white fs-5 py-4">
                 <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
                 Không có sản phẩm khuyến mãi nào được tìm thấy.
               </td>
@@ -357,24 +386,8 @@ const getProductName = (productId) => {
                 {{ variant.colorName }} - {{ variant.sizeName }} - Tồn kho:
                 {{ variant.stock }}
               </div>
-
-              <div v-if="selectedVariants[variant.productVariantId].checked">
-                <label class="form-label fw-semibold mt-2">Số lượng</label>
-                <input
-                  type="number"
-                  min="1"
-                  class="form-control"
-                  v-model.number="
-                    selectedVariants[variant.productVariantId].promotionQuantity
-                  "
-                  @input="errorsAdd.variants[variant.productVariantId] = ''"
-                />
-                <div
-                  class="text-danger mt-1"
-                  v-if="errorsAdd.variants[variant.productVariantId]"
-                >
-                  {{ errorsAdd.variants[variant.productVariantId] }}
-                </div>
+              <div v-if="errorsAdd.variants[variant.productVariantId]" class="text-danger mt-1">
+                {{ errorsAdd.variants[variant.productVariantId] }}
               </div>
             </div>
 
@@ -392,54 +405,6 @@ const getProductName = (productId) => {
         <div class="modal-footer">
           <button class="btn btn-secondary" @click="closeAddModal">Đóng</button>
           <button class="btn btn-success" @click="saveAddPromotion">Thêm mới</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal sửa số lượng -->
-  <div
-    v-if="showModal"
-    class="modal fade show d-block"
-    tabindex="-1"
-    style="background: rgba(0, 0, 0, 0.5)"
-  >
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Sửa số lượng</h5>
-          <button type="button" class="btn-close" @click="closeModal"></button>
-        </div>
-        <div class="modal-body">
-          <p><strong>ID:</strong> {{ selectedPromotion.id }}</p>
-          <p><strong>Biến thể:</strong> {{ selectedPromotion.productVariantId }}</p>
-
-          <div class="mb-3">
-            <label for="quantityLimit" class="form-label">Giới hạn số lượng</label>
-            <input
-              type="number"
-              class="form-control"
-              v-model="selectedPromotion.quantityLimit"
-              min="1"
-              :max="variantMap[selectedPromotion.productVariantId]?.stock || 1"
-            />
-            <div class="text-danger mt-1" v-if="errors.quantityLimit">
-              {{ errors.quantityLimit }}
-            </div>
-          </div>
-
-          <!-- Gợi ý thêm -->
-          <div class="text-muted small">
-            Số lượng tồn kho hiện tại:
-            <strong>{{
-              variantMap[selectedPromotion.productVariantId]?.stock ?? "..."
-            }}</strong>
-          </div>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @click="closeModal">Đóng</button>
-          <button class="btn btn-success" @click="saveUpdatedQuantity">Cập nhật</button>
         </div>
       </div>
     </div>
