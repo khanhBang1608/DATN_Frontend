@@ -192,6 +192,7 @@
           class="btn btn-primary"
           @click="updateStatusFlow"
         >
+        </button>
         <button
           v-if="[0, 1, 2].includes(order.status)"
           class="btn btn-primary"
