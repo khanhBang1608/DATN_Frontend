@@ -12,19 +12,34 @@ const newSize = ref({ sizeName: "" });
 const editSize = ref({ sizeId: null, sizeName: "" });
 const formErrors = ref({ name: "" });
 
+const currentPage = ref(0); // Server-side bắt đầu từ 0
+const pageSize = ref(10);
+const totalPages = ref(1);
+const totalItems = ref(0);
+
 const fetchSizes = async () => {
   try {
     const res = await axios.get("http://localhost:8080/api/admin/attributes/sizes", {
+      params: { page: currentPage.value, size: pageSize.value },
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    sizes.value = res.data.sort((a, b) => a.sizeId - b.sizeId);
+    sizes.value = res.data.content;
+    totalPages.value = res.data.totalPages;
+    totalItems.value = res.data.totalElements;
   } catch (err) {
     iziToast.error({
       title: "Lỗi",
       message: "Không thể tải kích thước.",
       position: "topRight",
     });
+  }
+};
+
+const changePage = (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    currentPage.value = page;
+    fetchSizes();
   }
 };
 
@@ -187,6 +202,40 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
+      <!-- Pagination -->
+      <div class="d-flex justify-content-center align-items-center mt-3 text-white">
+        <!-- Nút trước -->
+        <button
+          class="btn btn-sm btn-outline-light me-2"
+          :disabled="currentPage === 0"
+          @click="changePage(currentPage - 1)"
+        >
+          &lt;
+        </button>
+
+        <!-- Các số trang -->
+        <template v-for="page in totalPages" :key="page">
+          <button
+            class="btn btn-sm me-1"
+            :class="{
+              'btn-light text-dark fw-bold': currentPage === page - 1,
+              'btn-outline-light': currentPage !== page - 1,
+            }"
+            @click="changePage(page - 1)"
+          >
+            {{ page }}
+          </button>
+        </template>
+
+        <!-- Nút sau -->
+        <button
+          class="btn btn-sm btn-outline-light ms-2"
+          :disabled="currentPage + 1 >= totalPages"
+          @click="changePage(currentPage + 1)"
+        >
+          &gt;
+        </button>
+      </div>
     </div>
   </div>
 

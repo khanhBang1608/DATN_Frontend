@@ -12,6 +12,12 @@
             :value="order.userFullName || 'Không xác định'"
             disabled
           />
+          <input
+            type="text"
+            class="form-control"
+            :value="order.userFullName || 'Không xác định'"
+            disabled
+          />
         </div>
         <div class="col-md-6">
           <label class="form-label">Địa chỉ</label>
@@ -29,9 +35,21 @@
             :value="formatPrice(order.totalAmount)"
             disabled
           />
+          <input
+            type="text"
+            class="form-control"
+            :value="formatPrice(order.totalAmount)"
+            disabled
+          />
         </div>
         <div class="col-md-6">
           <label class="form-label">Phí vận chuyển</label>
+          <input
+            type="text"
+            class="form-control"
+            :value="formatPrice(order.shippingFee)"
+            disabled
+          />
           <input
             type="text"
             class="form-control"
@@ -47,6 +65,12 @@
             :value="formatPrice(order.discountAmount)"
             disabled
           />
+          <input
+            type="text"
+            class="form-control"
+            :value="formatPrice(order.discountAmount)"
+            disabled
+          />
         </div>
         <div class="col-md-6">
           <label class="form-label">Phương thức thanh toán</label>
@@ -55,15 +79,31 @@
         <div class="col-md-6">
           <label class="form-label">Trạng thái thanh toán</label>
           <input
+
             type="text"
+
             class="form-control"
-            :value="order.paymentStatus === 0 ? 'Chưa thanh toán' : 'Đã thanh toán'"
+
+            :value="
+              order.paymentStatus === 0
+                ? 'Chưa thanh toán'
+                : order.paymentStatus === 1
+                ? 'Đã thanh toán'
+                : 'Đã hoàn tiền'
+            "
+
             disabled
+
           />
         </div>
         <div class="col-md-6">
           <label class="form-label">Trạng thái</label>
-          <input type="text" class="form-control" :value="statusOptions[order.status]" disabled />
+          <input
+            type="text"
+            class="form-control"
+            :value="statusOptions[order.status]"
+            disabled
+          />
         </div>
       </div>
 
@@ -83,7 +123,18 @@
           </thead>
           <tbody>
             <tr v-for="detail in order.orderDetails" :key="detail.orderDetailId">
-              <td><img :src="detail.imageUrl" alt="" class="img-thumbnail" /></td>
+              <td>
+                <img
+                  :src="
+                    detail.imageUrl
+                      ? `http://localhost:8080/images/${detail.imageUrl}`
+                      : 'path/to/default.jpg'
+                  "
+                  alt=""
+                  class="img-thumbnail"
+                />
+              </td>
+
               <td>{{ detail.productName }}</td>
               <td>Size: {{ detail.size }}, Màu: {{ detail.color }}</td>
               <td>{{ detail.quantity }}</td>
@@ -126,7 +177,9 @@
       </div>
 
       <div class="d-flex flex-wrap justify-content-center gap-2">
-        <button class="btn btn-outline-light" @click="exportToPDF">Xuất hóa đơn PDF</button>
+        <button class="btn btn-outline-light" @click="exportToPDF">
+          Xuất hóa đơn PDF
+        </button>
 
         <button v-if="order.status === 4" class="btn btn-success" @click="approveReturn">
           Duyệt trả hàng
@@ -139,8 +192,17 @@
           class="btn btn-primary"
           @click="updateStatusFlow"
         >
+        <button
+          v-if="[0, 1, 2].includes(order.status)"
+          class="btn btn-primary"
+          @click="updateStatusFlow"
+        >
           Cập nhật trạng thái
         </button>
+        <button v-if="order.status === 0" class="btn btn-danger" @click="cancelOrder">
+          Hủy đơn
+        </button>
+        <router-link to="/admin/orders" class="btn btn-secondary">Quay lại</router-link>
         <button v-if="order.status === 0" class="btn btn-danger" @click="cancelOrder">
           Hủy đơn
         </button>
@@ -169,8 +231,8 @@
 </style>
 
 <script setup>
-import { onMounted, ref, watch, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { onMounted, ref, watch, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import {
   getOrderById,
   updateOrder,
@@ -191,15 +253,15 @@ const error = ref(null)
 const returnRequest = ref(null)
 
 const statusOptions = [
-  'Chờ xác nhận',
-  'Chờ lấy hàng',
-  'Chờ giao hàng',
-  'Đã giao',
-  'Yêu cầu trả hàng',
-  'Đã hủy',
-  'Trả hàng đã duyệt',
-  'Từ chối trả hàng',
-]
+  "Chờ xác nhận",
+  "Chờ lấy hàng",
+  "Chờ giao hàng",
+  "Đã giao",
+  "Yêu cầu trả hàng",
+  "Đã hủy",
+  "Trả hàng đã duyệt",
+  "Từ chối trả hàng",
+];
 
 const extractedPhone = computed(() => order.value?.address?.split(' - ')[0] || 'Không xác định')
 const extractedAddress = computed(
@@ -211,7 +273,9 @@ const resolveFileUrl = (url) => {
   return BASE_IMAGE_URL + url
 }
 function formatPrice(price) {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
+  return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
+    price
+  );
 }
 
 async function fetchOrder() {
@@ -226,8 +290,8 @@ async function fetchOrder() {
       returnRequest.value = null
     }
   } catch (err) {
-    console.error('Fetch error:', err)
-    error.value = 'Không thể tải chi tiết đơn hàng.'
+    console.error("Fetch error:", err);
+    error.value = "Không thể tải chi tiết đơn hàng.";
   }
 }
 
@@ -236,38 +300,38 @@ async function updateStatusFlow() {
     0: 1,
     1: 2,
     2: 3,
-  }
-  const current = order.value.status
-  const next = flow[current]
+  };
+  const current = order.value.status;
+  const next = flow[current];
 
   if (next === undefined) {
-    toast.error('Không thể cập nhật trạng thái ở bước hiện tại.')
-    return
+    toast.error("Không thể cập nhật trạng thái ở bước hiện tại.");
+    return;
   }
 
-  const confirmMsg = `Bạn có muốn cập nhật trạng thái đơn hàng từ "${statusOptions[current]}" lên "${statusOptions[next]}"?`
-  if (!window.confirm(confirmMsg)) return
+  const confirmMsg = `Bạn có muốn cập nhật trạng thái đơn hàng từ "${statusOptions[current]}" lên "${statusOptions[next]}"?`;
+  if (!window.confirm(confirmMsg)) return;
 
   try {
-    order.value.status = next
-    await updateOrder(orderId.value, order.value)
-    toast.success('Cập nhật trạng thái thành công')
+    order.value.status = next;
+    await updateOrder(orderId.value, order.value);
+    toast.success("Cập nhật trạng thái thành công");
   } catch (err) {
-    toast.error('Không thể cập nhật trạng thái đơn hàng.')
+    toast.error("Không thể cập nhật trạng thái đơn hàng.");
   }
 }
 
 async function cancelOrder() {
   if (order.value.status !== 0) {
-    toast.error('Chỉ có thể hủy đơn hàng khi trạng thái là "Chờ xác nhận".')
-    return
+    toast.error('Chỉ có thể hủy đơn hàng khi trạng thái là "Chờ xác nhận".');
+    return;
   }
-  order.value.status = 5
+  order.value.status = 5;
   try {
-    await updateOrder(orderId.value, order.value)
-    toast.success('Đơn hàng đã được hủy')
+    await updateOrder(orderId.value, order.value);
+    toast.success("Đơn hàng đã được hủy");
   } catch (err) {
-    toast.error('Không thể hủy đơn hàng.')
+    toast.error("Không thể hủy đơn hàng.");
   }
 }
 
@@ -289,36 +353,36 @@ onMounted(() => {
 
 async function approveReturn() {
   try {
-    await approveReturnRequest(orderId.value)
-    order.value.status = 6
-    toast.success('Đã duyệt yêu cầu trả hàng')
+    await approveReturnRequest(orderId.value);
+    order.value.status = 6;
+    toast.success("Đã duyệt yêu cầu trả hàng");
   } catch (err) {
-    toast.error('Không thể duyệt yêu cầu trả hàng.')
+    toast.error("Không thể duyệt yêu cầu trả hàng.");
   }
 }
 
 async function rejectReturn() {
   try {
-    await rejectReturnRequest(orderId.value)
-    order.value.status = 7
-    toast.info('Đã từ chối yêu cầu trả hàng')
+    await rejectReturnRequest(orderId.value);
+    order.value.status = 7;
+    toast.info("Đã từ chối yêu cầu trả hàng");
   } catch (err) {
-    toast.error('Không thể từ chối yêu cầu trả hàng.')
+    toast.error("Không thể từ chối yêu cầu trả hàng.");
   }
 }
 
 async function exportToPDF() {
   try {
-    await downloadInvoicePDF(orderId.value)
-    toast.success('Tải hóa đơn PDF thành công')
+    await downloadInvoicePDF(orderId.value);
+    toast.success("Tải hóa đơn PDF thành công");
   } catch (err) {
-    toast.error('Không thể xuất hóa đơn PDF.')
+    toast.error("Không thể xuất hóa đơn PDF.");
   }
 }
 
 onMounted(() => {
-  if (!isNaN(orderId.value)) fetchOrder()
-})
+  if (!isNaN(orderId.value)) fetchOrder();
+});
 
 watch(
   () => orderId.value,

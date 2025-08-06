@@ -110,9 +110,9 @@
               >
                 👁️
               </button>
-              <button class="btn btn-sm btn-danger m-1" @click="deleteReview(review.reviewId)">
+              <!-- <button class="btn btn-sm btn-danger m-1" @click="deleteReview(review.reviewId)">
                 🗑️
-              </button>
+              </button> -->
             </td>
           </tr>
         </tbody>

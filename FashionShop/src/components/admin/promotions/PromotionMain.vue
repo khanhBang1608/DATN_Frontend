@@ -56,6 +56,28 @@
           </tr>
         </tbody>
       </table>
+      <nav v-if="totalPages > 1" class="mt-3">
+        <ul class="pagination justify-content-center">
+          <li class="page-item" :class="{ disabled: currentPage === 0 }">
+            <button class="page-link" @click="changePage(currentPage - 1)">«</button>
+          </li>
+
+          <li
+            class="page-item"
+            v-for="page in totalPages"
+            :key="page"
+            :class="{ active: currentPage === page - 1 }"
+          >
+            <button class="page-link" @click="changePage(page - 1)">
+              {{ page }}
+            </button>
+          </li>
+
+          <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
+            <button class="page-link" @click="changePage(currentPage + 1)">»</button>
+          </li>
+        </ul>
+      </nav>
     </div>
 
     <!-- Modal -->
@@ -180,12 +202,28 @@ const form = ref({
 });
 
 const errors = ref({});
+const currentPage = ref(0);
+const pageSize = ref(8);
+const totalPages = ref(0);
 
 const fetchPromotions = async () => {
-  const res = await axios.get("http://localhost:8080/api/admin/promotions", {
+  const res = await axios.get(`http://localhost:8080/api/admin/promotions/paging`, {
     headers: { Authorization: `Bearer ${token}` },
+    params: {
+      page: currentPage.value,
+      size: pageSize.value,
+    },
   });
-  promotions.value = res.data;
+
+  promotions.value = res.data.content;
+  totalPages.value = res.data.totalPages;
+};
+
+const changePage = (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    currentPage.value = page;
+    fetchPromotions();
+  }
 };
 
 const openModal = async (id = null) => {

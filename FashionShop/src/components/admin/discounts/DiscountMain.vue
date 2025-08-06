@@ -64,6 +64,28 @@
           </tr>
         </tbody>
       </table>
+      <nav v-if="totalPages > 1" class="mt-3">
+        <ul class="pagination justify-content-center">
+          <li class="page-item" :class="{ disabled: currentPage === 0 }">
+            <button class="page-link" @click="fetchDiscounts(currentPage - 1)">«</button>
+          </li>
+
+          <li
+            v-for="page in totalPages"
+            :key="page"
+            class="page-item"
+            :class="{ active: currentPage === page - 1 }"
+          >
+            <button class="page-link" @click="fetchDiscounts(page - 1)">
+              {{ page }}
+            </button>
+          </li>
+
+          <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
+            <button class="page-link" @click="fetchDiscounts(currentPage + 1)">»</button>
+          </li>
+        </ul>
+      </nav>
     </div>
 
     <!-- Modal -->
@@ -202,7 +224,6 @@ import Swal from "sweetalert2";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 
-const discounts = ref([]);
 const token = localStorage.getItem("token") || "";
 
 const showModal = ref(false);
@@ -221,11 +242,26 @@ const form = ref({
 });
 const errors = ref({});
 
-const fetchDiscounts = async () => {
-  const res = await axios.get("http://localhost:8080/api/admin/discount/findAll", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  discounts.value = res.data;
+// Discount list & pagination
+const discounts = ref([]);
+const totalPages = ref(0);
+const currentPage = ref(0);
+const pageSize = ref(8);
+
+const fetchDiscounts = async (page = 0) => {
+  try {
+    const res = await axios.get(
+      `http://localhost:8080/api/admin/discount/paging?page=${page}&size=${pageSize.value}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    discounts.value = res.data.content;
+    totalPages.value = res.data.totalPages;
+    currentPage.value = res.data.number;
+  } catch (err) {
+    iziToast.error({ title: "Lỗi", message: "Không thể tải mã giảm giá." });
+  }
 };
 
 const openModal = async (id = null) => {
@@ -312,7 +348,7 @@ const saveDiscount = async () => {
     }
 
     closeModal();
-    await fetchDiscounts();
+    await fetchDiscounts(currentPage.value);
   } catch (err) {
     if (err.response && err.response.status === 400 && Array.isArray(err.response.data)) {
       err.response.data.forEach((e) => {
@@ -342,7 +378,7 @@ const deleteDiscount = async (id) => {
       await axios.delete(`http://localhost:8080/api/admin/discount/delete/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      await fetchDiscounts();
+      await fetchDiscounts(currentPage.value);
       iziToast.success({ title: "Thành công", message: "Mã giảm giá đã được xoá." });
     } catch {
       iziToast.error({ title: "Lỗi", message: "Xoá mã giảm giá thất bại!" });
@@ -363,8 +399,7 @@ const formatDate = (dateStr) =>
 const clearError = (field) => {
   errors.value[field] = null;
 };
-
-onMounted(fetchDiscounts);
+onMounted(() => fetchDiscounts(0));
 </script>
 
 <style scoped>
