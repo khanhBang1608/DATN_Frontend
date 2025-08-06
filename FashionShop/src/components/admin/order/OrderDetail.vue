@@ -12,12 +12,6 @@
             :value="order.userFullName || 'Không xác định'"
             disabled
           />
-          <input
-            type="text"
-            class="form-control"
-            :value="order.userFullName || 'Không xác định'"
-            disabled
-          />
         </div>
         <div class="col-md-6">
           <label class="form-label">Địa chỉ</label>
@@ -35,21 +29,9 @@
             :value="formatPrice(order.totalAmount)"
             disabled
           />
-          <input
-            type="text"
-            class="form-control"
-            :value="formatPrice(order.totalAmount)"
-            disabled
-          />
         </div>
         <div class="col-md-6">
           <label class="form-label">Phí vận chuyển</label>
-          <input
-            type="text"
-            class="form-control"
-            :value="formatPrice(order.shippingFee)"
-            disabled
-          />
           <input
             type="text"
             class="form-control"
@@ -65,12 +47,7 @@
             :value="formatPrice(order.discountAmount)"
             disabled
           />
-          <input
-            type="text"
-            class="form-control"
-            :value="formatPrice(order.discountAmount)"
-            disabled
-          />
+
         </div>
         <div class="col-md-6">
           <label class="form-label">Phương thức thanh toán</label>
@@ -192,18 +169,8 @@
           class="btn btn-primary"
           @click="updateStatusFlow"
         >
-        </button>
-        <button
-          v-if="[0, 1, 2].includes(order.status)"
-          class="btn btn-primary"
-          @click="updateStatusFlow"
-        >
           Cập nhật trạng thái
         </button>
-        <button v-if="order.status === 0" class="btn btn-danger" @click="cancelOrder">
-          Hủy đơn
-        </button>
-        <router-link to="/admin/orders" class="btn btn-secondary">Quay lại</router-link>
         <button v-if="order.status === 0" class="btn btn-danger" @click="cancelOrder">
           Hủy đơn
         </button>
