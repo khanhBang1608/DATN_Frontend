@@ -139,7 +139,7 @@
               <button
                 v-if="order.status === 3"
                 class="order-management-action-btn return"
-                @click="requestReturn(order.orderId)"
+                @click="openReturnModal(order.orderId)"
               >
                 <i class="bi bi-box-arrow-left me-1"></i> Yêu cầu trả hàng
               </button>
@@ -157,7 +157,41 @@
       </table>
     </div>
   </div>
+  <div class="modal fade" id="returnModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Yêu cầu trả hàng</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label>Lý do</label>
+          <textarea v-model="returnReason" class="form-control mb-3"></textarea>
 
+          <label>Upload ảnh hoặc video (tùy chọn)</label>
+          <input
+            type="file"
+            class="form-control"
+            accept="image/*,video/*"
+            @change="handleReturnFileUpload"
+          />
+
+          <div v-if="returnFilePreview" class="file-preview mt-2">
+            <img
+              v-if="returnFile?.type.startsWith('image')"
+              :src="returnFilePreview"
+              class="img-fluid"
+            />
+            <video v-else :src="returnFilePreview" controls class="img-fluid"></video>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button class="btn btn-danger" @click="submitReturn">Gửi yêu cầu</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -185,6 +219,10 @@ export default {
       reviewTypes: {}, // Lưu loại đánh giá cho từng orderDetailId
       filePreviews: {}, // Lưu preview URL cho từng orderDetailId
       mediaFiles: {}, // Lưu file gốc cho từng orderDetailId
+      returnReason: '',
+      returnFile: null,
+      returnFilePreview: null,
+      returnOrderId: null,
     }
   },
   computed: {
@@ -223,6 +261,59 @@ export default {
   },
 
   methods: {
+    openReturnModal(orderId) {
+      this.returnOrderId = orderId
+      this.returnReason = ''
+      this.returnFile = null
+      this.returnFilePreview = null
+
+      const modalEl = document.getElementById('returnModal')
+      const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl)
+      modal.show()
+    },
+
+    handleReturnFileUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      const maxSize = 20 * 1024 * 1024
+      if (file.size > maxSize) {
+        toast.error('File quá lớn! Vui lòng chọn file dưới 20MB.')
+        return
+      }
+
+      this.returnFile = file
+      const reader = new FileReader()
+      reader.onload = () => {
+        this.returnFilePreview = reader.result
+      }
+      reader.readAsDataURL(file)
+    },
+
+    async submitReturn() {
+      if (!this.returnReason.trim()) return toast.error('Vui lòng nhập lý do trả hàng.')
+
+      const form = new FormData()
+      form.append('reason', this.returnReason)
+      if (this.returnFile) {
+        const fileType = this.returnFile.type.startsWith('video') ? 'videoUrls' : 'imageUrls'
+        form.append(fileType, this.returnFile)
+      }
+
+      try {
+        await requestReturn(this.returnOrderId, form)
+        this.orders = this.orders.map((order) =>
+          order.orderId === this.returnOrderId ? { ...order, status: 4 } : order,
+        )
+        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${this.returnOrderId}`)
+
+        const modalEl = document.getElementById('returnModal')
+        const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl)
+        modal.hide()
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Gửi yêu cầu trả hàng thất bại.')
+      }
+    },
     async requestReturn(orderId) {
       try {
         await requestReturn(orderId)
