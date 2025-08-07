@@ -25,77 +25,75 @@
 
       <div class="favorite-container col-md-10">
         <h3 class="text-center mb-3 fw-bold">Danh sách yêu thích</h3>
-        <div v-if="favoriteProducts.length > 0" class="mb-4">
-          <div class="row g-3 mt-2">
+        <div v-if="favoriteProducts.length > 0" class="container mt-5">
+          <div class="row g-3">
             <div
               v-for="item in favoriteProducts"
               :key="item.id"
-              class="col-6 col-sm-6 col-md-4 col-lg-3"
+              class="col-12 col-sm-6 col-md-4"
             >
-              <div class="product-content-wrapper position-relative">
-                <a
-                  href="#"
-                  class="product-link"
-                  @click.prevent="handleProductClick(item.product.productId)"
-                >
-                  <div class="product-item">
-                    <span class="discount-badge" v-if="getDiscount(item)">
-                      -{{ getDiscount(item) }}%
-                    </span>
-                    <img
-                      :src="getImageUrl(item.product.variants[0]?.imageName)"
-                      class="img-fluid img-default"
-                      :alt="item.product.name"
-                    />
-                    <img
-                      :src="getImageUrl(item.product.variants[1]?.imageName)"
-                      class="img-fluid img-hover"
-                      :alt="item.product.name"
-                    />
-                  </div>
+              <a
+                href="#"
+                class="product-link"
+                @click.prevent="handleProductClick(item.product.productId)"
+              >
+                <div class="product-item">
+                  <span class="discount-badge" v-if="getDiscount(item)">
+                    -{{ getDiscount(item) }}%
+                  </span>
+                  <img
+                    :src="getImageUrl(item.product.variants[0]?.imageName)"
+                    class="img-fluid img-default"
+                    :alt="item.product.name"
+                  />
+                  <img
+                    :src="getImageUrl(item.product.variants[1]?.imageName)"
+                    class="img-fluid img-hover"
+                    :alt="item.product.name"
+                  />
+                </div>
 
-                  <div class="product-name">{{ item.product.name }}</div>
+                <div class="product-name">{{ item.product.name }}</div>
 
-                  <div>
-                    <span class="discounted-price">
-                      {{ getPrice(item)?.toLocaleString() }}₫
-                    </span>
-                    <span
-                      class="original-price"
-                      v-if="getOriginalPrice(item) > getPrice(item)"
-                    >
-                      {{ getOriginalPrice(item)?.toLocaleString() }}₫
-                    </span>
-                  </div>
-<div class="view-count text-muted" style="font-size: 14px">
-                    <i class="bi bi-eye me-1"></i>{{ item.product.viewCount || 0
-                    }}<i class="bi bi-bag-check me-1 ms-3"></i
-                    >{{ item.product.soldCount || 0 }} sản phẩm
-                  </div>
-                  <div class="product-rating">
-                    <span v-for="i in 5" :key="i">
-                      <i
-                        class="bi"
-                        :class="
-                          i <= Math.round(item.product.averageRating || 0)
-                            ? 'bi-star-fill text-warning'
-                            : 'bi-star text-muted'
-                        "
-                      ></i>
-                    </span>
-                    <span class="ms-1 text-muted">
-                      ({{ item.product.averageRating?.toFixed(1) || "0.0" }})
-                    </span>
-                  </div>
-                </a>
+                <div>
+                  <span class="discounted-price">
+                    {{ getPrice(item)?.toLocaleString() }}₫
+                  </span>
+                  <span
+                    class="original-price"
+                    v-if="getOriginalPrice(item) > getPrice(item)"
+                  >
+                    {{ getOriginalPrice(item)?.toLocaleString() }}₫
+                  </span>
+                </div>
+                <div class="view-count text-muted" style="font-size: 14px">
+                  <i class="bi bi-eye me-1"></i>{{ item.product.viewCount || 0
+                  }}<i class="bi bi-bag-check me-1 ms-3"></i
+                  >{{ item.product.soldCount || 0 }} sản phẩm
+                </div>
+                <div class="product-rating">
+                  <span v-for="i in 5" :key="i">
+                    <i
+                      class="bi"
+                      :class="
+                        i <= Math.round(item.product.averageRating || 0)
+                          ? 'bi-star-fill text-warning'
+                          : 'bi-star text-muted'
+                      "
+                    ></i>
+                  </span>
+                  <span class="ms-1 text-muted">
+                    ({{ item.product.averageRating?.toFixed(1) || "0.0" }})
+                  </span>
+                </div>
+              </a>
 
-                <button
-                  class="btn btn-sm btn-outline-danger w-100 mt-2"
-                  @click="removeFromFavorite(item.product.productId)"
-                >
-                  Gỡ khỏi yêu thích ❤️
-                </button>
-              </div>
+              <button
+                class="btn btn-sm btn-outline-danger w-100 mt-2"
+                @click="removeFromFavorite(item.product.productId)"
+              >
+                Gỡ khỏi yêu thích ❤️
+              </button>
             </div>
           </div>
         </div>
@@ -154,7 +152,7 @@ const loadFavorites = async () => {
         if (!variant) return item;
 
         // Handle promotions
-const promo = promotionMap.get(variant.productVariantId);
+        const promo = promotionMap.get(variant.productVariantId);
         if (promo) {
           const discountPercent = promo.discountAmount || 0;
           const originalPrice = variant.price;
@@ -241,7 +239,7 @@ const handleProductClick = async (productId) => {
     }
     router.push(`/product-detail/${productId}`);
   } catch (error) {
-console.error("Lỗi khi ghi nhận lượt xem:", error);
+    console.error("Lỗi khi ghi nhận lượt xem:", error);
     router.push(`/product-detail/${productId}`);
   }
 };
@@ -252,81 +250,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.product-content-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.5rem;
-}
-
-.product-item {
-  position: relative;
-  overflow: hidden;
-  height: 280px;
-  width: 100%;
-}
-
-.product-item img {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-  display: block;
-  transition: opacity 0.4s ease;
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-.img-hover {
-  opacity: 0;
-  z-index: 2;
-}
-
-.product-item:hover .img-hover {
-  opacity: 1;
-}
-
-.product-item:hover .img-default {
-  opacity: 0;
-}
-
-.discount-badge {
-  position: absolute;
-  top: 5px;
-  left: 5px;
-  background: white;
-  color: red;
-  font-weight: bold;
-  padding: 5px 10px;
-  font-size: 14px;
-  z-index: 3;
-}
-
-.product-name {
-  position: relative;
-  font-weight: 500;
-  text-align: center;
-  padding: 0 0.5rem;
-  margin-top: 8px;
-}
-
-.original-price {
-  text-decoration: line-through;
-  color: #999;
-  margin-left: 8px;
-}
-
-.discounted-price {
-  color: red;
-  font-weight: bold;
-}
-
-.product-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-}
-
 /* Empty State */
 .favorite-empty {
   text-align: center;
