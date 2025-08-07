@@ -196,13 +196,8 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        this.reviews = await getAllReviews({
-          ratings: this.filters.rating ? [this.filters.rating] : null,
-          startDate: this.filters.startDate ? this.filters.startDate + "T00:00:00" : null,
-          endDate: this.filters.endDate ? this.filters.endDate + "T23:59:59" : null,
-          userFullName: this.filters.userFullName.trim() || null,
-        });
-        this.applyFilters();
+        this.reviews = await getAllReviews(); // lấy toàn bộ
+        this.applyFilters(); // lọc tại frontend
       } catch (error) {
         console.error("Error fetching reviews:", error.message);
         this.error = error.message.includes("Access denied")
@@ -216,9 +211,30 @@ export default {
       this.currentPage = 1;
       let result = [...this.reviews];
 
+      if (this.filters.rating) {
+        result = result.filter(r => r.rating === Number(this.filters.rating));
+      }
+
+      if (this.filters.startDate) {
+        const start = new Date(this.filters.startDate);
+        result = result.filter(r => new Date(r.reviewDate) >= start);
+      }
+
+      if (this.filters.endDate) {
+        const end = new Date(this.filters.endDate + "T23:59:59");
+        result = result.filter(r => new Date(r.reviewDate) <= end);
+      }
+
+      if (this.filters.userFullName.trim()) {
+        const search = this.filters.userFullName.trim().toLowerCase();
+        result = result.filter(r =>
+          (r.userFullName || "").toLowerCase().includes(search)
+        );
+      }
+
       if (this.filters.productName.trim()) {
         const search = this.filters.productName.trim().toLowerCase();
-        result = result.filter((r) =>
+        result = result.filter(r =>
           (r.productName || "").toLowerCase().includes(search)
         );
       }
@@ -262,7 +278,7 @@ export default {
         userFullName: "",
         productName: "",
       };
-      this.fetchReviews();
+      this.applyFilters(); // chỉ cần gọi lại lọc
     },
   },
   mounted() {
