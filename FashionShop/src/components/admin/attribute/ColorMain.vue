@@ -15,6 +15,9 @@ const formErrors = ref({
   edit: { name: "" },
 });
 
+const searchKeyword = ref(""); //tu can tim
+
+
 const currentPage = ref(0);
 const pageSize = 10;
 const totalItems = ref(0);
@@ -24,9 +27,10 @@ const totalPages = ref(0);
 const fetchColors = async () => {
   try {
     const res = await axios.get(
-      `http://localhost:8080/api/admin/attributes/colors?page=${currentPage.value}&size=${pageSize}`,
+      `http://localhost:8080/api/admin/attributes/colors?page=${currentPage.value}&size=${pageSize}&search=${searchKeyword.value}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
+
 
     colors.value = res.data.content;
     totalItems.value = res.data.totalElements;
@@ -174,13 +178,33 @@ onMounted(() => {
   <div class="card p-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2>🎨 Danh sách Màu</h2>
-      <button
-        class="btn btn-primary"
-        data-bs-toggle="modal"
-        data-bs-target="#addColorModal"
-      >
-        + Thêm màu
-      </button>
+      
+      
+        <button
+          class="btn btn-primary"
+          data-bs-toggle="modal"
+          data-bs-target="#addColorModal"
+        >
+          + Thêm màu
+        </button>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+        <input
+          type="text"
+          v-model="searchKeyword"
+          class="form-control form-control-sm"
+          placeholder="🔍 Nhập tên màu..."
+          @keyup.enter="fetchColors"
+          style="max-width: 250px"
+        />
+        <button
+          class="btn btn-outline-secondary btn-sm"
+          @click="fetchColors"
+          title="Tìm kiếm"
+        >
+          🔍 Tìm
+        </button>
+
     </div>
 
     <div class="table-responsive">
