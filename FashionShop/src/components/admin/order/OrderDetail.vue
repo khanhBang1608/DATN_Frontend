@@ -47,6 +47,7 @@
             :value="formatPrice(order.discountAmount)"
             disabled
           />
+
         </div>
         <div class="col-md-6">
           <label class="form-label">Phương thức thanh toán</label>
@@ -55,8 +56,11 @@
         <div class="col-md-6">
           <label class="form-label">Trạng thái thanh toán</label>
           <input
+
             type="text"
+
             class="form-control"
+
             :value="
               order.paymentStatus === 0
                 ? 'Chưa thanh toán'
@@ -64,7 +68,9 @@
                 ? 'Đã thanh toán'
                 : 'Đã hoàn tiền'
             "
+
             disabled
+
           />
         </div>
         <div class="col-md-6">
@@ -115,6 +121,38 @@
         </table>
       </div>
 
+      <div v-if="[4, 6, 7].includes(order.status) && returnRequest" class="mt-4">
+        <h5 class="text-info text-center">Lý do trả hàng:</h5>
+        <p class="text-light">{{ returnRequest.reason }}</p>
+
+        <div v-if="returnRequest.imageUrls?.length">
+          <h6 class="text-warning">Ảnh đính kèm:</h6>
+          <div class="d-flex flex-wrap gap-2">
+            <img
+              v-for="(url, i) in returnRequest.imageUrls"
+              :key="i"
+              :src="resolveFileUrl(url)"
+              class="img-thumbnail"
+              style="max-height: 150px"
+            />
+          </div>
+        </div>
+
+        <div v-if="returnRequest.videoUrls?.length" class="mt-3">
+          <h6 class="text-warning">Video đính kèm:</h6>
+          <div class="d-flex flex-wrap gap-3">
+            <video
+              v-for="(url, i) in returnRequest.videoUrls"
+              :key="i"
+              :src="resolveFileUrl(url)"
+              class="rounded"
+              style="max-height: 200px"
+              controls
+            />
+          </div>
+        </div>
+      </div>
+
       <div class="d-flex flex-wrap justify-content-center gap-2">
         <button class="btn btn-outline-light" @click="exportToPDF">
           Xuất hóa đơn PDF
@@ -136,7 +174,7 @@
         <button v-if="order.status === 0" class="btn btn-danger" @click="cancelOrder">
           Hủy đơn
         </button>
-        <router-link to="/admin/orders" class="btn btn-secondary">Quay lại</router-link>
+        <router-link to="/admin/order" class="btn btn-secondary">Quay lại</router-link>
       </div>
 
       <div v-if="error" class="alert alert-danger mt-3 text-center">{{ error }}</div>
@@ -169,15 +207,18 @@ import {
   downloadInvoicePDF,
   approveReturnRequest,
   rejectReturnRequest,
-} from "@/api/admin/orderAPI";
-import { useToast } from "vue-toastification";
+  getReturnRequestByOrder,
+} from '@/api/admin/orderAPI'
+import { useToast } from 'vue-toastification'
+const BASE_IMAGE_URL = 'http://localhost:8080'
 
-const toast = useToast();
-const route = useRoute();
-const router = useRouter();
-const orderId = computed(() => parseInt(route.params.orderId));
-const order = ref(null);
-const error = ref(null);
+const toast = useToast()
+const route = useRoute()
+const router = useRouter()
+const orderId = computed(() => parseInt(route.params.orderId))
+const order = ref(null)
+const error = ref(null)
+const returnRequest = ref(null)
 
 const statusOptions = [
   "Chờ xác nhận",
@@ -190,13 +231,15 @@ const statusOptions = [
   "Từ chối trả hàng",
 ];
 
-const extractedPhone = computed(
-  () => order.value?.address?.split(" - ")[0] || "Không xác định"
-);
+const extractedPhone = computed(() => order.value?.address?.split(' - ')[0] || 'Không xác định')
 const extractedAddress = computed(
-  () => order.value?.address?.split(" - ")[1] || order.value?.address || "Không xác định"
-);
-
+  () => order.value?.address?.split(' - ')[1] || order.value?.address || 'Không xác định',
+)
+const resolveFileUrl = (url) => {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  return BASE_IMAGE_URL + url
+}
 function formatPrice(price) {
   return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
     price
@@ -205,8 +248,15 @@ function formatPrice(price) {
 
 async function fetchOrder() {
   try {
-    const response = await getOrderById(orderId.value);
-    order.value = response;
+    const response = await getOrderById(orderId.value)
+    order.value = response
+
+    if (order.value.status === 4) {
+      const returnData = await getReturnRequestByOrder(orderId.value)
+      returnRequest.value = returnData
+    } else {
+      returnRequest.value = null
+    }
   } catch (err) {
     console.error("Fetch error:", err);
     error.value = "Không thể tải chi tiết đơn hàng.";
@@ -253,6 +303,22 @@ async function cancelOrder() {
   }
 }
 
+async function fetchReturnReason() {
+  try {
+    if ([4, 6, 7].includes(order.value?.status)) {
+      returnRequest.value = await getReturnRequestByOrder(orderId.value)
+    }
+  } catch (err) {
+    console.warn('Không tìm thấy lý do trả hàng:', err)
+  }
+}
+
+onMounted(() => {
+  if (!isNaN(orderId.value)) {
+    fetchOrder().then(fetchReturnReason)
+  }
+})
+
 async function approveReturn() {
   try {
     await approveReturnRequest(orderId.value);
@@ -289,7 +355,7 @@ onMounted(() => {
 watch(
   () => orderId.value,
   (newVal) => {
-    if (!isNaN(newVal)) fetchOrder();
-  }
-);
+    if (!isNaN(newVal)) fetchOrder()
+  },
+)
 </script>

@@ -12,6 +12,10 @@ const newSize = ref({ sizeName: "" });
 const editSize = ref({ sizeId: null, sizeName: "" });
 const formErrors = ref({ name: "" });
 
+
+const searchKeyword = ref(""); //tu can tim
+
+
 const currentPage = ref(0); // Server-side bắt đầu từ 0
 const pageSize = ref(10);
 const totalPages = ref(1);
@@ -19,8 +23,7 @@ const totalItems = ref(0);
 
 const fetchSizes = async () => {
   try {
-    const res = await axios.get("http://localhost:8080/api/admin/attributes/sizes", {
-      params: { page: currentPage.value, size: pageSize.value },
+    const res = await axios.get(`http://localhost:8080/api/admin/attributes/sizes?page=${currentPage.value}&size=${pageSize.value}&search=${searchKeyword.value}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -172,6 +175,18 @@ onMounted(() => {
         + Thêm kích thước
       </button>
     </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+          <input
+        v-model="searchKeyword"
+        type="text"
+        class="form-control form-control-sm me-2"
+        placeholder="🔍 Tìm theo tên kích thước..."
+        @keyup.enter="fetchSizes"
+        style="max-width: 250px"
+      />
+      <button class="btn btn-outline-light btn-sm" @click="fetchSizes">Tìm</button>
+    </div>
+    
 
     <div class="table-responsive">
       <table class="table table-hover align-middle text-light custom-table">
