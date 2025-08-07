@@ -63,27 +63,27 @@
           </tr>
         </tbody>
       </table>
-    </div>
-    <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
-      <button
-        class="btn btn-outline-secondary me-2"
-        :disabled="currentPage === 0"
-        @click="fetchUsers(currentPage - 1)"
-      >
-        &laquo; Trang trước
-      </button>
+      <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
+        <button
+          class="btn btn-outline-secondary me-2"
+          :disabled="currentPage === 0"
+          @click="fetchUsers(currentPage - 1)"
+        >
+          &laquo; Trang trước
+        </button>
 
-      <span class="mx-2 align-self-center">
-        Trang {{ currentPage + 1 }} / {{ totalPages }}
-      </span>
+        <span class="mx-2 align-self-center">
+          Trang {{ currentPage + 1 }} / {{ totalPages }}
+        </span>
 
-      <button
-        class="btn btn-outline-secondary ms-2"
-        :disabled="currentPage >= totalPages - 1"
-        @click="fetchUsers(currentPage + 1)"
-      >
-        Trang sau &raquo;
-      </button>
+        <button
+          class="btn btn-outline-secondary ms-2"
+          :disabled="currentPage >= totalPages - 1"
+          @click="fetchUsers(currentPage + 1)"
+        >
+          Trang sau &raquo;
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -107,12 +107,12 @@ const goToUserAddresses = (userId, userName) => {
   });
 };
 
-const totalPages = ref(0);
-const currentPage = ref(0);
+const totalPages = ref();
+const currentPage = ref(1);
 
 const fetchUsers = async (page = 0) => {
   try {
-    const res = await axios.get(`http://localhost:8080/api/admin/users?page=${page}`, {
+    const res = await axios.get(`http://localhost:8080/api/admin/users?page=${page}&size=10`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
