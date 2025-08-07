@@ -12,9 +12,7 @@ const newSize = ref({ sizeName: "" });
 const editSize = ref({ sizeId: null, sizeName: "" });
 const formErrors = ref({ name: "" });
 
-
 const searchKeyword = ref(""); //tu can tim
-
 
 const currentPage = ref(0); // Server-side bắt đầu từ 0
 const pageSize = ref(10);
@@ -23,9 +21,12 @@ const totalItems = ref(0);
 
 const fetchSizes = async () => {
   try {
-    const res = await axios.get(`http://localhost:8080/api/admin/attributes/sizes?page=${currentPage.value}&size=${pageSize.value}&search=${searchKeyword.value}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await axios.get(
+      `http://localhost:8080/api/admin/attributes/sizes?page=${currentPage.value}&size=${pageSize.value}&search=${searchKeyword.value}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     sizes.value = res.data.content;
     totalPages.value = res.data.totalPages;
@@ -145,6 +146,11 @@ const deleteSize = async (id) => {
   }
 };
 
+const clearSearch = () => {
+  searchKeyword.value = "";
+  fetchSizes();
+};
+
 onMounted(() => {
   fetchSizes();
 
@@ -176,17 +182,17 @@ onMounted(() => {
       </button>
     </div>
     <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
-          <input
+      <input
         v-model="searchKeyword"
         type="text"
-        class="form-control form-control-sm me-2"
+        class="form-control form-control-sm"
         placeholder="🔍 Tìm theo tên kích thước..."
         @keyup.enter="fetchSizes"
         style="max-width: 250px"
       />
-      <button class="btn btn-outline-light btn-sm" @click="fetchSizes">Tìm</button>
+      <button class="btn btn-outline-light btn-sm" @click="fetchSizes">🔍 Tìm</button>
+      <button class="btn btn-outline-danger btn-sm" @click="clearSearch">❌ Xóa</button>
     </div>
-    
 
     <div class="table-responsive">
       <table class="table table-hover align-middle text-light custom-table">
