@@ -4,6 +4,41 @@
       <h2 class="mb-0">🎁 Quản lý Mã Giảm Giá</h2>
       <button class="btn btn-primary" @click="openModal()">+ Thêm mã giảm giá</button>
     </div>
+    <!-- Bộ lọc -->
+    <div class="row mb-3 g-2">
+      <div class="col-md-3">
+        <input v-model="filters.code" placeholder="🔍 Mã giảm giá" class="form-control" />
+      </div>
+
+      <div class="col-md-3">
+        <input
+          v-model.number="filters.percentMin"
+          type="number"
+          placeholder="Phần trăm giảm tối thiểu"
+          class="form-control"
+        />
+      </div>
+      <div class="col-md-3">
+        <input
+          v-model.number="filters.percentMax"
+          type="number"
+          placeholder="Phần trăm giảm tối đa"
+          class="form-control"
+        />
+      </div>
+
+      <div class="col-md-3">
+        <select v-model="filters.status" class="form-select">
+          <option value="">-- Trạng thái --</option>
+          <option value="active">Đang hoạt động</option>
+          <option value="inactive">Ngừng hoạt động</option>
+        </select>
+      </div>
+      <div class="col-md-3 d-flex gap-2">
+        <button class="btn btn-success w-100" @click="searchDiscounts">🔍 Tìm</button>
+        <button class="btn btn-secondary w-100" @click="clearFilters">❌ Xóa</button>
+      </div>
+    </div>
 
     <div class="table-responsive">
       <table class="table table-hover align-middle text-light custom-table">
@@ -26,7 +61,7 @@
               mã giảm giá nào được tìm thấy.
             </td>
           </tr>
-          <tr v-for="discount in discounts" :key="discount.discountId">
+          <tr v-for="discount in filteredDiscounts" :key="discount.discountId">
             <td>
               <strong>{{ discount.discountCode }}</strong>
             </td>
@@ -41,10 +76,10 @@
               <span
                 :class="[
                   'badge text-light',
-                  discount.status ? 'bg-success' : 'bg-danger',
+                  isActive(discount) ? 'bg-success' : 'bg-danger',
                 ]"
               >
-                {{ discount.status ? "Đang hoạt động" : "Ngừng hoạt động" }}
+                {{ isActive(discount) ? "Đang hoạt động" : "Ngừng hoạt động" }}
               </span>
             </td>
             <td class="text-center">
@@ -399,6 +434,69 @@ const formatDate = (dateStr) =>
 const clearError = (field) => {
   errors.value[field] = null;
 };
+
+import { computed } from "vue";
+
+const filters = ref({
+  code: "",
+  percentMin: null,
+  percentMax: null,
+  status: "",
+});
+
+// Hàm kiểm tra trạng thái thực tế (3 điều kiện)
+const isActive = (discount) => {
+  const today = new Date().toISOString().split("T")[0];
+  return (
+    discount.status === true &&
+    discount.quantityLimit > 0 &&
+    discount.startDate <= today &&
+    discount.endDate >= today
+  );
+};
+
+// Danh sách lọc sau khi áp dụng bộ lọc
+const filteredDiscounts = computed(() => {
+  return discounts.value.filter((d) => {
+    const matchCode = filters.value.code
+      ? d.discountCode.toLowerCase().includes(filters.value.code.toLowerCase())
+      : true;
+
+    const matchPercentMin =
+      filters.value.percentMin != null
+        ? d.discountPercent >= filters.value.percentMin
+        : true;
+
+    const matchPercentMax =
+      filters.value.percentMax != null
+        ? d.discountPercent <= filters.value.percentMax
+        : true;
+
+    const matchStatus =
+      filters.value.status === "active"
+        ? isActive(d)
+        : filters.value.status === "inactive"
+        ? !isActive(d)
+        : true;
+
+    return matchCode && matchPercentMin && matchPercentMax && matchStatus;
+  });
+});
+const searchDiscounts = () => {
+  // Với computed filteredDiscounts đã xử lý, bạn không cần fetch lại
+  // nhưng nếu muốn reset về trang đầu, có thể làm thêm:
+  currentPage.value = 0;
+};
+
+const clearFilters = () => {
+  filters.value = {
+    code: "",
+    percentMin: null,
+    percentMax: null,
+    status: "",
+  };
+};
+
 onMounted(() => fetchDiscounts(0));
 </script>
 

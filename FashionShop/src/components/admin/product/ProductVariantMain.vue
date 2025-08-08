@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { getProductById } from "@/api/adminProductAPI";
 import axios from "axios";
 import Swal from "sweetalert2";
 import iziToast from "izitoast";
@@ -18,6 +19,9 @@ const errorMessage = ref("");
 const showModal = ref(false);
 const isEdit = ref(false);
 const currentVariantId = ref(null);
+const productName = ref("");
+const totalStock = ref(0);
+
 
 const variant = ref({
   colorId: "",
@@ -47,7 +51,12 @@ const fetchVariants = async () => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    variants.value = response.data;
+
+    const sortedVariants = response.data.sort((a, b) => b.productVariantId - a.productVariantId);
+    variants.value = sortedVariants;
+
+    // 👉 Tính tổng tồn kho
+    totalStock.value = sortedVariants.reduce((acc, cur) => acc + cur.stock, 0);
   } catch (error) {
     console.error("Lỗi khi fetch biến thể:", error);
     iziToast.error({
@@ -57,6 +66,22 @@ const fetchVariants = async () => {
     });
   }
 };
+
+
+const fetchProductInfo = async () => {
+  try {
+    const productData = await getProductById(productId);
+    productName.value = productData.name;
+  } catch (error) {
+    console.error("Không thể tải tên sản phẩm", error);
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không thể tải thông tin sản phẩm",
+      position: "topRight",
+    });
+  }
+};
+
 
 const fetchColorsAndSizes = async () => {
   try {
@@ -253,17 +278,27 @@ const handleBack = () => {
 };
 
 onMounted(async () => {
+  await fetchProductInfo();
   await fetchColorsAndSizes();
   await fetchVariants();
 });
+
 </script>
 
 <template>
   <div class="container py-5">
     <div class="card p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">📦 Danh sách biến thể sản phẩm #{{ productId }}</h2>
-        <button class="btn btn-primary" @click="openAddModal">+ Thêm biến thể</button>
+        <h2 class="text-white fw-bold fs-4 mb-3">
+          📦 Biến thể của sản phẩm <span class="text-info">{{ productName }}</span> (ID: {{ productId }})
+        </h2>
+        <div class="d-flex align-items-center flex-wrap gap-3">
+          <span class="badge bg-gradient fs-6 shadow-sm p-3">
+            🧮 <strong>Tổng tồn kho: {{ totalStock }}</strong>
+          </span>
+          <button class="btn btn-success" @click="openAddModal">+ Thêm biến thể</button>
+        </div>
+
       </div>
 
       <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
@@ -282,30 +317,20 @@ onMounted(async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="variant in variants" :key="variant.productVariantId">
-              <td>{{ variant.productVariantId }}</td>
+            <tr v-for="(variant, index) in variants" :key="variant.productVariantId">
+              <td>{{ index + 1 }}</td>
               <td>
-                <img
-                  v-if="variant.imageName"
-                  :src="`http://localhost:8080/images/${variant.imageName}`"
-                  width="80"
-                />
+                <img v-if="variant.imageName" :src="`http://localhost:8080/images/${variant.imageName}`" width="80" />
               </td>
               <td>{{ variant.colorName }}</td>
               <td>{{ variant.sizeName || "Không có" }}</td>
               <td>{{ variant.price.toLocaleString() }}đ</td>
               <td>{{ variant.stock }}</td>
               <td>
-                <button
-                  class="btn btn-sm btn-warning me-1"
-                  @click="openEditModal(variant.productVariantId)"
-                >
+                <button class="btn btn-sm btn-warning me-1" @click="openEditModal(variant.productVariantId)">
                   ✏️ Sửa
                 </button>
-                <button
-                  class="btn btn-sm btn-danger"
-                  @click="deleteVariant(variant.productVariantId)"
-                >
+                <button class="btn btn-sm btn-danger" @click="deleteVariant(variant.productVariantId)">
                   🗑️ Xoá
                 </button>
               </td>
@@ -326,12 +351,7 @@ onMounted(async () => {
     </div>
 
     <!-- Modal Form -->
-    <div
-      v-if="showModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0, 0, 0, 0.5)"
-    >
+    <div v-if="showModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -344,17 +364,9 @@ onMounted(async () => {
             <form @submit.prevent="handleSubmit" class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Màu sắc</label>
-                <select
-                  class="form-select"
-                  v-model="variant.colorId"
-                  @change="clearFieldError('colorId')"
-                >
+                <select class="form-select" v-model="variant.colorId" @change="clearFieldError('colorId')">
                   <option value="">-- Chọn màu --</option>
-                  <option
-                    v-for="color in colors"
-                    :key="color.colorId"
-                    :value="color.colorId"
-                  >
+                  <option v-for="color in colors" :key="color.colorId" :value="color.colorId">
                     {{ color.colorName }}
                   </option>
                 </select>
@@ -363,11 +375,7 @@ onMounted(async () => {
 
               <div class="col-md-6">
                 <label class="form-label">Size</label>
-                <select
-                  class="form-select"
-                  v-model="variant.sizeId"
-                  @change="clearFieldError('sizeId')"
-                >
+                <select class="form-select" v-model="variant.sizeId" @change="clearFieldError('sizeId')">
                   <option value="">-- Không có --</option>
                   <option v-for="size in sizes" :key="size.sizeId" :value="size.sizeId">
                     {{ size.sizeName }}
@@ -378,40 +386,26 @@ onMounted(async () => {
 
               <div class="col-md-6">
                 <label class="form-label">Giá</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  v-model="variant.price"
-                  @input="clearFieldError('price')"
-                />
+                <input type="number" class="form-control" v-model="variant.price" @input="clearFieldError('price')" />
 
                 <div class="text-danger small">{{ fieldErrors.price }}</div>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label">Tồn kho</label>
-                <input
-                  type="number"
-                  class="form-control"
-                  v-model="variant.stock"
-                  @input="clearFieldError('stock')"
-                />
+                <input type="number" class="form-control" v-model="variant.stock" @input="clearFieldError('stock')" />
 
                 <div class="text-danger small">{{ fieldErrors.stock }}</div>
               </div>
 
               <div class="col-md-12">
                 <label class="form-label">Ảnh</label>
-                <input
-                  type="file"
-                  class="form-control"
-                  @change="
-                    (e) => {
-                      handleImageChange(e);
-                      clearFieldError('image');
-                    }
-                  "
-                />
+                <input type="file" class="form-control" @change="
+                  (e) => {
+                    handleImageChange(e);
+                    clearFieldError('image');
+                  }
+                " />
 
                 <div class="text-danger small">{{ fieldErrors.image }}</div>
 
@@ -422,10 +416,7 @@ onMounted(async () => {
 
                 <div v-else-if="isEdit && variant.imageName" class="mt-2">
                   <p>Ảnh hiện tại:</p>
-                  <img
-                    :src="`http://localhost:8080/images/${variant.imageName}`"
-                    width="100"
-                  />
+                  <img :src="`http://localhost:8080/images/${variant.imageName}`" width="100" />
                 </div>
               </div>
 
@@ -458,6 +449,7 @@ table td {
 
 .btn-link.text-white:hover {
   text-decoration: none;
-  color: #fff; /* Đảm bảo màu trắng khi hover */
+  color: #fff;
+  /* Đảm bảo màu trắng khi hover */
 }
 </style>

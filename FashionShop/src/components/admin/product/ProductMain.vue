@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { getAllCategories } from "@/api/adminCategoryAPI";
 import { addProduct, updateProduct, getProductById } from "@/api/adminProductAPI";
+import { getTotalStockByProductId } from "@/api/admin/ProductStockAPI";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 
@@ -16,6 +17,7 @@ const token = localStorage.getItem("token");
 const showModal = ref(false);
 const isEditing = ref(false);
 const currentProductId = ref(null);
+const searchKeyword = ref("");
 
 const product = ref({
   name: "",
@@ -23,10 +25,94 @@ const product = ref({
   status: true,
   categoryId: "",
 });
+// Bộ lọc nâng cao
+const filters = ref({
+  searchType: "product", // "product" hoặc "category"
+  keyword: "",
+  minPrice: "",
+  maxPrice: "",
+  status: "",
+  interactionSort: "",
+  priceSort: "",
+});
+
+const resetFilter = () => {
+  filters.value = {
+    searchType: "product",
+    keyword: "",
+    minPrice: "",
+    maxPrice: "",
+    status: "",
+    interactionSort: "",
+    priceSort: "",
+  };
+};
+
 const categories = ref([]);
 
 const totalPages = ref(0);
 const currentPage = ref(0);
+
+const filteredProducts = computed(() => {
+  let list = [...products.value];
+
+  // Lọc theo kiểu tìm
+  if (filters.value.keyword.trim()) {
+    const keyword = filters.value.keyword.trim().toLowerCase();
+
+    if (filters.value.searchType === "product") {
+      list = list.filter((p) => (p.name || "").toLowerCase().includes(keyword));
+    } else if (filters.value.searchType === "category") {
+      list = list.filter((p) => (p.categoryName || "").toLowerCase().includes(keyword));
+    }
+  }
+
+  // Lọc theo giá
+  list = list.filter((p) => {
+    const price = getMinPrice(p.variants);
+    const minOk = !filters.value.minPrice || price >= Number(filters.value.minPrice);
+    const maxOk = !filters.value.maxPrice || price <= Number(filters.value.maxPrice);
+    return minOk && maxOk;
+  });
+
+  // Lọc theo trạng thái
+  if (filters.value.status !== "") {
+    const isActive = filters.value.status === "true";
+    list = list.filter((p) => p.status === isActive);
+  }
+
+  // Sắp xếp theo tương tác
+  if (filters.value.interactionSort) {
+    list.sort((a, b) => {
+      const totalA = (a.viewCount || 0) + (a.favoriteCount || 0) + (a.cartCount || 0);
+      const totalB = (b.viewCount || 0) + (b.favoriteCount || 0) + (b.cartCount || 0);
+      return filters.value.interactionSort === "desc" ? totalB - totalA : totalA - totalB;
+    });
+  }
+
+  // Sắp xếp theo giá
+  if (filters.value.priceSort) {
+    list.sort((a, b) => {
+      const priceA = getMinPrice(a.variants);
+      const priceB = getMinPrice(b.variants);
+      return filters.value.priceSort === "asc" ? priceA - priceB : priceB - priceA;
+    });
+  }
+
+  return list;
+});
+
+const getTotalVariantCount = computed(() => {
+  return products.value.reduce((total, product) => {
+    return total + (product.variants?.length || 0);
+  }, 0);
+});
+
+const getTotalStockCount = computed(() => {
+  return products.value.reduce((total, product) => {
+    return total + (product.totalStock || 0);
+  }, 0);
+});
 
 const fetchProducts = async (page = 0) => {
   try {
@@ -36,9 +122,22 @@ const fetchProducts = async (page = 0) => {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
+
     products.value = response.data.products;
     totalPages.value = response.data.totalPages;
     currentPage.value = response.data.currentPage;
+
+    // Lấy stock song song cho nhanh
+    await Promise.all(
+      products.value.map(async (p) => {
+        try {
+          const stockData = await getTotalStockByProductId(p.productId);
+          p.totalStock = stockData.totalStock;
+        } catch {
+          p.totalStock = 0;
+        }
+      })
+    );
   } catch (error) {
     console.error("Lỗi khi tải sản phẩm:", error);
   }
@@ -81,6 +180,8 @@ const handleSubmit = async () => {
     if (!product.value.categoryId) errors.value.categoryId = "Vui lòng chọn danh mục";
     if (!product.value.description?.trim())
       errors.value.description = "Mô tả không được để trống";
+    else if (product.value.description.length > 300)
+      errors.value.description = "Mô tả không được vượt quá 300 ký tự";
 
     if (Object.keys(errors.value).length > 0) return;
 
@@ -160,9 +261,102 @@ const changePage = (page) => {
 </script>
 <template>
   <div class="card p-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="mb-0">🛍️ Quản lý Sản phẩm</h2>
-      <button class="btn btn-primary" @click="openAddModal">+ Thêm sản phẩm</button>
+    <div class="card p-3 shadow-sm mb-4">
+      <!-- Tiêu đề + nút thêm -->
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <h3 class="fw-bold text-primary m-0">🛍️ Quản lý Sản phẩm</h3>
+        <button
+          class="btn btn-primary btn-sm rounded-pill shadow-sm px-4"
+          @click="openAddModal"
+        >
+          ➕ Thêm sản phẩm
+        </button>
+      </div>
+
+      <!-- Bộ lọc & tìm kiếm -->
+      <div class="row g-3 align-items-end">
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <label class="form-label mb-1">Tìm theo</label>
+          <select v-model="filters.searchType" class="form-select form-select-sm">
+            <option value="product">Tên sản phẩm</option>
+            <option value="category">Tên danh mục</option>
+          </select>
+        </div>
+
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <label class="form-label mb-1">Từ khóa</label>
+          <input
+            v-model="filters.keyword"
+            type="text"
+            class="form-control form-control-sm"
+            placeholder="Nhập từ khóa..."
+          />
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6">
+          <label class="form-label mb-1">Giá từ</label>
+          <input
+            v-model="filters.minPrice"
+            type="number"
+            class="form-control form-control-sm"
+            placeholder="0"
+          />
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6">
+          <label class="form-label mb-1">Giá đến</label>
+          <input
+            v-model="filters.maxPrice"
+            type="number"
+            class="form-control form-control-sm"
+            placeholder="∞"
+          />
+        </div>
+
+        <div class="col-lg-2 col-md-4 col-sm-6">
+          <label class="form-label mb-1">Trạng thái</label>
+          <select v-model="filters.status" class="form-select form-select-sm">
+            <option value="">Tất cả</option>
+            <option value="true">Đang bán</option>
+            <option value="false">Ngừng bán</option>
+          </select>
+        </div>
+
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <label class="form-label mb-1">Sắp xếp tương tác</label>
+          <select v-model="filters.interactionSort" class="form-select form-select-sm">
+            <option value="">Mặc định</option>
+            <option value="desc">Cao → Thấp</option>
+            <option value="asc">Thấp → Cao</option>
+          </select>
+        </div>
+
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <label class="form-label mb-1">Sắp xếp giá</label>
+          <select v-model="filters.priceSort" class="form-select form-select-sm">
+            <option value="">Mặc định</option>
+            <option value="asc">Thấp → Cao</option>
+            <option value="desc">Cao → Thấp</option>
+          </select>
+        </div>
+
+        <!-- Nút Tìm và Xóa -->
+        <div class="col-12 d-flex gap-2 mt-2">
+          <button class="btn btn-primary btn-sm" @click="applyFilter">🔍 Tìm</button>
+          <button class="btn btn-secondary btn-sm" @click="resetFilter">
+            ❌ Xóa bộ lọc
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thống kê -->
+    <div class="mb-3 d-flex flex-wrap gap-2">
+      <span class="badge bg-success fs-6 shadow-sm py-2 px-3 rounded-pill">
+        📦 Tổng biến thể: <strong>{{ getTotalVariantCount }}</strong>
+      </span>
+      <span class="badge bg-info fs-6 shadow-sm py-2 px-3 rounded-pill">
+        🏷 Tổng tồn kho: <strong>{{ getTotalStockCount }}</strong>
+      </span>
     </div>
 
     <div class="table-responsive">
@@ -174,6 +368,8 @@ const changePage = (page) => {
             <th>Tên</th>
             <th>Danh mục</th>
             <th>Biến thể</th>
+            <th>Tồn kho</th>
+            <th>Lượng tương tác</th>
             <th>Giá từ</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
@@ -181,8 +377,8 @@ const changePage = (page) => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(product, index) in products" :key="product.productId">
-            <td>{{ index + 1 }}</td>
+          <tr v-for="(product, index) in filteredProducts" :key="product.productId">
+            <td>{{ index + 1 + currentPage * 10 }}</td>
             <td>
               <img
                 :src="
@@ -197,6 +393,15 @@ const changePage = (page) => {
             <td>{{ product.name }}</td>
             <td>{{ product.categoryName || "---" }}</td>
             <td>{{ product.variants?.length || 0 }}</td>
+            <td>{{ product.totalStock }}</td>
+            <td>
+              <div class="d-flex flex-column">
+                <span>👁 {{ product.viewCount || 0 }} lượt xem</span>
+                <span>❤️ {{ product.favoriteCount || 0 }} yêu thích</span>
+                <span>🛒 {{ product.cartCount || 0 }} trong giỏ</span>
+              </div>
+            </td>
+
             <td>{{ formatPrice(getMinPrice(product.variants)) }}</td>
             <td>
               <span :class="['badge', product.status ? 'bg-success' : 'bg-danger']">
@@ -312,11 +517,17 @@ const changePage = (page) => {
                 class="form-control"
                 rows="3"
                 placeholder="Nhập mô tả..."
+                maxlength="300"
                 :class="{ 'is-invalid': errors.description }"
               ></textarea>
 
-              <div class="invalid-feedback" v-if="errors.description">
-                {{ errors.description }}
+              <div class="d-flex justify-content-between">
+                <div class="invalid-feedback" v-if="errors.description">
+                  {{ errors.description }}
+                </div>
+                <small class="text-muted ms-auto"
+                  >{{ product.description.length }}/300 ký tự</small
+                >
               </div>
             </div>
 
