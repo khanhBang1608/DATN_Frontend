@@ -5,6 +5,7 @@ import { clearCart } from '@/api/user/cartAPI'
 import { useToast } from 'vue-toastification'
 import { getDiscount } from '@/api/user/discountAPI'
 import { getShippingFee } from '@/api/user/ShippingFeeAPI'
+import { v4 as uuidv4 } from 'uuid';
 
 const toast = useToast()
 
@@ -186,22 +187,12 @@ export default {
       })
     },
     async placeOrder() {
-      if (this.cartDetails.length === 0) {
-        toast.error('Giỏ hàng trống. Vui lòng thêm sản phẩm.')
-        return
-      }
-
-      if (!localStorage.getItem('token')) {
-        toast.error('Vui lòng đăng nhập để tiếp tục.')
-        this.$router.push('/login')
-        return
-      }
-
+      if (this.loading) return
       this.loading = true
+      const idempotencyKey = uuidv4()
 
       try {
         const fullAddress = `${this.form.phone} - ${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`
-
         const orderDetails = this.cartDetails.map((item) => ({
           productVariantId: item.productVariantId,
           quantity: item.quantity,
@@ -216,41 +207,39 @@ export default {
             discountAmount: this.discountAmount || 0,
             shippingFee: this.shippingFee,
             orderDetails,
+            idempotencyKey,
           }
-
           const response = await createOrder(orderData)
           await clearCart()
-
           toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`)
           this.$router.push('/user/order-management')
         } else if (this.paymentMethod === 'VNPAY') {
-          const res = await axios.post(
-            '/api/user/payment/create',
-            {
-              total: this.total,
-              address: fullAddress,
-              discountCode: this.discountCode || null,
-              discountAmount: this.discountAmount || 0,
-              shippingFee: this.shippingFee,
-              orderDetails,
-            },
-            {
-              headers: { Authorization: 'Bearer ' + localStorage.getItem('token') },
-            },
-          )
-
-          const tempOrderData = {
+          const requestData = {
+            total: this.total,
             address: fullAddress,
-            email: this.form.email || 'default@example.com',
-            paymentMethod: this.paymentMethod,
-            paymentStatus: 1,
             discountCode: this.discountCode || null,
             discountAmount: this.discountAmount || 0,
             shippingFee: this.shippingFee,
             orderDetails,
+            idempotencyKey,
           }
-
-          localStorage.setItem('pendingOrder', JSON.stringify(tempOrderData))
+          const res = await axios.post('/api/user/payment/create', requestData, {
+            headers: { Authorization: 'Bearer ' + localStorage.getItem('token') },
+          })
+          localStorage.setItem(
+            'pendingOrder',
+            JSON.stringify({
+              address: fullAddress,
+              email: this.form.email || 'default@example.com',
+              paymentMethod: this.paymentMethod,
+              paymentStatus: 1,
+              discountCode: this.discountCode || null,
+              discountAmount: this.discountAmount || 0,
+              shippingFee: this.shippingFee,
+              orderDetails,
+              idempotencyKey,
+            }),
+          )
           window.location.href = res.data.paymentUrl
         }
       } catch (error) {
