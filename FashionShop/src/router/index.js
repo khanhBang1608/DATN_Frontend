@@ -294,11 +294,15 @@ router.beforeEach((to, from, next) => {
   // Chưa đăng nhập hoặc token hết hạn
   if (!isLoggedIn) {
     if (to.path.startsWith('/admin') || to.path.startsWith('/user')) {
-      return next('/login')
+      return next({
+        path: '/login',
+        query: { redirect: to.fullPath }, // Gửi thông tin redirect qua URL
+      });
     } else {
-      return next() // Cho phép vào trang public
+      return next();
     }
   }
+
 
   // Đã đăng nhập nhưng phân quyền sai
   if (role === '0' && to.path.startsWith('/user')) {

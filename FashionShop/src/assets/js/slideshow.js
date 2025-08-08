@@ -8,26 +8,27 @@ import 'swiper/css/effect-fade';
 
 export default function useSlideshow() {
   const slides = [
-    {
-      img: "https://picsum.photos/id/1025/1920/1080",
-      title: "Galaxy S24 Ultra",
-      description:
-        "Trải nghiệm đột phá với AI. Sáng tạo, mạnh mẽ và hiệu quả hơn bao giờ hết.",
-      button: "Tìm hiểu ngay",
-    },
-    {
-      img: "https://picsum.photos/id/1026/1920/1080",
-      title: "Neo QLED 8K",
-      description: "Mở ra kỷ nguyên TV siêu thực, với độ chi tiết vượt thời gian.",
-      button: "Khám phá",
-    },
-    {
-      img: "https://picsum.photos/id/1027/1920/1080",
-      title: "Galaxy Watch6",
-      description: "Giấc ngủ trọn vẹn, sức khỏe toàn diện trong tầm tay bạn.",
-      button: "Đặt mua ngay",
-    },
-  ];
+  {
+    img: "https://theme.hstatic.net/200001023102/1001370296/14/slide_3_img.jpg?v=106",
+    title: "Bộ sưu tập Thu Đông 2025",
+    description:
+      "Phong cách hiện đại, chất liệu cao cấp – Tỏa sáng mọi khoảnh khắc.",
+    button: "Mua ngay",
+  },
+  {
+    img: "https://pos.nvncdn.com/0406df-94299/bn/20250322_RxPFgkXR.gif?v=1742614529",
+    title: "Áo Khoác Thời Thượng",
+    description: "Giữ ấm và nổi bật – thiết kế dành riêng cho bạn.",
+    button: "Khám phá ngay",
+  },
+  {
+    img: "https://pos.nvncdn.com/0406df-94299/bn/20250321_tlTuPeU0.gif?v=1742614357",
+    title: "Giày Sneaker Hot Trend",
+    description: "Thoải mái vận động – Đậm cá tính thời trang.",
+    button: "Thêm vào giỏ",
+  },
+];
+
 
   const initSlideshow = () => {
     new Swiper('.slider', {

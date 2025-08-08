@@ -278,7 +278,7 @@ export default {
       const map = {
         0: 'Chưa thanh toán',
         1: 'Đã thanh toán',
-        2: 'Thanh toán thất bại',
+        2: 'Hoàn tiền',
         3: 'Đang xử lý',
       }
       return map[status] || 'Không xác định'
