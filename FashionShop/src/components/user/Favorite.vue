@@ -30,7 +30,7 @@
             <div
               v-for="item in favoriteProducts"
               :key="item.id"
-              class="col-12 col-sm-6 col-md-4"
+              class="col-6 col-sm-6 col-md-4"
             >
               <a
                 href="#"
@@ -67,10 +67,10 @@
                   </span>
                 </div>
                 <div class="view-count text-muted" style="font-size: 14px">
-                  <i class="bi bi-eye me-1"></i>{{ item.product.viewCount || 0
-                  }}<i class="bi bi-bag-check me-1 ms-3"></i
+                  <i class="bi bi-bag-check me-1"></i
                   >{{ item.product.soldCount || 0 }} sản phẩm
                 </div>
+
                 <div class="product-rating">
                   <span v-for="i in 5" :key="i">
                     <i
@@ -87,13 +87,12 @@
                   </span>
                 </div>
               </a>
-
-              <button
-                class="btn btn-sm btn-outline-danger w-100 mt-2"
+              <i
+                class="bi bi-trash text-danger fs-5"
+                style="cursor: pointer"
                 @click="removeFromFavorite(item.product.productId)"
               >
-                Gỡ khỏi yêu thích ❤️
-              </button>
+              </i>
             </div>
           </div>
         </div>
@@ -112,9 +111,9 @@
           </router-link>
         </div>
 
-        <div v-if="message" class="alert alert-info text-center mt-3">
+        <!-- <div v-if="message" class="alert alert-info text-center mt-3">
           {{ message }}
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
@@ -124,6 +123,8 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 import { getFavorites, toggleFavorite } from "@/api/user/FavoriteAPI";
 import { fetchAverageRating } from "@/api/ProductClient";
 import promotionApi from "@/api/PromotionClien";
@@ -143,8 +144,6 @@ const loadFavorites = async () => {
         promotionMap.set(pp.productVariantId, promo);
       });
     });
-
-    const token = localStorage.getItem("token");
 
     favoriteProducts.value = await Promise.all(
       favorites.map(async (item) => {
@@ -172,41 +171,40 @@ const loadFavorites = async () => {
         );
         item.product.soldCount = soldResponse.data.soldCount || 0;
 
-        // Fetch view count (assuming viewCount is available in ProductEntity or via API)
-        if (token) {
-          try {
-            const viewResponse = await axios.get("/api/user/product-views/recent", {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            const viewItem = viewResponse.data.find(
-              (view) => view.product?.[0]?.productId === item.product.productId
-            );
-            item.product.viewCount = viewItem ? viewItem.product[0].viewCount || 0 : 0;
-          } catch (error) {
-            console.error("Lỗi khi lấy lượt xem:", error);
-            item.product.viewCount = 0;
-          }
-        } else {
-          item.product.viewCount = 0;
-        }
-
         return item;
       })
     );
 
     message.value = "";
   } catch (err) {
-    message.value = err.message || "Lỗi khi tải danh sách yêu thích.";
+    iziToast.error({
+      title: "Lỗi",
+      message: err.message || "Lỗi khi xoá sản phẩm yêu thích.",
+      position: "topRight",
+      timeout: 2000,
+    });
   }
 };
 
 const removeFromFavorite = async (productId) => {
   try {
     const result = await toggleFavorite(productId);
-    message.value = result;
+
+    iziToast.success({
+      title: "Thành công",
+      message: result,
+      position: "topRight",
+      timeout: 2000,
+    });
+
     await loadFavorites();
   } catch (err) {
-    message.value = err.message || "Lỗi khi xoá sản phẩm yêu thích.";
+    iziToast.error({
+      title: "Lỗi",
+      message: err.message || "Lỗi khi xoá sản phẩm yêu thích.",
+      position: "topRight",
+      timeout: 2000,
+    });
   }
 };
 

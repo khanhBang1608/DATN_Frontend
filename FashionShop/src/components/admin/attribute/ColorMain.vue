@@ -18,7 +18,7 @@ const formErrors = ref({
 const searchKeyword = ref(""); //tu can tim
 
 const currentPage = ref(0);
-const pageSize = 10;
+const pageSize = 8;
 const totalItems = ref(0);
 const totalPages = ref(0);
 
@@ -137,7 +137,15 @@ const deleteColor = async (id) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // Gọi lại fetch để biết totalPages mới
       await fetchColors();
+
+      // Nếu currentPage hiện tại > totalPages - 1 => lùi về trang cuối cùng
+      if (currentPage.value >= totalPages.value && totalPages.value > 0) {
+        currentPage.value = totalPages.value - 1;
+        await fetchColors();
+      }
+
       iziToast.success({
         title: "Thành công",
         message: "Màu đã được xoá.",
@@ -152,6 +160,7 @@ const deleteColor = async (id) => {
     }
   }
 };
+
 const clearSearch = () => {
   searchKeyword.value = "";
   fetchColors();
@@ -225,7 +234,7 @@ onMounted(() => {
         </thead>
         <tbody>
           <tr v-for="(color, index) in colors" :key="color.colorId">
-            <td>{{ index + 1 }}</td>
+            <td>{{ currentPage * pageSize + index + 1 }}</td>
             <td>{{ color.colorName }}</td>
             <td class="text-end">
               <button
@@ -243,36 +252,30 @@ onMounted(() => {
           </tr>
         </tbody>
       </table>
-      <!-- Pagination -->
-      <div class="d-flex justify-content-center align-items-center mt-3 text-white">
-        <button
-          class="btn btn-sm btn-outline-light me-2"
-          :disabled="currentPage === 0"
-          @click="changePage(currentPage - 1)"
-        >
-          &lt;
-        </button>
-
-        <template v-for="page in totalPages" :key="page">
-          <button
-            class="btn btn-sm me-1"
-            :class="{
-              'btn-light text-dark fw-bold': currentPage === page - 1,
-              'btn-outline-light': currentPage !== page - 1,
-            }"
-            @click="changePage(page - 1)"
-          >
-            {{ page }}
-          </button>
-        </template>
-
-        <button
-          class="btn btn-sm btn-outline-light ms-2"
-          :disabled="currentPage + 1 >= totalPages"
-          @click="changePage(currentPage + 1)"
-        >
-          &gt;
-        </button>
+    </div>
+    <div class="admin-pagination">
+      <div
+        class="admin-button admin-prev"
+        :class="{ disabled: currentPage === 0 }"
+        @click="changePage(currentPage - 1)"
+      >
+        &lt; prev
+      </div>
+      <div
+        v-for="page in totalPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page - 1 }"
+        @click="changePage(page - 1)"
+      >
+        {{ page }}
+      </div>
+      <div
+        class="admin-button admin-next"
+        :class="{ disabled: currentPage + 1 >= totalPages }"
+        @click="changePage(currentPage + 1)"
+      >
+        next &gt;
       </div>
     </div>
   </div>

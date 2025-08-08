@@ -71,14 +71,16 @@
             <td>{{ promo.description }}</td>
             <td>{{ formatDiscount(promo.discountAmount) }}</td>
             <td>{{ formatDate(promo.startDate) }} - {{ formatDate(promo.endDate) }}</td>
-            <span
-              :class="[
-                'badge text-light',
-                isCurrentlyActive(promo) ? 'bg-success' : 'bg-danger',
-              ]"
-            >
-              {{ isCurrentlyActive(promo) ? "Đang hoạt động" : "Ngừng hoạt động" }}
-            </span>
+            <td>
+              <span
+                :class="[
+                  'badge text-light',
+                  isCurrentlyActive(promo) ? 'bg-success' : 'bg-danger',
+                ]"
+              >
+                {{ isCurrentlyActive(promo) ? "Đang hoạt động" : "Ngừng hoạt động" }}
+              </span>
+            </td>
             <td class="text-center">
               <button class="btn btn-sm btn-warning m-1" @click="openModal(promo.id)">
                 ✏️ Sửa
@@ -456,11 +458,7 @@ const clearFilters = async () => {
 
 const isCurrentlyActive = (promo) => {
   const today = new Date().toISOString().split("T")[0];
-  return (
-    promo.status === true &&
-    promo.startDate <= today &&
-    promo.endDate >= today
-  );
+  return promo.status === true && promo.startDate <= today && promo.endDate >= today;
 };
 
 onMounted(fetchPromotions);
