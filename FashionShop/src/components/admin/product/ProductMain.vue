@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { getAllCategories } from '@/api/adminCategoryAPI'
 import { addProduct, updateProduct, getProductById } from '@/api/adminProductAPI'
+import { getTotalStockByProductId } from '@/api/admin/ProductStockAPI'
 import iziToast from 'izitoast'
 import 'izitoast/dist/css/iziToast.min.css'
 
@@ -48,6 +49,13 @@ const getTotalVariantCount = computed(() => {
   }, 0);
 });
 
+const getTotalStockCount = computed(() => {
+  return products.value.reduce((total, product) => {
+    return total + (product.totalStock || 0);
+  }, 0);
+});
+
+
 
 const fetchProducts = async (page = 0) => {
   try {
@@ -55,15 +63,29 @@ const fetchProducts = async (page = 0) => {
       `http://localhost:8080/api/admin/products?page=${page}&size=10`,
       {
         headers: { Authorization: `Bearer ${token}` },
-      },
-    )
-    products.value = response.data.products
-    totalPages.value = response.data.totalPages
-    currentPage.value = response.data.currentPage
+      }
+    );
+
+    products.value = response.data.products;
+    totalPages.value = response.data.totalPages;
+    currentPage.value = response.data.currentPage;
+
+    // Lấy stock song song cho nhanh
+    await Promise.all(
+      products.value.map(async (p) => {
+        try {
+          const stockData = await getTotalStockByProductId(p.productId);
+          p.totalStock = stockData.totalStock;
+        } catch {
+          p.totalStock = 0;
+        }
+      })
+    );
   } catch (error) {
-    console.error('Lỗi khi tải sản phẩm:', error)
+    console.error('Lỗi khi tải sản phẩm:', error);
   }
-}
+};
+
 
 const fetchCategories = async () => {
   try {
@@ -187,8 +209,12 @@ const changePage = (page) => {
       🛍️ Quản lý Sản phẩm
     </h2>
     <span class="badge bg-success fs-6 shadow-sm py-2 px-3 rounded-pill">
-      📦 Tổng biến thể: <strong>{{ getTotalVariantCount }}</strong>
-    </span>
+  📦 Tổng biến thể: <strong>{{ getTotalVariantCount }}</strong>
+</span>
+<span class="badge bg-primary fs-6 shadow-sm py-2 px-3 rounded-pill">
+  📦 Tổng stock: <strong>{{ getTotalStockCount }}</strong>
+</span>
+
   </div>
 
   <!-- Bên phải: Tìm kiếm + Nút Thêm -->
@@ -217,6 +243,7 @@ const changePage = (page) => {
             <th>Tên</th>
             <th>Danh mục</th>
             <th>Biến thể</th>
+            <th>Tổng stock</th> 
             <th>Giá từ</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
@@ -240,6 +267,7 @@ const changePage = (page) => {
             <td>{{ product.name }}</td>
             <td>{{ product.categoryName || '---' }}</td>
             <td>{{ product.variants?.length || 0 }}</td>
+            <td>{{ product.totalStock }}</td>
             <td>{{ formatPrice(getMinPrice(product.variants)) }}</td>
             <td>
               <span :class="['badge', product.status ? 'bg-success' : 'bg-danger']">
