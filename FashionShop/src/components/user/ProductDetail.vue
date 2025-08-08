@@ -108,7 +108,10 @@ const handleAddToCart = async () => {
       message: "Bạn cần đăng nhập để thêm vào giỏ hàng.",
       position: "topRight",
     });
-    router.push("/login");
+    router.push({
+      path: "/login",
+      query: { redirect: route.fullPath }, // Lưu đường dẫn hiện tại
+    });
     return;
   }
 

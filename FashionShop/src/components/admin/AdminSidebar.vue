@@ -41,7 +41,7 @@ function goLogout() {
         </li>
         <li>
           <i class="fas fa-bolt fa-fw"></i>
-          <router-link to="/admin/product">Product</router-link>
+          <router-link to="/admin/product">Sản phẩm</router-link>
         </li>
         <li>
           <i class="fas fa-users fa-fw"></i>
@@ -65,7 +65,7 @@ function goLogout() {
         </li>
         <li>
           <i class="fas fa-cc-amex" aria-hidden="true"></i>
-          <router-link to="/admin/discount">Voucher</router-link>
+          <router-link to="/admin/discount">Giảm giá</router-link>
         </li>
       </ul>
 
