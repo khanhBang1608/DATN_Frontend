@@ -201,38 +201,34 @@ const changePage = (page) => {
 </script>
 <template>
   <div class="card p-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold text-primary m-0">
+        🛍️ Quản lý Sản phẩm
+      </h3>
 
-  <!-- Bên trái: Tiêu đề + Tổng biến thể -->
-  <div class="d-flex align-items-center gap-3 flex-wrap">
-    <h2 class="mb-0 text-primary">
-      🛍️ Quản lý Sản phẩm
-    </h2>
-    <span class="badge bg-success fs-6 shadow-sm py-2 px-3 rounded-pill">
-  📦 Tổng biến thể: <strong>{{ getTotalVariantCount }}</strong>
-</span>
-<span class="badge bg-primary fs-6 shadow-sm py-2 px-3 rounded-pill">
-  📦 Tổng stock: <strong>{{ getTotalStockCount }}</strong>
-</span>
+      <div class="d-flex align-items-center gap-2">
+        <input
+          v-model="searchKeyword"
+          type="text"
+          placeholder="🔍 Tìm sản phẩm..."
+          class="form-control form-control-sm rounded-pill shadow-sm"
+          style="min-width: 240px"
+        />
+        <button class="btn btn-primary btn-sm rounded-pill shadow-sm px-4" @click="openAddModal">
+          ➕ Thêm sản phẩm
+        </button>
+      </div>
+    </div>
 
-  </div>
-
-  <!-- Bên phải: Tìm kiếm + Nút Thêm -->
-  <div class="d-flex align-items-center gap-2 flex-nowrap">
-    <input
-      v-model="searchKeyword"
-      type="text"
-      placeholder="🔍 Tìm sản phẩm..."
-      class="form-control form-control-sm shadow-sm rounded-pill"
-      style="min-width: 240px;"
-    />
-    <button class="btn btn-primary btn-sm px-4 rounded-pill shadow-sm" @click="openAddModal">
-      ➕ Thêm sản phẩm
-    </button>
-  </div>
-
-</div>
-
+    <!-- Thống kê -->
+    <div class="mb-3 d-flex flex-wrap gap-2">
+      <span class="badge bg-success fs-6 shadow-sm py-2 px-3 rounded-pill">
+        📦 Tổng biến thể: <strong>{{ getTotalVariantCount }}</strong>
+      </span>
+      <span class="badge bg-info fs-6 shadow-sm py-2 px-3 rounded-pill">
+        🏷 Tổng tồn kho: <strong>{{ getTotalStockCount }}</strong>
+      </span>
+    </div>
 
     <div class="table-responsive">
       <table class="table table-hover align-middle text-light custom-table">
@@ -243,7 +239,7 @@ const changePage = (page) => {
             <th>Tên</th>
             <th>Danh mục</th>
             <th>Biến thể</th>
-            <th>Tổng stock</th> 
+            <th>Tổng biến thể</th>
             <th>Giá từ</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
