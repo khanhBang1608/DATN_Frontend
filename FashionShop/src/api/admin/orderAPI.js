@@ -1,73 +1,90 @@
-import axios from 'axios';
+import axios from 'axios'
 
-const API_URL = 'http://localhost:8080/api/admin/orders';
-const RETURN_API = 'http://localhost:8080/api/admin/orders/returns';
+// Tạo axios instance chung
+const api = axios.create({
+  baseURL: 'http://localhost:8080',
+})
 
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  if (!token) throw new Error('No JWT token found. Please log in.');
-  return {
-    'Authorization': `Bearer ${token}`,
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-  };
-};
+// Interceptor để tự động thêm token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token')
+  if (!token) throw new Error('No JWT token found. Please log in.')
+  config.headers.Authorization = `Bearer ${token}`
+  return config
+})
 
+// ===== ORDERS =====
 export const getAllOrders = async (page = 0, size = 10) => {
-  try {
-    const response = await axios.get(`${API_URL}?page=${page}&size=${size}`, {
-      headers: getAuthHeaders(),
-    });
-    return response.data; // trả về Page<OrderDTO> có cả content, totalPages, ...
-  } catch (error) {
-    console.error('API Error:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Failed to fetch orders');
-  }
-};
+  const res = await api.get(`/api/admin/orders?page=${page}&size=${size}`, {
+    headers: { Accept: 'application/json' },
+  })
+  return res.data
+}
 
 export const getOrderById = async (orderId) => {
-  const res = await axios.get(`${API_URL}/${orderId}`, { headers: getAuthHeaders() });
-  return res.data;
-};
+  const res = await api.get(`/api/admin/orders/${orderId}`, {
+    headers: { Accept: 'application/json' },
+  })
+  return res.data
+}
 
 export const updateOrder = async (orderId, orderData) => {
-  const res = await axios.put(`${API_URL}/${orderId}`, orderData, { headers: getAuthHeaders() });
-  return res.data;
-};
+  const res = await api.put(`/api/admin/orders/${orderId}`, orderData, {
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+  })
+  return res.data
+}
+export async function downloadInvoicePDF(orderId) {
+    try {
+        const res = await api.get(`/api/admin/orders/${orderId}/download-pdf`, {
+            responseType: 'blob' // để nhận file PDF
+        });
 
-export const downloadInvoicePDF = async (orderId) => {
-  const res = await axios.get(`${API_URL}/${orderId}/invoice`, {
-    headers: { ...getAuthHeaders(), 'Accept': 'application/pdf' },
-    responseType: 'blob',
-  });
+        const url = window.URL.createObjectURL(new Blob([res.data]));
+        const link = document.createElement('a');
+        link.href = url;
 
-  const blob = new Blob([res.data], { type: 'application/pdf' });
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.setAttribute('download', `hoa-don-${orderId}.pdf`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(url);
-};
+        // Lấy tên file từ header
+        const contentDisposition = res.headers['content-disposition'];
+        let fileName = `invoice-${orderId}.pdf`;
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename="?(.+)"?/);
+            if (match) fileName = match[1];
+        }
+
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    } catch (error) {
+        console.error('Download PDF Error:', error);
+    }
+}
 
 export const approveReturnRequest = async (orderId) => {
-  const res = await axios.put(`${API_URL}/${orderId}/approve-return`, null, { headers: getAuthHeaders() });
-  return res.data;
-};
+  const res = await api.put(`/api/admin/orders/${orderId}/approve-return`, null, {
+    headers: { Accept: 'application/json' },
+  })
+  return res.data
+}
 
 export const rejectReturnRequest = async (orderId) => {
-  const res = await axios.put(`${API_URL}/${orderId}/reject-return`, null, { headers: getAuthHeaders() });
-  return res.data;
-};
+  const res = await api.put(`/api/admin/orders/${orderId}/reject-return`, null, {
+    headers: { Accept: 'application/json' },
+  })
+  return res.data
+}
 
 export const getReturnRequestByOrder = async (orderId) => {
-  const res = await axios.get(`${RETURN_API}/${orderId}`, { headers: getAuthHeaders() });
-  return res.data;
-};
+  const res = await api.get(`/api/admin/orders/returns/${orderId}`, {
+    headers: { Accept: 'application/json' },
+  })
+  return res.data
+}
 
 export const getAllReturnRequests = async () => {
-  const res = await axios.get(RETURN_API, { headers: getAuthHeaders() });
-  return res.data;
-};
+  const res = await api.get(`/api/admin/orders/returns`, {
+    headers: { Accept: 'application/json' },
+  })
+  return res.data
+}
