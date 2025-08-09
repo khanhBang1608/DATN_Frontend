@@ -532,10 +532,6 @@ export default {
             </div>
           </form>
 
-          <footer class="checkout-footer text-center text-muted mt-5 small fw-light">
-            <hr class="mb-3" />
-            Powered by Haravan
-          </footer>
         </div>
       </div>
 
