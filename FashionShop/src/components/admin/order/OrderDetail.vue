@@ -380,14 +380,28 @@ async function rejectReturn() {
     loading.value = false;
   }
 }
-
 async function exportToPDF() {
   try {
-    loading.value = true;
     await downloadInvoicePDF(orderId.value);
     toast.success('Tải hóa đơn PDF thành công');
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Không thể xuất hóa đơn PDF.');
+    let errorMessage = 'Không thể xuất hóa đơn PDF.';
+    if (err.response) {
+      try {
+        const text = await err.response.data.text();
+        errorMessage = text || errorMessage;
+      } catch {
+        errorMessage = err.message || errorMessage;
+      }
+    } else {
+      errorMessage = err.message || errorMessage;
+    }
+    console.error('Export PDF Error:', {
+      message: err.message,
+      code: err.code,
+      response: err.response,
+    });
+    toast.error(errorMessage);
   } finally {
     loading.value = false;
   }
