@@ -89,7 +89,7 @@ function handleSearch() {
 
 <template>
   <header>
-    <div class="" style="background-color: #ccffcc">
+    <div class="header" style="background-color: #ccffcc">
       <div
         class="container d-flex flex-column flex-md-row justify-content-between align-items-center py-2"
       >

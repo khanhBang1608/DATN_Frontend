@@ -248,7 +248,192 @@ watch(
           <div class="offcanvas-body">
             <div id="mobileFilterContent">
               <div class="accordion product-accordion" id="filterAccordionMobile">
-                <!-- Giữ nguyên code bộ lọc -->
+                <div class="product-accordion-item">
+                  <h2 class="accordion-header" id="headingColorMobile">
+                    <button
+                      class="accordion-button accordion-btn collapsed"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseColorMobile"
+                      aria-controls="collapseColorMobile"
+                      aria-expanded="false"
+                    >
+                      <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                      MÀU SẮC
+                    </button>
+                  </h2>
+                  <div
+                    id="collapseColorMobile"
+                    class="accordion-collapse collapse"
+                    data-bs-parent="#filterAccordionMobile"
+                  >
+                    <div class="accordion-body">
+                      <ul class="list-unstyled mb-2">
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: black"
+                          ></span>
+                          <span>Đen <span class="text-muted">(52)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: white; border: 1px solid #ccc"
+                          ></span>
+                          <span>Trắng <span class="text-muted">(33)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: #8b4513"
+                          ></span>
+                          <span>Nâu <span class="text-muted">(9)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: #f5f5f5"
+                          ></span>
+                          <span>Trắng Xám <span class="text-muted">(9)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: silver"
+                          ></span>
+                          <span>Bạc <span class="text-muted">(5)</span></span>
+                        </li>
+                        <li class="d-flex align-items-center mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <span
+                            class="color-dot me-2"
+                            style="background-color: #6a5acd"
+                          ></span>
+                          <span>Xanh Dương <span class="text-muted">(4)</span></span>
+                        </li>
+                      </ul>
+                      <a href="#" class="text-decoration-underline small">Xem Thêm</a>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="product-accordion-item">
+                  <h2 class="accordion-header" id="headingSizeMobile">
+                    <button
+                      class="accordion-button accordion-btn collapsed"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapseSizeMobile"
+                      aria-expanded="false"
+                      aria-controls="collapseSizeMobile"
+                    >
+                      <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                      KÍCH THƯỚC
+                    </button>
+                  </h2>
+                  <div
+                    id="collapseSizeMobile"
+                    class="accordion-collapse collapse"
+                    data-bs-parent="#filterAccordionMobile"
+                  >
+                    <div class="accordion-body">
+                      <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <label class="form-check-label"
+                            >S <span class="text-muted">(58)</span></label
+                          >
+                        </li>
+                        <li class="mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <label class="form-check-label"
+                            >M <span class="text-muted">(51)</span></label
+                          >
+                        </li>
+                        <li class="mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <label class="form-check-label"
+                            >L <span class="text-muted">(16)</span></label
+                          >
+                        </li>
+                        <li class="mb-2">
+                          <input type="checkbox" class="form-check-input me-2" />
+                          <label class="form-check-label"
+                            >XL <span class="text-muted">(2)</span></label
+                          >
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="product-accordion-item">
+                  <h2 class="accordion-header" id="headingPriceMobile">
+                    <button
+                      class="accordion-button accordion-btn collapsed ps-3"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#collapsePriceMobile"
+                      aria-expanded="false"
+                      aria-controls="collapsePriceMobile"
+                    >
+                      <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                      GIÁ
+                    </button>
+                  </h2>
+                  <div
+                    id="collapsePriceMobile"
+                    class="accordion-collapse collapse"
+                    data-bs-parent="#filterAccordionMobile"
+                  >
+                    <div class="accordion-body">
+                      <div class="range-slider mb-3">
+                        <input
+                          type="range"
+                          class="form-range price-range-slider"
+                          min="0"
+                          max="10000000"
+                          step="100000"
+                          id="priceMinMobile"
+                        />
+                        <input
+                          type="range"
+                          class="form-range price-range-slider"
+                          min="0"
+                          max="10000000"
+                          step="100000"
+                          id="priceMaxMobile"
+                        />
+                      </div>
+                      <div class="d-flex justify-content-between">
+                        <div class="form-group me-2">
+                          <label class="form-label small">Từ</label>
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="priceFromMobile"
+                            value="1,690,000"
+                          />
+                        </div>
+                        <div class="form-group">
+                          <label class="form-label small">Đến</label>
+                          <input
+                            type="text"
+                            class="form-control"
+                            id="priceToMobile"
+                            value="4,190,000"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -256,7 +441,189 @@ watch(
 
         <div class="product-sidebar" id="desktopFilterContent">
           <div class="accordion" id="filterAccordionDesktop">
-            <!-- Giữ nguyên code bộ lọc -->
+            <div class="product-accordion-item">
+              <h2 class="accordion-header" id="headingColorDesktop">
+                <button
+                  class="accordion-button accordion-btn collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseColorDesktop"
+                  aria-expanded="false"
+                  aria-controls="collapseColorDesktop"
+                >
+                  <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                  MÀU SẮC
+                </button>
+              </h2>
+              <div
+                id="collapseColorDesktop"
+                class="accordion-collapse collapse"
+                data-bs-parent="#filterAccordionDesktop"
+              >
+                <div class="accordion-body">
+                  <ul class="list-unstyled mb-2">
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span class="color-dot me-2" style="background-color: black"></span>
+                      <span>Đen <span class="text-muted">(52)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: white; border: 1px solid #ccc"
+                      ></span>
+                      <span>Trắng <span class="text-muted">(33)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: #8b4513"
+                      ></span>
+                      <span>Nâu <span class="text-muted">(9)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: #f5f5f5"
+                      ></span>
+                      <span>Trắng Xám <span class="text-muted">(9)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: silver"
+                      ></span>
+                      <span>Bạc <span class="text-muted">(5)</span></span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <span
+                        class="color-dot me-2"
+                        style="background-color: #6a5acd"
+                      ></span>
+                      <span>Xanh Dương <span class="text-muted">(4)</span></span>
+                    </li>
+                  </ul>
+                  <a href="#" class="text-decoration-underline small">Xem Thêm</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="product-accordion-item">
+              <h2 class="accordion-header" id="headingSizeDesktop">
+                <button
+                  class="accordion-button accordion-btn collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapseSizeDesktop"
+                  aria-expanded="false"
+                  aria-controls="collapseSizeDesktop"
+                >
+                  <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                  KÍCH THƯỚC
+                </button>
+              </h2>
+              <div
+                id="collapseSizeDesktop"
+                class="accordion-collapse collapse"
+                data-bs-parent="#filterAccordionDesktop"
+              >
+                <div class="accordion-body">
+                  <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <label class="form-check-label"
+                        >S <span class="text-muted">(58)</span></label
+                      >
+                    </li>
+                    <li class="mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <label class="form-check-label"
+                        >M <span class="text-muted">(51)</span></label
+                      >
+                    </li>
+                    <li class="mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <label class="form-check-label"
+                        >L <span class="text-muted">(16)</span></label
+                      >
+                    </li>
+                    <li class="mb-2">
+                      <input type="checkbox" class="form-check-input me-2" />
+                      <label class="form-check-label"
+                        >XL <span class="text-muted">(2)</span></label
+                      >
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="product-accordion-item">
+              <h2 class="accordion-header" id="headingPriceDesktop">
+                <button
+                  class="accordion-button accordion-btn collapsed"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#collapsePriceDesktop"
+                  aria-expanded="false"
+                  aria-controls="collapsePriceDesktop"
+                >
+                  <i class="bi bi-chevron-down me-2 rotate-icon"></i>
+                  GIÁ
+                </button>
+              </h2>
+              <div
+                id="collapsePriceDesktop"
+                class="accordion-collapse collapse"
+                data-bs-parent="#filterAccordionDesktop"
+              >
+                <div class="accordion-body">
+                  <div class="range-slider mb-3">
+                    <input
+                      type="range"
+                      class="form-range"
+                      min="0"
+                      max="10000000"
+                      step="100000"
+                      id="priceMinDesktop"
+                    />
+                    <input
+                      type="range"
+                      class="form-range"
+                      min="0"
+                      max="10000000"
+                      step="100000"
+                      id="priceMaxDesktop"
+                    />
+                  </div>
+                  <div class="d-flex justify-content-between">
+                    <div class="form-group me-2">
+                      <label class="form-label small">Từ</label>
+                      <input
+                        type="text"
+                        class="form-control price-input"
+                        id="priceFromDesktop"
+                        value="1,690,000"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label small">Đến</label>
+                      <input
+                        type="text"
+                        class="form-control price-input"
+                        id="priceToDesktop"
+                        value="4,190,000"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
