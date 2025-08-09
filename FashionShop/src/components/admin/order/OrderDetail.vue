@@ -76,6 +76,10 @@
             disabled
           />
         </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Địa chỉ</label>
+          <input type="text" class="form-control" :value="extractedCustomerName" disabled />
+        </div>
       </div>
 
       <hr class="my-4 border-brand" />
@@ -273,6 +277,12 @@ const extractedPhone = computed(() => {
 });
 
 const extractedAddress = computed(() => {
+  if (!order.value?.address) return 'Không xác định';
+  const parts = order.value.address.split(' - ');
+  return parts.length > 1 ? parts[2] : order.value.address;
+});
+
+const extractedCustomerName = computed(() => {
   if (!order.value?.address) return 'Không xác định';
   const parts = order.value.address.split(' - ');
   return parts.length > 1 ? parts[1] : order.value.address;
