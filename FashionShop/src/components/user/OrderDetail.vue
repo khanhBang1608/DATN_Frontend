@@ -21,9 +21,9 @@
             <i class="bi bi-box-arrow-left me-1"></i> Yêu cầu trả hàng
           </button>
         </p>
-
-        <p><strong>Số điện thoại:</strong> {{ order.address?.split(' - ')[0] }}</p>
-        <p><strong>Địa chỉ:</strong> {{ order.address?.split(' - ')[1] }}</p>
+        <p><strong>Người nhận:</strong>  {{ order.address?.split(' - ')[0] }}</p>
+        <p><strong>Số điện thoại:</strong> {{ order.address?.split(' - ')[1] }}</p>
+        <p><strong>Địa chỉ:</strong> {{ order.address?.split(' - ')[2] }}</p>
         <p><strong>Phương thức thanh toán:</strong> {{ order.paymentMethod }}</p>
         <p>
           <strong>Trạng thái thanh toán:</strong>

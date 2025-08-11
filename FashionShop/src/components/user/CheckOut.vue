@@ -192,7 +192,7 @@ export default {
       const idempotencyKey = uuidv4()
 
       try {
-        const fullAddress = `${this.form.phone} - ${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`
+        const fullAddress = `${this.form.fullName} - ${this.form.phone} - ${this.form.address}, ${this.form.ward}, ${this.form.district}, ${this.form.province}, ${this.form.country}`
         const orderDetails = this.cartDetails.map((item) => ({
           productVariantId: item.productVariantId,
           quantity: item.quantity,

@@ -183,11 +183,15 @@ export default {
     };
   },
   methods: {
-    extractPhone(address) {
+
+    extractedFullName(address) {
       return address?.split(" - ")[0] || "Không xác định";
     },
+    extractPhone(address) {
+      return address?.split(" - ")[1] || "Không xác định";
+    },
     extractAddress(address) {
-      return address?.split(" - ")[1] || address;
+      return address?.split(" - ")[2] || address;
     },
 
     formatPrice(price) {

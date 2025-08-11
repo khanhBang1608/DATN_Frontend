@@ -13,6 +13,10 @@
             disabled
           />
         </div>
+          <div class="col-md-6">
+          <label class="form-label fw-bold">Người nhận</label>
+          <input type="text" class="form-control" :value="extractedFullName" disabled />
+        </div>
         <div class="col-md-6">
           <label class="form-label fw-bold">Địa chỉ</label>
           <input type="text" class="form-control" :value="extractedAddress" disabled />
@@ -266,17 +270,24 @@ const statusOptions = [
   'Từ chối trả hàng',
 ];
 
+const extractedFullName = computed(() => {
+  if (!order.value?.address) return 'Không xác định';
+  const parts = order.value.address.split(' - ');
+  return parts.length > 0 ? parts[0] : 'Không xác định';
+});
+
 const extractedPhone = computed(() => {
   if (!order.value?.address) return 'Không xác định';
   const parts = order.value.address.split(' - ');
-  return parts.length > 1 ? parts[0] : 'Không xác định';
+  return parts.length > 1 ? parts[1] : 'Không xác định';
 });
 
 const extractedAddress = computed(() => {
   if (!order.value?.address) return 'Không xác định';
   const parts = order.value.address.split(' - ');
-  return parts.length > 1 ? parts[1] : order.value.address;
+  return parts.length > 2 ? parts[2] : 'Không xác định';
 });
+
 
 const resolveFileUrl = (url) => {
   if (!url) return '';
