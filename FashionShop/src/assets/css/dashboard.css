@@ -50,33 +50,134 @@
 }
 
 /* ====Thanh tìm kiếm==== */
-.admin-sbox {
+.admin-search-box {
     position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 350px;
+    /* Slightly wider for better usability */
+    margin: 0;
+    /* Center the search box */
 }
 
-.admin-stext {
-    width: 300px;
-    height: 50px;
-    background: #2b303b;
+.admin-search-text {
+    width: 100%;
+    height: 48px;
+    /* Slightly shorter for a sleek look */
+    background: #2a2b3d;
     border: none;
-    font-size: 10pt;
-    float: left;
+    font-size: 14px;
+    /* Larger font for readability */
     color: #fff;
-    padding-left: 45px;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
+    padding: 12px 16px 12px 48px;
+    /* Adjusted padding for icon space */
+    border-radius: 8px;
+    /* Softer, modern rounded corners */
+    outline: none;
+    /* Remove default outline */
+    transition: all 0.3s ease;
+    /* Smooth transitions for hover/focus */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    /* Subtle shadow for depth */
 }
 
-.admin-search {
-    position: absolute;
-    top: 0;
-    left: 0;
-    margin-left: 16px;
-    margin-top: 16px;
-    z-index: 1;
-    color: #fff;
+.admin-search-text::placeholder {
+    color: #a0a4b0;
+    /* Lighter placeholder color for contrast */
+    font-style: italic;
+    /* Subtle italic for placeholder */
 }
+
+.admin-search-text:focus {
+    background: #2a2b3d;
+    /* Slightly lighter background on focus */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    /* Enhanced shadow on focus */
+    border: 1px solid #4a90e2;
+    /* Blue border for focus state */
+}
+
+.admin-search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    /* Center vertically */
+    color: #a0a4b0;
+    /* Softer icon color */
+    font-size: 18px;
+    /* Slightly larger icon */
+    z-index: 1;
+    pointer-events: none;
+    /* Prevent icon from intercepting clicks */
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .admin-search-box {
+        max-width: 100%;
+        /* Full width on smaller screens */
+        padding: 0 16px;
+        /* Add padding to prevent edge-to-edge */
+    }
+
+    .admin-search-text {
+        height: 44px;
+        /* Slightly smaller for mobile */
+        font-size: 13px;
+        /* Adjust font size for mobile */
+    }
+
+    .admin-search-icon {
+        font-size: 16px;
+        /* Smaller icon for mobile */
+    }
+}
+
+/* ===Bộ lọc=== */
+.admin-select {
+    width: 100%;
+    height: 48px;
+    background: #2a2b3d;
+    border: none;
+    font-size: 14px;
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    appearance: none;
+    /* Ẩn mũi tên mặc định của select */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%23a0a4b0' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 24px;
+}
+
+.admin-select:focus {
+    background: #2a2b3d;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid #4a90e2;
+}
+
+.admin-select option:hover {
+  background-color: #ccc !important;
+  color: #000; /* Đổi chữ sang đen để dễ đọc */
+}
+
+
+/* Responsive */
+@media (max-width: 600px) {
+    .admin-select {
+        height: 44px;
+        font-size: 13px;
+    }
+}
+
 
 @keyframes jump {
     from {

@@ -23,7 +23,12 @@ const searchQuery = ref("");
 const selectedStatus = ref("all");
 
 const currentPage = ref(1);
-const itemsPerPage = 10;
+const itemsPerPage = 8;
+
+const changePage = (page) => {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+};
 
 const showSystemError = (message) => {
   iziToast.error({
@@ -215,20 +220,26 @@ onMounted(fetchCategories);
         data-bs-toggle="modal"
         data-bs-target="#addCategoryModal"
       >
-        + Thêm danh mục
+        <i class="bi bi-plus-circle"></i> Thêm danh mục
       </button>
     </div>
 
     <div class="row mb-3">
       <div class="col-md-4">
-        <input
-          v-model="searchQuery"
-          class="form-control"
-          placeholder="🔍 Tìm theo tên danh mục..."
-        />
+        <div class="admin-search-box">
+          <input
+            type="text"
+            v-model="searchQuery"
+            class="admin-search-text"
+            placeholder="Nhập tên danh mục..."
+            @input="onSearchInput"
+          />
+
+          <i class="bi bi-search admin-search-icon"></i>
+        </div>
       </div>
       <div class="col-md-4">
-        <select v-model="selectedStatus" class="form-select">
+        <select v-model="selectedStatus" class="admin-select">
           <option value="all">-- Tất cả trạng thái --</option>
           <option value="active">Đang bán</option>
           <option value="inactive">Ngừng bán</option>
@@ -298,7 +309,7 @@ onMounted(fetchCategories);
                 data-bs-target="#editCategoryModal"
                 @click="editCategoryData(item)"
               >
-                ✏️ Sửa
+                <i class="bi bi-pencil-square"></i> Sửa
               </button>
             </td>
           </tr>
@@ -306,33 +317,36 @@ onMounted(fetchCategories);
       </table>
     </div>
 
-    <nav v-if="totalPages > 1">
-      <ul class="pagination justify-content-center mt-3">
-        <li
-          class="page-item"
-          :class="{ disabled: currentPage === 1 }"
-          @click="currentPage > 1 && currentPage--"
-        >
-          <a class="page-link">Trước</a>
-        </li>
-        <li
-          v-for="page in totalPages"
-          :key="page"
-          class="page-item"
-          :class="{ active: currentPage === page }"
-          @click="currentPage = page"
-        >
-          <a class="page-link">{{ page }}</a>
-        </li>
-        <li
-          class="page-item"
-          :class="{ disabled: currentPage === totalPages }"
-          @click="currentPage < totalPages && currentPage++"
-        >
-          <a class="page-link">Sau</a>
-        </li>
-      </ul>
-    </nav>
+    <div v-if="totalPages > 1" class="admin-pagination">
+      <!-- Nút trước -->
+      <div
+        class="admin-button admin-prev"
+        :class="{ disabled: currentPage === 1 }"
+        @click="changePage(currentPage - 1)"
+      >
+        &lt; prev
+      </div>
+
+      <!-- Số trang -->
+      <div
+        v-for="page in totalPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page }"
+        @click="changePage(page)"
+      >
+        {{ page }}
+      </div>
+
+      <!-- Nút sau -->
+      <div
+        class="admin-button admin-next"
+        :class="{ disabled: currentPage === totalPages }"
+        @click="changePage(currentPage + 1)"
+      >
+        next &gt;
+      </div>
+    </div>
   </div>
 
   <!-- Modal Thêm -->

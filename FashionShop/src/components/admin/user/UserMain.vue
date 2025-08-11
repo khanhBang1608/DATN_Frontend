@@ -57,7 +57,7 @@
                 class="btn btn-sm btn-info m-1"
                 @click="goToUserAddresses(user.id, user.name)"
               >
-                <i class="bi bi-eye-fill me-1"></i> Xem Địa chỉ
+                <i class="bi bi-eye-fill me-1"></i> Xem địa chỉ
               </button>
             </td>
           </tr>
@@ -112,12 +112,15 @@ const currentPage = ref(1);
 
 const fetchUsers = async (page = 0) => {
   try {
-    const res = await axios.get(`http://localhost:8080/api/admin/users?page=${page}&size=10`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      withCredentials: true,
-    });
+    const res = await axios.get(
+      `http://localhost:8080/api/admin/users?page=${page}&size=10`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      }
+    );
 
     users.value = res.data.users;
     totalPages.value = res.data.totalPages;

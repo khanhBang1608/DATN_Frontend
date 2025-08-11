@@ -15,12 +15,20 @@ const formErrors = ref({
   edit: { name: "" },
 });
 
-const searchKeyword = ref(""); //tu can tim
-
+const searchKeyword = ref("");
 const currentPage = ref(0);
 const pageSize = 8;
 const totalItems = ref(0);
 const totalPages = ref(0);
+
+// Hàm debounce
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
 
 // Lấy danh sách màu có phân trang
 const fetchColors = async () => {
@@ -43,11 +51,20 @@ const fetchColors = async () => {
   }
 };
 
+// Gọi fetchColors với debounce
+const debouncedFetchColors = debounce(fetchColors, 100);
+
 const changePage = (page) => {
   if (page >= 0 && page < totalPages.value) {
     currentPage.value = page;
     fetchColors();
   }
+};
+
+// Thêm hàm mới để reset trang và gọi tìm kiếm
+const onSearchInput = () => {
+  currentPage.value = 0; // Luôn về trang đầu tiên
+  debouncedFetchColors();
 };
 
 const validateColorForm = (form) => {
@@ -137,10 +154,8 @@ const deleteColor = async (id) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Gọi lại fetch để biết totalPages mới
       await fetchColors();
 
-      // Nếu currentPage hiện tại > totalPages - 1 => lùi về trang cuối cùng
       if (currentPage.value >= totalPages.value && totalPages.value > 0) {
         currentPage.value = totalPages.value - 1;
         await fetchColors();
@@ -166,7 +181,6 @@ const clearSearch = () => {
   fetchColors();
 };
 
-// Reset form khi modal đóng
 onMounted(() => {
   fetchColors();
 
@@ -195,32 +209,21 @@ onMounted(() => {
         data-bs-toggle="modal"
         data-bs-target="#addColorModal"
       >
-        + Thêm màu
+        <i class="bi bi-plus-circle"></i>
+        Thêm màu
       </button>
     </div>
     <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
-      <input
-        type="text"
-        v-model="searchKeyword"
-        class="form-control form-control-sm"
-        placeholder="🔍 Nhập tên màu..."
-        @keyup.enter="fetchColors"
-        style="max-width: 250px"
-      />
-      <button
-        class="btn btn-outline-secondary btn-sm"
-        @click="fetchColors"
-        title="Tìm kiếm"
-      >
-        🔍 Tìm
-      </button>
-      <button
-        class="btn btn-outline-danger btn-sm"
-        @click="clearSearch"
-        title="Xoá bộ lọc"
-      >
-        ❌ Xóa
-      </button>
+      <div class="admin-search-box">
+        <input
+          type="text"
+          v-model="searchKeyword"
+          class="admin-search-text"
+          placeholder="Nhập tên màu..."
+          @input="onSearchInput"
+        />
+        <i class="bi bi-search admin-search-icon"></i>
+      </div>
     </div>
 
     <div class="table-responsive">
@@ -243,17 +246,17 @@ onMounted(() => {
                 data-bs-target="#editColorModal"
                 @click="openEditColor(color)"
               >
-                ✏️ Sửa
+                <i class="bi bi-pencil-square"></i> Sửa
               </button>
               <button class="btn btn-danger btn-sm" @click="deleteColor(color.colorId)">
-                🗑️ Xóa
+                <i class="bi bi-trash"></i> Xóa
               </button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div class="admin-pagination">
+    <div class="admin-pagination" v-if="totalItems > pageSize">
       <div
         class="admin-button admin-prev"
         :class="{ disabled: currentPage === 0 }"
