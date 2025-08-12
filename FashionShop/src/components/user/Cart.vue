@@ -31,14 +31,21 @@
             class="d-flex p-3 cart-item"
           >
             <!-- Checkbox -->
-            <div class="me-5 d-flex align-items-center">
-              <input
-                type="checkbox"
-                :value="item.cartDetailId"
-                v-model="selectedItems"
-                style="transform: scale(1.5); width: 15px; height: 15px"
-              />
-            </div>
+            <!-- Checkbox hoặc thông báo -->
+<div class="me-5 d-flex align-items-center">
+  <template v-if="item.productStatus && item.categoryStatus">
+    <input
+      type="checkbox"
+      :value="item.cartDetailId"
+      v-model="selectedItems"
+      style="transform: scale(1.5); width: 15px; height: 15px"
+    />
+  </template>
+  <template v-else>
+    <span class="text-danger fw-bold">Ngưng bán</span>
+  </template>
+</div>
+
 
             <!-- Ảnh -->
             <img
@@ -67,29 +74,29 @@
               <p class="mb-2">Màu: {{ item.color }}</p>
 
               <!-- Số lượng -->
-              <div class="input-group w-auto cart-quantity">
-                <button
-                  class="btn btn-outline-secondary"
-                  @click="updateQuantity(item.cartDetailId, item.quantity - 1)"
-                  :disabled="item.quantity <= 1"
-                >
-                  -
-                </button>
-                <input
-                  type="text"
-                  class="form-control text-center"
-                  v-model.number="item.quantity"
-                  style="max-width: 60px"
-                  readonly
-                />
-                <button
-                  class="btn btn-outline-secondary"
-                  @click="updateQuantity(item.cartDetailId, item.quantity + 1)"
-                  :disabled="item.quantity >= item.stock"
-                >
-                  +
-                </button>
-              </div>
+              <div v-if="item.productStatus && item.categoryStatus">
+  <!-- Số lượng -->
+  <div class="input-group w-auto cart-quantity">
+    <button
+      class="btn btn-outline-secondary"
+      @click="updateQuantity(item.cartDetailId, item.quantity - 1)"
+      :disabled="item.quantity <= 1"
+    >-</button>
+    <input
+      type="text"
+      class="form-control text-center"
+      v-model.number="item.quantity"
+      style="max-width: 60px"
+      readonly
+    />
+    <button
+      class="btn btn-outline-secondary"
+      @click="updateQuantity(item.cartDetailId, item.quantity + 1)"
+      :disabled="item.quantity >= item.stock"
+    >+</button>
+  </div>
+</div>
+
             </div>
 
             <!-- Nút xóa -->
