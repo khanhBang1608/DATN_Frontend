@@ -12,7 +12,6 @@ import UserAddress from '@/views/admin/UserAddressView.vue'
 import Product from '@/views/admin/ProductView.vue'
 import Color from '@/views/admin/ColorView.vue'
 import size from '@/views/admin/SizeView.vue'
-// import ProductFrom from '@/views/admin/ProductFormViews.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -29,10 +28,7 @@ import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
 import ProductVariantList from '@/components/admin/product/ProductVariantMain.vue'
-import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
 import ProductPromotions from '@/components/admin/promotions/ProductPromotions.vue'
-import ProductPromotionForm from '@/components/admin/promotions/ProductPromotionForm.vue'
-import ProductPromotionForm2 from '@/components/admin/promotions/ProductPromotionForm2.vue'
 import ListAddressView from '@/views/ListAddressView.vue'
 import EditAddressView from '@/views/EditAddressView.vue'
 import FavoriteView from '@/views/FavoriteView.vue'
@@ -232,29 +228,9 @@ const router = createRouter({
           component: ProductVariantList,
         },
         {
-          path: 'promotion/form',
-          name: 'PromotionForm',
-          component: PromotionModal,
-        },
-        {
-          path: 'promotion/form/:id',
-          name: 'EditPromotion',
-          component: PromotionModal,
-        },
-        {
           path: 'ProductPromotions/:promotionId',
           name: 'ProductPromotions',
           component: ProductPromotions,
-        },
-        {
-          path: 'ProductPromotionForm/:promotionId',
-          name: 'ProductPromotionFormCreate',
-          component: ProductPromotionForm,
-        },
-        {
-          path: 'ProductPromotionForm/:promotionId/:id',
-          name: 'ProductPromotionFormUpdate',
-          component: ProductPromotionForm2,
         },
         {
           path: 'category',

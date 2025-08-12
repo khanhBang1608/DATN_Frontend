@@ -242,7 +242,9 @@ const saveAddPromotion = async () => {
           .find((v) => v.productVariantId === item.productVariantId);
         return `${variant.colorName} - ${variant.sizeName}`;
       });
-      successMessage.value = `Đã thêm thành công các biến thể: ${successVariantNames.join(", ")}`;
+      successMessage.value = `Đã thêm thành công các biến thể: ${successVariantNames.join(
+        ", "
+      )}`;
     }
 
     if (failedVariants.length > 0) {
