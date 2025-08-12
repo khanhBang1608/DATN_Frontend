@@ -32,9 +32,9 @@ export const getRelatedProducts = (categoryId, excludeProductId, page = 0, size 
     }
   });
 
-export const searchProductsByName = (keyword) =>
+export const searchProductsByName = (keyword, page = 0, size = 8) =>
   axios.get(`${API_BASE}/products/search`, {
-    params: { keyword }
+    params: { keyword, page, size }
   });
 
 export const fetchAverageRating = (productId) =>

@@ -109,13 +109,21 @@ const fetchProducts = async (page = 0, size = pageSize.value) => {
 };
 
 // Hàm tìm kiếm sản phẩm
-const handleSearch = async () => {
+const handleSearch = async (page = 0, size = pageSize.value) => {
   try {
-    const response = await searchProductsByName(searchKeyword.value);
-    products.value = response.data.length > 0 ? await processProducts(response.data) : [];
-    if (!response.data.length) {
+    const response = await searchProductsByName(searchKeyword.value, page, size);
+    const data = response.data;
+
+    const processed = await processProducts(data.content || []);
+    products.value = processed;
+
+    totalPages.value = data.totalPages;
+    currentPage.value = data.number;
+
+    if (!data.content || data.content.length === 0) {
       console.log("Không tìm thấy sản phẩm phù hợp.");
     }
+
     handleSort(sortOption.value);
   } catch (error) {
     console.error("Lỗi khi tìm kiếm sản phẩm:", error);
