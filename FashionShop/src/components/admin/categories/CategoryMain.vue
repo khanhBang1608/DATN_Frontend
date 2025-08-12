@@ -234,7 +234,6 @@ onMounted(fetchCategories);
             placeholder="Nhập tên danh mục..."
             @input="onSearchInput"
           />
-
           <i class="bi bi-search admin-search-icon"></i>
         </div>
       </div>
@@ -256,8 +255,7 @@ onMounted(fetchCategories);
             <!-- Icon expand -->
             <th style="width: auto">Tên danh mục</th>
             <th style="width: 160px" class="text-end">Loại</th>
-            <th style="width: 130px" class="text-end">Trạng thái</th>
-            <th style="width: 130px" class="text-end">Hành động</th>
+            <th style="width: 130px" class="text-end">Số sản phẩm</th>
           </tr>
         </thead>
 
@@ -278,8 +276,34 @@ onMounted(fetchCategories);
 
             <!-- Tên danh mục (thụt lề theo cấp) -->
             <td class="align-middle">
-              <div :style="{ paddingLeft: `${item.level * 20}px` }">
-                {{ item.categoryName }}
+              <div
+                class="d-flex align-items-center "
+                :style="{ paddingLeft: `${item.level * 20}px` }"
+              >
+                <!-- Tên danh mục -->
+                <div>{{ item.categoryName }}</div>
+
+                <!-- Trạng thái & nút sửa -->
+                <div class="ms-auto d-flex align-items-center gap-2 ">
+                  <span
+                    v-if="item.parentId !== null"
+                    class="d-flex align-items-center"
+                    :class="['badge', item.status ? 'bg-success' : 'bg-danger']"
+                    style="height: fit-content"
+                  >
+                    {{ item.status ? "Đang bán" : "Ngừng bán" }}
+                  </span>
+
+                  <button
+                    v-if="item.parentId !== null"
+                    class="btn btn-warning btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editCategoryModal"
+                    @click="editCategoryData(item)"
+                  >
+                    <i class="bi bi-pencil-square "></i> Sửa
+                  </button>
+                </div>
               </div>
             </td>
 
@@ -294,23 +318,9 @@ onMounted(fetchCategories);
               </span>
             </td>
 
-            <!-- Trạng thái -->
+            <!-- Số sản phẩm -->
             <td class="text-end align-middle">
-              <span :class="['badge', item.status ? 'bg-success' : 'bg-danger']">
-                {{ item.status ? "Đang bán" : "Ngừng bán" }}
-              </span>
-            </td>
-
-            <!-- Hành động -->
-            <td class="text-end align-middle">
-              <button
-                class="btn btn-warning btn-sm"
-                data-bs-toggle="modal"
-                data-bs-target="#editCategoryModal"
-                @click="editCategoryData(item)"
-              >
-                <i class="bi bi-pencil-square"></i> Sửa
-              </button>
+              {{ item.productCount }}
             </td>
           </tr>
         </tbody>
@@ -493,19 +503,25 @@ onMounted(fetchCategories);
 }
 
 .custom-table th:nth-child(1) {
-  width: 5%;
+  width: 5%; /* STT */
 }
 .custom-table th:nth-child(2) {
-  width: 45%;
+  width: 5%; /* Icon expand */
 }
 .custom-table th:nth-child(3) {
-  width: 15%;
+  width: 35%; /* Tên danh mục */
 }
 .custom-table th:nth-child(4) {
-  width: 15%;
+  width: 15%; /* Loại */
 }
 .custom-table th:nth-child(5) {
-  width: 20%;
+  width: 15%; /* Số sản phẩm */
+}
+.custom-table th:nth-child(6) {
+  width: 10%; /* Trạng thái */
+}
+.custom-table th:nth-child(7) {
+  width: 15%; /* Hành động */
 }
 
 .table-responsive {
