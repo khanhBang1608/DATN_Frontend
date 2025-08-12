@@ -37,6 +37,8 @@ import ListAddressView from '@/views/ListAddressView.vue'
 import EditAddressView from '@/views/EditAddressView.vue'
 import FavoriteView from '@/views/FavoriteView.vue'
 import PaymentSuccess from '@/views/PaymentResult.vue'
+import { getProductDetail } from '@/api/ProductClient'
+import ErrorView from '@/views/ErrorView.vue'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -119,6 +121,27 @@ const router = createRouter({
       path: '/product-detail/:id',
       name: 'product-detail',
       component: ProductDetailView,
+      beforeEnter: async (to, from, next) => {
+        try {
+          const productId = to.params.id
+          const res = await getProductDetail(productId)
+
+          // Nếu API trả null hoặc object rỗng
+          if (res.data === null || Object.keys(res.data).length === 0) {
+            return next({ name: 'NotFound' })
+          }
+
+          next() // Có dữ liệu -> cho vào trang chi tiết
+        } catch (err) {
+          // Nếu lỗi mạng hoặc lỗi khác
+          return next({ name: 'NotFound' })
+        }
+      }
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'NotFound',
+      component: ErrorView
     },
     {
       path: '/user/address',
@@ -294,11 +317,15 @@ router.beforeEach((to, from, next) => {
   // Chưa đăng nhập hoặc token hết hạn
   if (!isLoggedIn) {
     if (to.path.startsWith('/admin') || to.path.startsWith('/user')) {
-      return next('/login')
+      return next({
+        path: '/login',
+        query: { redirect: to.fullPath }, // Gửi thông tin redirect qua URL
+      });
     } else {
-      return next() // Cho phép vào trang public
+      return next();
     }
   }
+
 
   // Đã đăng nhập nhưng phân quyền sai
   if (role === '0' && to.path.startsWith('/user')) {

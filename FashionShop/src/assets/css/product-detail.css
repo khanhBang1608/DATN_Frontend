@@ -93,20 +93,22 @@
 
 /* ========== Modal Swiper ========== */
 #galleryModal {
- position: fixed;
-  z-index: 9999;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.9);
-  display: flex; /* Mặc định là flex, được kiểm soát bởi v-show */
-  justify-content: center;
-  align-items: center;
+    position: fixed;
+    z-index: 9999;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    /* Mặc định là flex, được kiểm soát bởi v-show */
+    justify-content: center;
+    align-items: center;
 }
 
 #galleryModal[style*="display: none"] {
-  display: none !important; /* Đảm bảo v-show ẩn nó đúng cách */
+    display: none !important;
+    /* Đảm bảo v-show ẩn nó đúng cách */
 }
 
 .pd-modal-slider {
@@ -137,12 +139,14 @@
 }
 
 /* ========== Nút scroll mobile ========== */
+/* Các quy tắc khác giữ nguyên */
 .pd-scroll-btn {
     display: none;
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    /* z-index: 10; */
+    z-index: 10;
+    /* Bỏ comment để đảm bảo nút không bị che */
     background-color: #f8f9fa;
     border: none;
     padding: 6px 10px;
@@ -184,7 +188,6 @@
 /* Swiper dấu chấm phân trang */
 .pd-mobile-swiper-pagination .swiper-pagination-bullet {
     background: #000;
-    /* Màu chấm */
     opacity: 0.3;
     width: 8px;
     height: 8px;
@@ -197,40 +200,64 @@
     opacity: 1;
 }
 
+/* Đảm bảo các nút hiển thị trên mobile */
+@media (max-width: 768px) {
+    .pd-mobile-swiper {
+        display: block;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto 20px;
+        position: relative;
+        overflow: visible;
+        /* Đảm bảo nút không bị cắt */
+    }
+
+    .pd-scroll-btn {
+        display: block !important;
+        /* Đảm bảo nút hiển thị */
+    }
+
+    .product-detail-thumbnails,
+    .product-detail-scroll-wrapper,
+    .product-detail-fullscreen-icon {
+        display: none !important;
+    }
+}
+
 
 
 
 /* ========== Màu sắc & kích thước ========== */
 .product-detail-size,
 .product-detail-color {
-  min-width: 50px;
-  padding: 6px 6px;
-  text-align: center;
-  font-weight: 600;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s;
+    min-width: 50px;
+    padding: 6px 6px;
+    text-align: center;
+    font-weight: 600;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
 }
 
 .product-detail-size:hover,
 .product-detail-color:hover {
-  border-color: black !important;
-  font-weight: bold !important;
+    border-color: black !important;
+    font-weight: bold !important;
 }
 
 .product-detail-size.active,
 .product-detail-color.active {
-  background-color: black !important;
-  color: white !important;
-  border: 1px solid white !important;
-  box-shadow: 0 0 0 1px white !important;
+    background-color: black !important;
+    color: white !important;
+    border: 1px solid white !important;
+    box-shadow: 0 0 0 1px white !important;
 }
 
 .product-detail-size.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 

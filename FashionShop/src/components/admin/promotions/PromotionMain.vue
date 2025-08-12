@@ -5,6 +5,48 @@
       <button class="btn btn-primary" @click="openModal()">+ Thêm khuyến mãi</button>
     </div>
 
+    <div class="row g-3 mb-4">
+      <div class="col-md-2">
+        <label class="form-label">Mã</label>
+        <input
+          v-model="filters.code"
+          type="text"
+          class="form-control"
+          placeholder="Nhập mã..."
+        />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Tên chương trình</label>
+        <input
+          v-model="filters.description"
+          type="text"
+          class="form-control"
+          placeholder="Nhập tên..."
+        />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Giảm giá từ (%)</label>
+        <input v-model="filters.discountMin" type="number" class="form-control" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Đến (%)</label>
+        <input v-model="filters.discountMax" type="number" class="form-control" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Trạng thái</label>
+        <select v-model="filters.status" class="form-select">
+          <option value="">Tất cả</option>
+          <option :value="true">Đang hoạt động</option>
+          <option :value="false">Ngừng hoạt động</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <button class="btn btn-primary me-2" @click="applyFilters">🔍 Tìm</button>
+      <button class="btn btn-secondary" @click="clearFilters">Xóa bộ lọc</button>
+    </div>
+
     <div class="table-responsive">
       <table class="table table-hover align-middle text-light custom-table">
         <thead>
@@ -31,9 +73,12 @@
             <td>{{ formatDate(promo.startDate) }} - {{ formatDate(promo.endDate) }}</td>
             <td>
               <span
-                :class="['badge text-light', promo.status ? 'bg-success' : 'bg-danger']"
+                :class="[
+                  'badge text-light',
+                  isCurrentlyActive(promo) ? 'bg-success' : 'bg-danger',
+                ]"
               >
-                {{ promo.status ? "Đang hoạt động" : "Ngừng hoạt động" }}
+                {{ isCurrentlyActive(promo) ? "Đang hoạt động" : "Ngừng hoạt động" }}
               </span>
             </td>
             <td class="text-center">
@@ -191,6 +236,15 @@ const showModal = ref(false);
 const isEdit = ref(false);
 const currentId = ref(null);
 const token = localStorage.getItem("token");
+
+const filters = ref({
+  code: "",
+  description: "",
+  status: "",
+  discountMin: "",
+  discountMax: "",
+  isCurrentlyActive: false,
+});
 
 const form = ref({
   code: "",
@@ -356,6 +410,56 @@ const formatDate = (d) =>
   });
 
 const clearError = (field) => (errors.value[field] = null);
+
+const applyFilters = async () => {
+  await fetchPromotions(); // Tải dữ liệu gốc
+
+  let filtered = [...promotions.value];
+
+  const today = new Date().toISOString().split("T")[0];
+
+  if (filters.value.code)
+    filtered = filtered.filter((p) =>
+      p.code.toLowerCase().includes(filters.value.code.toLowerCase())
+    );
+
+  if (filters.value.description)
+    filtered = filtered.filter((p) =>
+      p.description.toLowerCase().includes(filters.value.description.toLowerCase())
+    );
+
+  if (filters.value.status !== "")
+    filtered = filtered.filter((p) => p.status === JSON.parse(filters.value.status));
+
+  if (filters.value.discountMin)
+    filtered = filtered.filter((p) => p.discountAmount >= +filters.value.discountMin);
+
+  if (filters.value.discountMax)
+    filtered = filtered.filter((p) => p.discountAmount <= +filters.value.discountMax);
+
+  if (filters.value.isCurrentlyActive) {
+    filtered = filtered.filter((p) => p.startDate <= today && p.endDate >= today);
+  }
+
+  promotions.value = filtered;
+};
+
+const clearFilters = async () => {
+  filters.value = {
+    code: "",
+    description: "",
+    status: "",
+    discountMin: "",
+    discountMax: "",
+    isCurrentlyActive: false,
+  };
+  await fetchPromotions();
+};
+
+const isCurrentlyActive = (promo) => {
+  const today = new Date().toISOString().split("T")[0];
+  return promo.status === true && promo.startDate <= today && promo.endDate >= today;
+};
 
 onMounted(fetchPromotions);
 </script>

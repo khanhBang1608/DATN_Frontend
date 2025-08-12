@@ -8,6 +8,7 @@ import { loginWithGoogle } from "./GoogleLogin.js";
 
 const router = useRouter();
 axios.defaults.withCredentials = true;
+const redirectPath = router.currentRoute.value.query.redirect;
 
 // Login logic
 const email = ref("");
@@ -42,11 +43,11 @@ const login = async () => {
       localStorage.setItem("tokenExpiresAt", expiresAt.toString());
 
       if (role === 0) {
-        router.push("/admin/dashboard").then(() => {
+        router.push(redirectPath || "/admin/dashboard").then(() => {
           window.location.reload();
         });
       } else {
-        router.push("/").then(() => {
+        router.push(redirectPath || "/").then(() => {
           window.location.reload();
         });
       }
@@ -121,12 +122,14 @@ const handleGoogleLogin = async () => {
     localStorage.setItem("role", userData.role);
     localStorage.setItem("tokenExpiresAt", expiresAt.toString());
 
+    const redirect = router.currentRoute.value.query.redirect;
+
     if (userData.role === 0) {
-      router.push("/admin/dashboard").then(() => {
+      router.push(redirect || "/admin/dashboard").then(() => {
         window.location.reload();
       });
     } else {
-      router.push("/").then(() => {
+      router.push(redirect || "/").then(() => {
         window.location.reload();
       });
     }

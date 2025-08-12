@@ -15,16 +15,26 @@ const formErrors = ref({
   edit: { name: "" },
 });
 
+const searchKeyword = ref("");
 const currentPage = ref(0);
-const pageSize = 10;
+const pageSize = 8;
 const totalItems = ref(0);
 const totalPages = ref(0);
+
+// Hàm debounce
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
 
 // Lấy danh sách màu có phân trang
 const fetchColors = async () => {
   try {
     const res = await axios.get(
-      `http://localhost:8080/api/admin/attributes/colors?page=${currentPage.value}&size=${pageSize}`,
+      `http://localhost:8080/api/admin/attributes/colors?page=${currentPage.value}&size=${pageSize}&search=${searchKeyword.value}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
@@ -41,11 +51,20 @@ const fetchColors = async () => {
   }
 };
 
+// Gọi fetchColors với debounce
+const debouncedFetchColors = debounce(fetchColors, 100);
+
 const changePage = (page) => {
   if (page >= 0 && page < totalPages.value) {
     currentPage.value = page;
     fetchColors();
   }
+};
+
+// Thêm hàm mới để reset trang và gọi tìm kiếm
+const onSearchInput = () => {
+  currentPage.value = 0; // Luôn về trang đầu tiên
+  debouncedFetchColors();
 };
 
 const validateColorForm = (form) => {
@@ -136,6 +155,12 @@ const deleteColor = async (id) => {
       });
 
       await fetchColors();
+
+      if (currentPage.value >= totalPages.value && totalPages.value > 0) {
+        currentPage.value = totalPages.value - 1;
+        await fetchColors();
+      }
+
       iziToast.success({
         title: "Thành công",
         message: "Màu đã được xoá.",
@@ -151,7 +176,11 @@ const deleteColor = async (id) => {
   }
 };
 
-// Reset form khi modal đóng
+const clearSearch = () => {
+  searchKeyword.value = "";
+  fetchColors();
+};
+
 onMounted(() => {
   fetchColors();
 
@@ -174,13 +203,27 @@ onMounted(() => {
   <div class="card p-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2>🎨 Danh sách Màu</h2>
+
       <button
         class="btn btn-primary"
         data-bs-toggle="modal"
         data-bs-target="#addColorModal"
       >
-        + Thêm màu
+        <i class="bi bi-plus-circle"></i>
+        Thêm màu
       </button>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+      <div class="admin-search-box">
+        <input
+          type="text"
+          v-model="searchKeyword"
+          class="admin-search-text"
+          placeholder="Nhập tên màu..."
+          @input="onSearchInput"
+        />
+        <i class="bi bi-search admin-search-icon"></i>
+      </div>
     </div>
 
     <div class="table-responsive">
@@ -194,7 +237,7 @@ onMounted(() => {
         </thead>
         <tbody>
           <tr v-for="(color, index) in colors" :key="color.colorId">
-            <td>{{ index + 1 }}</td>
+            <td>{{ currentPage * pageSize + index + 1 }}</td>
             <td>{{ color.colorName }}</td>
             <td class="text-end">
               <button
@@ -203,45 +246,39 @@ onMounted(() => {
                 data-bs-target="#editColorModal"
                 @click="openEditColor(color)"
               >
-                ✏️ Sửa
+                <i class="bi bi-pencil-square"></i> Sửa
               </button>
               <button class="btn btn-danger btn-sm" @click="deleteColor(color.colorId)">
-                🗑️ Xóa
+                <i class="bi bi-trash"></i> Xóa
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <!-- Pagination -->
-      <div class="d-flex justify-content-center align-items-center mt-3 text-white">
-        <button
-          class="btn btn-sm btn-outline-light me-2"
-          :disabled="currentPage === 0"
-          @click="changePage(currentPage - 1)"
-        >
-          &lt;
-        </button>
-
-        <template v-for="page in totalPages" :key="page">
-          <button
-            class="btn btn-sm me-1"
-            :class="{
-              'btn-light text-dark fw-bold': currentPage === page - 1,
-              'btn-outline-light': currentPage !== page - 1,
-            }"
-            @click="changePage(page - 1)"
-          >
-            {{ page }}
-          </button>
-        </template>
-
-        <button
-          class="btn btn-sm btn-outline-light ms-2"
-          :disabled="currentPage + 1 >= totalPages"
-          @click="changePage(currentPage + 1)"
-        >
-          &gt;
-        </button>
+    </div>
+    <div class="admin-pagination" v-if="totalItems > pageSize">
+      <div
+        class="admin-button admin-prev"
+        :class="{ disabled: currentPage === 0 }"
+        @click="changePage(currentPage - 1)"
+      >
+        &lt; prev
+      </div>
+      <div
+        v-for="page in totalPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page - 1 }"
+        @click="changePage(page - 1)"
+      >
+        {{ page }}
+      </div>
+      <div
+        class="admin-button admin-next"
+        :class="{ disabled: currentPage + 1 >= totalPages }"
+        @click="changePage(currentPage + 1)"
+      >
+        next &gt;
       </div>
     </div>
   </div>

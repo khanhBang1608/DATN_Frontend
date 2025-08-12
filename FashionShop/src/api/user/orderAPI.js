@@ -11,61 +11,32 @@ const getAuthHeaders = () => {
 };
 
 export const createOrder = async (orderData) => {
-  try {
-    const response = await axios.post(BASE_URL, orderData, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error creating order:', error.response?.data || error.message);
-    throw error.response?.data?.message || 'Failed to create order';
-  }
+  const res = await axios.post(BASE_URL, orderData, { headers: getAuthHeaders() });
+  return res.data;
 };
 
 export const getUserOrders = async () => {
-  try {
-    const response = await axios.get(BASE_URL, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching orders:', error.response?.data || error.message);
-    throw error.response?.data?.message || 'Failed to fetch orders';
-  }
+  const res = await axios.get(BASE_URL, { headers: getAuthHeaders() });
+  return res.data;
 };
 
 export const getOrderDetails = async (orderId) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/${orderId}`, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching order details:', error.response?.data || error.message);
-    throw error.response?.data?.message || 'Failed to fetch order details';
-  }
+  const res = await axios.get(`${BASE_URL}/${orderId}`, { headers: getAuthHeaders() });
+  return res.data;
 };
 
 export const cancelOrder = async (orderId) => {
-  try {
-    const response = await axios.put(`${BASE_URL}/${orderId}/cancel`, null, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error cancelling order:', error.response?.data || error.message);
-    throw error.response?.data?.message || 'Failed to cancel order';
-  }
+  const res = await axios.put(`${BASE_URL}/${orderId}/cancel`, null, { headers: getAuthHeaders() });
+  return res.data;
 };
 
-export const requestReturn = async (orderId) => {
-  try {
-    const response = await axios.put(`${BASE_URL}/${orderId}/return-request`, null, {
-      headers: getAuthHeaders(),
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error requesting return:', error.response?.data || error.message);
-    throw error.response?.data?.message || 'Failed to request return';
-  }
+export const requestReturn = async (orderId, formData) => {
+  const res = await axios.post(`${BASE_URL}/${orderId}/return-request`, formData, {
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data;
 };
+

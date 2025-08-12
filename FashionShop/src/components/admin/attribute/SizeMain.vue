@@ -12,21 +12,32 @@ const newSize = ref({ sizeName: "" });
 const editSize = ref({ sizeId: null, sizeName: "" });
 const formErrors = ref({ name: "" });
 
-const currentPage = ref(0); // Server-side bắt đầu từ 0
-const pageSize = ref(10);
-const totalPages = ref(1);
+const searchKeyword = ref("");
+const currentPage = ref(0);
+const pageSize = 10;
+const totalPages = ref(0);
 const totalItems = ref(0);
 
+// debounce function
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func(...args), delay);
+  };
+};
+
+// Fetch sizes
 const fetchSizes = async () => {
   try {
-    const res = await axios.get("http://localhost:8080/api/admin/attributes/sizes", {
-      params: { page: currentPage.value, size: pageSize.value },
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
+    const res = await axios.get(
+      `http://localhost:8080/api/admin/attributes/sizes?page=${currentPage.value}&size=${pageSize}&search=${searchKeyword.value}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     sizes.value = res.data.content;
     totalPages.value = res.data.totalPages;
     totalItems.value = res.data.totalElements;
+    currentPage.value = res.data.number;
   } catch (err) {
     iziToast.error({
       title: "Lỗi",
@@ -36,11 +47,20 @@ const fetchSizes = async () => {
   }
 };
 
+// Gọi API với debounce khi search
+const debouncedFetchSizes = debounce(fetchSizes, 100);
+
 const changePage = (page) => {
   if (page >= 0 && page < totalPages.value) {
     currentPage.value = page;
     fetchSizes();
   }
+};
+
+// Thêm hàm mới để reset trang và gọi tìm kiếm
+const onSearchInput = () => {
+  currentPage.value = 0; // Luôn về trang đầu tiên
+  debouncedFetchSizes();
 };
 
 const validateSizeForm = (form) => {
@@ -54,12 +74,10 @@ const validateSizeForm = (form) => {
 
 const createSize = async () => {
   if (!validateSizeForm(newSize.value)) return;
-
   try {
     await axios.post("http://localhost:8080/api/admin/attributes/sizes", newSize.value, {
       headers: { Authorization: `Bearer ${token}` },
     });
-
     iziToast.success({
       title: "Thành công",
       message: "Tạo kích thước thành công",
@@ -84,14 +102,12 @@ const openEditSize = (size) => {
 
 const updateSize = async () => {
   if (!validateSizeForm(editSize.value)) return;
-
   try {
     await axios.put(
       `http://localhost:8080/api/admin/attributes/sizes/${editSize.value.sizeId}`,
       editSize.value,
       { headers: { Authorization: `Bearer ${token}` } }
     );
-
     iziToast.success({
       title: "Thành công",
       message: "Cập nhật kích thước thành công",
@@ -126,7 +142,13 @@ const deleteSize = async (id) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // Nếu trong trang hiện tại chỉ còn 1 item và không phải trang đầu -> quay về trang trước
+      if (sizes.value.length === 1 && currentPage.value > 0) {
+        currentPage.value--;
+      }
+
       await fetchSizes();
+
       iziToast.success({
         title: "Thành công",
         message: "Kích thước đã được xoá.",
@@ -169,8 +191,22 @@ onMounted(() => {
         data-bs-toggle="modal"
         data-bs-target="#addSizeModal"
       >
-        + Thêm kích thước
+        <i class="bi bi-plus-circle"></i> Thêm kích thước
       </button>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+      <div class="admin-search-box">
+        <!-- Input tìm kiếm -->
+        <input
+          type="text"
+          v-model="searchKeyword"
+          class="admin-search-text"
+          placeholder="Nhập tên kích thước..."
+          @input="onSearchInput"
+        />
+
+        <i class="bi bi-search admin-search-icon"></i>
+      </div>
     </div>
 
     <div class="table-responsive">
@@ -184,7 +220,7 @@ onMounted(() => {
         </thead>
         <tbody>
           <tr v-for="(size, index) in sizes" :key="size.sizeId">
-            <td>{{ index + 1 }}</td>
+            <td>{{ currentPage * pageSize + index + 1 }}</td>
             <td>{{ size.sizeName }}</td>
             <td class="text-end">
               <button
@@ -193,48 +229,40 @@ onMounted(() => {
                 data-bs-target="#editSizeModal"
                 @click="openEditSize(size)"
               >
-                ✏️ Sửa
+                <i class="bi bi-pencil-square"></i> Sửa
               </button>
               <button class="btn btn-danger btn-sm" @click="deleteSize(size.sizeId)">
-                🗑️ Xóa
+                <i class="bi bi-trash"></i> Xóa
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <!-- Pagination -->
-      <div class="d-flex justify-content-center align-items-center mt-3 text-white">
-        <!-- Nút trước -->
-        <button
-          class="btn btn-sm btn-outline-light me-2"
-          :disabled="currentPage === 0"
-          @click="changePage(currentPage - 1)"
-        >
-          &lt;
-        </button>
-
-        <!-- Các số trang -->
-        <template v-for="page in totalPages" :key="page">
-          <button
-            class="btn btn-sm me-1"
-            :class="{
-              'btn-light text-dark fw-bold': currentPage === page - 1,
-              'btn-outline-light': currentPage !== page - 1,
-            }"
-            @click="changePage(page - 1)"
-          >
-            {{ page }}
-          </button>
-        </template>
-
-        <!-- Nút sau -->
-        <button
-          class="btn btn-sm btn-outline-light ms-2"
-          :disabled="currentPage + 1 >= totalPages"
-          @click="changePage(currentPage + 1)"
-        >
-          &gt;
-        </button>
+    </div>
+    <!-- Pagination -->
+    <div class="admin-pagination" v-if="totalItems > pageSize">
+      <div
+        class="admin-button admin-prev"
+        :class="{ disabled: currentPage === 0 }"
+        @click="changePage(currentPage - 1)"
+      >
+        &lt; prev
+      </div>
+      <div
+        v-for="page in totalPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page - 1 }"
+        @click="changePage(page - 1)"
+      >
+        {{ page }}
+      </div>
+      <div
+        class="admin-button admin-next"
+        :class="{ disabled: currentPage + 1 >= totalPages }"
+        @click="changePage(currentPage + 1)"
+      >
+        next &gt;
       </div>
     </div>
   </div>
@@ -259,7 +287,6 @@ onMounted(() => {
             @input="formErrors.name = ''"
             class="form-control mb-2"
           />
-
           <div v-if="formErrors.name" class="text-danger small mb-2">
             {{ formErrors.name }}
           </div>

@@ -12,8 +12,18 @@
             {{ getStatusText(order.status) }}
           </span>
         </p>
+        <p v-if="order.status === 3">
+          <button
+            class="order-management-action-btn return"
+            data-bs-toggle="modal"
+            data-bs-target="#returnModal"
+          >
+            <i class="bi bi-box-arrow-left me-1"></i> Yêu cầu trả hàng
+          </button>
+        </p>
+
         <p><strong>Số điện thoại:</strong> {{ order.address?.split(' - ')[0] }}</p>
-        <p><strong>Địa chỉ:</strong> {{ order.address?.split(' - ')[1] }}</p>
+        <p><strong>Địa chỉ:</strong> {{ order.address?.split(' - ')[2] }}</p>
         <p><strong>Phương thức thanh toán:</strong> {{ order.paymentMethod }}</p>
         <p>
           <strong>Trạng thái thanh toán:</strong>
@@ -24,6 +34,7 @@
 
         <p><strong>Phí vận chuyển:</strong> {{ formatPrice(order.shippingFee) }}</p>
         <p><strong>Giảm giá:</strong> {{ formatPrice(order.discountAmount) }}</p>
+        <p><strong>Người nhận</strong> {{ order.address?.split(' - ')[1] }}</p>
       </div>
     </div>
 
@@ -143,16 +154,48 @@
       </div>
     </div>
   </div>
+  <div class="modal fade" id="returnModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Yêu cầu trả hàng</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label>Lý do</label>
+          <textarea v-model="returnReason" class="form-control mb-3"></textarea>
 
-  <div v-else class="text-center mt-5">
-    <p>Đang tải chi tiết đơn hàng...</p>
+          <label>Upload ảnh hoặc video (tùy chọn)</label>
+          <input
+            type="file"
+            class="form-control"
+            accept="image/*,video/*"
+            @change="handleReturnFileUpload"
+          />
+
+          <div v-if="returnFilePreview" class="file-preview mt-2">
+            <img
+              v-if="returnFile?.type.startsWith('image')"
+              :src="returnFilePreview"
+              class="img-fluid"
+            />
+            <video v-else :src="returnFilePreview" controls class="img-fluid"></video>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button class="btn btn-danger" @click="submitReturn(order.orderId)">Gửi yêu cầu</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { getOrderDetails } from '@/api/user/orderAPI'
+import { getOrderDetails, requestReturn } from '@/api/user/orderAPI'
 import { createReview, checkReviewsForOrderDetails } from '@/api/user/reviewAPI'
 import { useToast } from 'vue-toastification'
+import { Modal } from 'bootstrap'
 import axios from 'axios'
 
 const toast = useToast()
@@ -172,6 +215,10 @@ export default {
       reviewTypes: {},
       filePreviews: {},
       mediaFiles: {},
+      showReturnForm: false,
+      returnReason: '',
+      returnFile: null,
+      returnFilePreview: null,
     }
   },
   async mounted() {
@@ -281,6 +328,48 @@ export default {
       const reader = new FileReader()
       reader.onload = () => {
         this.filePreviews[id] = reader.result
+      }
+      reader.readAsDataURL(file)
+    },
+    async submitReturn(orderId) {
+      if (!this.returnReason.trim()) return toast.error('Vui lòng nhập lý do trả hàng.')
+
+      const form = new FormData()
+      form.append('reason', this.returnReason)
+      if (this.returnFile) {
+        const fileType = this.returnFile.type.startsWith('video') ? 'videoUrls' : 'imageUrls'
+        form.append(fileType, this.returnFile)
+      }
+
+      try {
+        await requestReturn(orderId, form)
+        this.order.status = 4
+        this.returnReason = ''
+        this.returnFile = null
+        this.returnFilePreview = null
+        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${orderId}`)
+
+        const modalEl = document.getElementById('returnModal')
+        const modal = Modal.getOrCreateInstance(modalEl)
+        modal.hide()
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Gửi yêu cầu trả hàng thất bại.')
+      }
+    },
+    handleReturnFileUpload(event) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      const maxSize = 20 * 1024 * 1024
+      if (file.size > maxSize) {
+        toast.error('File quá lớn! Vui lòng chọn file dưới 20MB.')
+        return
+      }
+
+      this.returnFile = file
+      const reader = new FileReader()
+      reader.onload = () => {
+        this.returnFilePreview = reader.result
       }
       reader.readAsDataURL(file)
     },
