@@ -234,7 +234,6 @@ onMounted(fetchCategories);
             placeholder="Nhập tên danh mục..."
             @input="onSearchInput"
           />
-
           <i class="bi bi-search admin-search-icon"></i>
         </div>
       </div>
@@ -252,10 +251,10 @@ onMounted(fetchCategories);
         <thead>
           <tr>
             <th style="width: 50px">STT</th>
-            <th style="width: 40px" class="text-center">#</th>
-            <!-- Icon expand -->
+            <th style="width: 40px" class="text-center">#</th> <!-- Icon expand -->
             <th style="width: auto">Tên danh mục</th>
             <th style="width: 160px" class="text-end">Loại</th>
+            <th style="width: 130px" class="text-end">Số sản phẩm</th> <!-- Cột mới -->
             <th style="width: 130px" class="text-end">Trạng thái</th>
             <th style="width: 130px" class="text-end">Hành động</th>
           </tr>
@@ -292,6 +291,11 @@ onMounted(fetchCategories);
                     ?.categoryName || "Không rõ"
                 }}
               </span>
+            </td>
+
+            <!-- Số sản phẩm -->
+            <td class="text-end align-middle">
+              {{ item.productCount }}
             </td>
 
             <!-- Trạng thái -->
@@ -493,19 +497,25 @@ onMounted(fetchCategories);
 }
 
 .custom-table th:nth-child(1) {
-  width: 5%;
+  width: 5%; /* STT */
 }
 .custom-table th:nth-child(2) {
-  width: 45%;
+  width: 5%; /* Icon expand */
 }
 .custom-table th:nth-child(3) {
-  width: 15%;
+  width: 35%; /* Tên danh mục */
 }
 .custom-table th:nth-child(4) {
-  width: 15%;
+  width: 15%; /* Loại */
 }
 .custom-table th:nth-child(5) {
-  width: 20%;
+  width: 15%; /* Số sản phẩm */
+}
+.custom-table th:nth-child(6) {
+  width: 10%; /* Trạng thái */
+}
+.custom-table th:nth-child(7) {
+  width: 15%; /* Hành động */
 }
 
 .table-responsive {

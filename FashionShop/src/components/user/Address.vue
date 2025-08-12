@@ -3,15 +3,11 @@
     <nav class="custom-breadcrumb container">
       <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="/user/account" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Tổng quan tài khoản</a
-      >
+      <a href="/user/account" class="custom-breadcrumb-link custom-breadcrumb-current">Tổng quan tài khoản</a>
       <span class="custom-breadcrumb-separator">/</span>
       <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Sổ địa chỉ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Thêm địa chỉ mới</a
-      >
+      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Thêm địa chỉ mới</a>
     </nav>
   </div>
 
@@ -31,8 +27,7 @@
         <div class="mb-4">
           <h3 class="text-center fw-bold mb-3">Địa Chỉ Đặt Hàng</h3>
           <div
-            class="d-flex justify-content-between flex-column flex-sm-row align-items-start align-items-sm-center mt-3"
-          >
+            class="d-flex justify-content-between flex-column flex-sm-row align-items-start align-items-sm-center mt-3">
             <div>
               <h6 class="fw-bold mb-1">Thêm Địa Chỉ Mới</h6>
               <small class="text-muted">* Trường thông tin bắt buộc</small>
@@ -43,33 +38,19 @@
         <form @submit.prevent="submitForm" class="mt-4">
           <div class="row g-2 mb-3">
             <div class="col-sm-12 col-md-6 mb-2">
-              <label for="customerName" class="form-label address-form-label"
-                >Họ tên người nhận *</label
-              >
-              <input
-                type="text"
-                v-model="form.customerName"
-                class="form-control address-form-input"
-                id="customerName"
-                @input="clearFieldError('customerName')"
-              />
+              <label for="customerName" class="form-label address-form-label">Họ tên người nhận *</label>
+              <input type="text" v-model="form.customerName" class="form-control address-form-input" id="customerName"
+                @input="clearFieldError('customerName')" placeholder="Vui lòng nhập họ tên người nhận!" />
 
               <small v-if="errors.customerName" class="text-danger">{{
                 errors.customerName
-              }}</small>
+                }}</small>
             </div>
 
             <div class="col-sm-12 col-md-6 mb-2">
-              <label for="phone" class="form-label address-form-label"
-                >Số điện thoại *</label
-              >
-              <input
-                type="text"
-                v-model="form.phone"
-                class="form-control address-form-input"
-                id="phone"
-                @input="clearFieldError('phone')"
-              />
+              <label for="phone" class="form-label address-form-label">Số điện thoại *</label>
+              <input type="text" v-model="form.phone" class="form-control address-form-input" id="phone"
+                @input="clearFieldError('phone')" placeholder="Vui lòng nhập số điện thoại!" />
 
               <small v-if="errors.phone" class="text-danger">{{ errors.phone }}</small>
             </div>
@@ -78,16 +59,12 @@
           <div class="row g-2 mb-3">
             <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Tỉnh/Thành phố *</label>
-              <select
-                class="form-select address-form-select"
-                v-model="form.provinceId"
-                @change="
-                  () => {
-                    loadDistricts();
-                    clearFieldError('provinceId');
-                  }
-                "
-              >
+              <select class="form-select address-form-select" v-model="form.provinceId" @change="
+                () => {
+                  loadDistricts();
+                  clearFieldError('provinceId');
+                }
+              ">
                 <option value="">Tỉnh/Thành</option>
                 <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
                   {{ p.ProvinceName }}
@@ -95,21 +72,17 @@
               </select>
               <small v-if="errors.provinceId" class="text-danger">{{
                 errors.provinceId
-              }}</small>
+                }}</small>
             </div>
 
             <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Quận/Huyện *</label>
-              <select
-                class="form-select address-form-select"
-                v-model="form.districtId"
-                @change="
-                  () => {
-                    loadWards();
-                    clearFieldError('districtId');
-                  }
-                "
-              >
+              <select class="form-select address-form-select" v-model="form.districtId" @change="
+                () => {
+                  loadWards();
+                  clearFieldError('districtId');
+                }
+              ">
                 <option value="">Quận/Huyện</option>
                 <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">
                   {{ d.DistrictName }}
@@ -117,16 +90,12 @@
               </select>
               <small v-if="errors.districtId" class="text-danger">{{
                 errors.districtId
-              }}</small>
+                }}</small>
             </div>
 
             <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Phường/Xã *</label>
-              <select
-                class="form-select address-form-select"
-                v-model="form.wardId"
-                @change="clearFieldError('wardId')"
-              >
+              <select class="form-select address-form-select" v-model="form.wardId" @change="clearFieldError('wardId')">
                 <option value="">Phường/Xã</option>
                 <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">
                   {{ w.WardName }}
@@ -138,15 +107,11 @@
 
           <div class="mb-3">
             <label class="form-label address-form-label">Địa chỉ cụ thể *</label>
-            <input
-              type="text"
-              v-model="form.address"
-              class="form-control address-form-input"
-              @input="clearFieldError('address')"
-            />
+            <input type="text" v-model="form.address" class="form-control address-form-input"
+              @input="clearFieldError('address')" placeholder="Vui lòng nhập địa chỉ cụ thể!" />
             <small v-if="errors.address" class="text-danger">{{ errors.address }}</small>
           </div>
-          <div class="mb-3 form-check">
+          <!-- <div class="mb-3 form-check">
             <input
               type="checkbox"
               class="form-check-input address-form-checkbox"
@@ -156,7 +121,7 @@
             <label class="form-check-label" for="defaultAddress"
               >Đặt làm địa chỉ mặc định</label
             >
-          </div>
+          </div> -->
           <button type="submit" class="btn address-form-btn" :disabled="isLoading">
             <span v-if="isLoading">Đang lưu...</span>
             <span v-else>Lưu địa chỉ</span>
@@ -220,28 +185,45 @@ function validateForm() {
   if (!form.phone.trim()) {
     errors.phone = "Số điện thoại không được để trống";
     valid = false;
-  } else if (!/^[0-9]{10,11}$/.test(form.phone)) {
-    errors.phone = "Số điện thoại không hợp lệ";
+  } else if (!/^\d+$/.test(form.phone)) {
+    errors.phone = "Số điện thoại chỉ được chứa số (0-9)";
+    valid = false;
+  } else if (form.phone.length !== 10) {
+    errors.phone = "Số điện thoại phải đúng 10 số";
+    valid = false;
+  } else if (!/^(03[2-9]|05[2689]|07[06789]|08[1-9]|09[0-9])/.test(form.phone)) {
+    errors.phone = "Số điện thoại phải bắt đầu bằng 03, 05, 07, 08 hoặc 09";
     valid = false;
   }
 
+
+
   if (!form.provinceId) {
-    errors.provinceId = "Tỉnh/Thành phố không được để trống";
+    errors.provinceId = "Vui lòng chọn Tỉnh/Thành";
     valid = false;
   }
 
   if (!form.districtId) {
-    errors.districtId = "Quận/Huyện không được để trống";
+    errors.districtId = "Vui lòng chọn Quận/Huyện";
     valid = false;
   }
 
   if (!form.wardId) {
-    errors.wardId = "Phường/Xã không được để trống";
+    errors.wardId = "Vui lòng chọn Phường/Xã";
     valid = false;
   }
 
   if (!form.address.trim()) {
-    errors.address = "Địa chỉ chi tiết không được để trống";
+    errors.address = "Địa chỉ cụ thể không được để trống";
+    valid = false;
+  } else if (form.address.length < 5) {
+    errors.address = "Địa chỉ phải có ít nhất 5 ký tự";
+    valid = false;
+  } else if (form.address.length > 200) {
+    errors.address = "Địa chỉ cụ thể không được vượt quá 200 ký tự";
+    valid = false;
+  } else if (!/^[A-Za-zÀ-ỹ0-9\s,./-]+$/.test(form.address)) {
+    errors.address = "Địa chỉ chỉ được chứa chữ, số và ký tự thông dụng (, . / -)";
     valid = false;
   }
 
@@ -357,6 +339,7 @@ onMounted(() => {
   color: red;
   font-size: 13px;
 }
+
 /* --- giữ nguyên style cũ đã tối ưu --- */
 .address-form-container {
   width: 90%;
@@ -430,6 +413,7 @@ onMounted(() => {
 
 /* Responsive */
 @media (max-width: 576px) {
+
   .address-form-label,
   .address-form-input,
   .address-form-select,
@@ -447,6 +431,7 @@ onMounted(() => {
     height: 16px;
   }
 }
+
 .address-form-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
