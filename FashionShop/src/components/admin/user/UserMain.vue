@@ -136,10 +136,10 @@
             <td>{{ formatDate(user.createdAt) }}</td>
             <td class="text-center">
               <button
-                class="btn btn-sm btn-info m-1"
+                class="btn btn-sm btn-info m-1 text-white"
                 @click="goToUserAddresses(user.id, user.name)"
               >
-                <i class="bi bi-eye-fill me-1"></i> Xem địa chỉ
+                <i class="bi bi-eye-fill"></i> Xem địa chỉ
               </button>
             </td>
           </tr>

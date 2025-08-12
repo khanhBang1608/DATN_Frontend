@@ -1,91 +1,98 @@
 <template>
   <div class="card p-4" ref="reviewContent">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
-      <h2 class="mb-3 mb-md-0">⭐ Quản lý Đánh giá sản phẩm</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="mb-0">⭐ Quản lý Đánh giá sản phẩm</h2>
     </div>
-    <div class="mb-4">
-      <!-- Hàng 1: Đánh giá + Ngày đánh giá -->
-      <div class="d-flex flex-wrap gap-3 mb-3">
-        <!-- Đánh giá sao -->
-        <div style="min-width: 180px">
-          <label class="form-label">Đánh giá</label>
-          <select class="form-select" v-model="filters.rating">
-            <option value="">Tất cả sao</option>
-            <option v-for="rating in [1, 2, 3, 4, 5]" :key="rating" :value="rating">
-              {{ rating }} sao
+
+    <!-- Lọc theo ngày đánh giá -->
+    <div class="mb-4 admin-date-filter">
+      <label class="form-label">Ngày đánh giá</label>
+      <div class="d-flex align-items-center w-50">
+        <input
+          type="date"
+          class="admin-date-input"
+          v-model="filters.startDate"
+          @change="
+            resetFiltersExcept('date');
+            resetAndFetch();
+          "
+        />
+        <span class="mx-2">Đến</span>
+        <input
+          type="date"
+          class="admin-date-input"
+          v-model="filters.endDate"
+          @change="
+            resetFiltersExcept('date');
+            resetAndFetch();
+          "
+        />
+      </div>
+    </div>
+
+    <!-- Hàng 1: Loại tìm kiếm + Từ khóa + Đánh giá sao -->
+    <div class="row mb-3">
+      <div class="col-md-4">
+        <label class="form-label">Loại tìm kiếm</label>
+        <div class="admin-search-box">
+          <select
+            class="admin-select"
+            v-model="filters.searchType"
+            @change="
+              resetFiltersExcept('search');
+              resetAndFetch();
+            "
+          >
+            <option value="userFullName">Tên khách hàng</option>
+            <option value="productName">Tên sản phẩm</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="col-md-5">
+        <label class="form-label">Từ khóa</label>
+        <div class="admin-search-box">
+          <input
+            type="text"
+            class="admin-search-text"
+            :placeholder="
+              filters.searchType === 'userFullName'
+                ? 'Nhập tên khách hàng...'
+                : 'Nhập tên sản phẩm...'
+            "
+            v-model="filters.searchKeyword"
+            @input="
+              resetFiltersExcept('search');
+              resetAndFetch();
+            "
+          />
+          <i class="bi bi-search admin-search-icon"></i>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Đánh giá sao</label>
+        <div class="admin-search-box">
+          <select
+            class="admin-select"
+            v-model="filters.rating"
+            @change="
+              resetFiltersExcept('rating');
+              resetAndFetch();
+            "
+          >
+            <option value="">Tất cả</option>
+            <option v-for="star in [1, 2, 3, 4, 5]" :key="star" :value="star">
+              {{ star }} sao
             </option>
           </select>
         </div>
-
-        <!-- Ngày đánh giá -->
-        <div>
-          <label class="form-label">Ngày đánh giá</label>
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <input
-              type="date"
-              class="form-control"
-              v-model="filters.startDate"
-              placeholder="Từ ngày"
-              style="max-width: 160px"
-            />
-            <span>đến</span>
-            <input
-              type="date"
-              class="form-control"
-              v-model="filters.endDate"
-              placeholder="Đến ngày"
-              style="max-width: 160px"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Hàng 2: Tên khách hàng + Tên sản phẩm + Nút -->
-      <div class="d-flex flex-wrap gap-3 align-items-end">
-        <!-- Tên khách hàng -->
-        <div style="min-width: 250px; flex-grow: 1">
-          <label class="form-label">Tên khách hàng</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="filters.userFullName"
-            placeholder="Nhập tên..."
-          />
-        </div>
-
-        <!-- Tên sản phẩm -->
-        <div style="min-width: 250px; flex-grow: 1">
-          <label class="form-label">Tên sản phẩm</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="filters.productName"
-            placeholder="Nhập tên sản phẩm..."
-          />
-        </div>
-
-        <!-- Nút tìm kiếm và xóa -->
-        <div class="d-flex gap-2">
-          <button class="btn btn-primary" @click="applyFilters">🔍 Tìm</button>
-          <button class="btn btn-secondary" @click="clearFilters">Xóa bộ lọc</button>
-        </div>
       </div>
     </div>
 
-    <div class="d-flex justify-content-end gap-2 mb-3">
-      <button class="btn btn-danger" @click="exportToPDF" :disabled="loading">
-        📄 Export PDF
-      </button>
-    </div>
-
-    <div v-if="loading" class="text-center">
-      <p>Đang tải đánh giá...</p>
-    </div>
-    <div
-      v-else-if="error"
-      class="text-center text-danger alert alert-danger"
-      role="alert"
-    >
+    <!-- Bảng danh sách -->
+    <div v-if="loading" class="text-center">Đang tải đánh giá...</div>
+    <div v-else-if="error" class="text-center text-danger alert alert-danger">
       {{ error }}
       <button @click="error = null" class="btn btn-sm btn-outline-danger">Đóng</button>
     </div>
@@ -93,9 +100,10 @@
       <table class="table table-hover align-middle text-light custom-table">
         <thead>
           <tr>
+            <th>STT</th>
             <th>Sản phẩm</th>
             <th>Khách hàng</th>
-            <th>Số sao</th>
+            <th>Đánh giá</th>
             <th>Nội dung</th>
             <th>Ngày</th>
             <th class="text-center">Hành động</th>
@@ -109,6 +117,7 @@
             </td>
           </tr>
           <tr v-for="review in paginatedReviews" :key="review.reviewId">
+            <td>{{ review.reviewId }}</td>
             <td>{{ review.productName || "Không xác định" }}</td>
             <td>{{ review.userFullName || "Không xác định" }}</td>
             <td>
@@ -121,7 +130,7 @@
                 class="btn btn-sm btn-info text-white m-1"
                 @click="viewReview(review.reviewId)"
               >
-                👁️
+                <i class="bi bi-eye-fill"></i> Xem đánh giá
               </button>
             </td>
           </tr>
@@ -129,24 +138,32 @@
       </table>
     </div>
 
-    <nav class="mt-4" v-if="filteredReviews.length > pageSize">
-      <ul class="pagination">
-        <li class="page-item" :class="{ disabled: currentPage === 1 }">
-          <a class="page-link" href="#" @click.prevent="changePage(currentPage - 1)">«</a>
-        </li>
-        <li
-          class="page-item"
-          v-for="page in totalPages"
-          :key="page"
-          :class="{ active: currentPage === page }"
-        >
-          <a class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
-        </li>
-        <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-          <a class="page-link" href="#" @click.prevent="changePage(currentPage + 1)">»</a>
-        </li>
-      </ul>
-    </nav>
+    <!-- Phân trang -->
+    <div class="admin-pagination" v-if="totalPages > 1">
+      <div
+        class="admin-button admin-prev"
+        :class="{ disabled: currentPage === 1 }"
+        @click="changePage(currentPage - 1)"
+      >
+        &lt; prev
+      </div>
+      <div
+        v-for="page in totalPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page }"
+        @click="changePage(page)"
+      >
+        {{ page }}
+      </div>
+      <div
+        class="admin-button admin-next"
+        :class="{ disabled: currentPage === totalPages }"
+        @click="changePage(currentPage + 1)"
+      >
+        next &gt;
+      </div>
+    </div>
   </div>
 </template>
 
@@ -161,21 +178,26 @@ export default {
       filteredReviews: [],
       paginatedReviews: [],
       currentPage: 1,
-      pageSize: 10,
+      pageSize: 8,
       loading: false,
       error: null,
       filters: {
         rating: "",
         startDate: "",
         endDate: "",
-        userFullName: "",
-        productName: "",
+        searchType: "userFullName",
+        searchKeyword: "",
       },
     };
   },
   computed: {
     totalPages() {
       return Math.ceil(this.filteredReviews.length / this.pageSize);
+    },
+    searchPlaceholder() {
+      return this.filters.searchType === "userFullName"
+        ? "Nhập tên khách hàng..."
+        : "Nhập tên sản phẩm...";
     },
   },
   methods: {
@@ -192,12 +214,13 @@ export default {
     displayStars(rating) {
       return "★".repeat(rating) + "☆".repeat(5 - rating);
     },
+
     async fetchReviews() {
       this.loading = true;
       this.error = null;
       try {
-        this.reviews = await getAllReviews(); // lấy toàn bộ
-        this.applyFilters(); // lọc tại frontend
+        this.reviews = await getAllReviews();
+        this.applyFilters();
       } catch (error) {
         console.error("Error fetching reviews:", error.message);
         this.error = error.message.includes("Access denied")
@@ -207,55 +230,59 @@ export default {
         this.loading = false;
       }
     },
+
     applyFilters() {
-      this.currentPage = 1;
       let result = [...this.reviews];
 
       if (this.filters.rating) {
-        result = result.filter(r => r.rating === Number(this.filters.rating));
+        result = result.filter((r) => r.rating === Number(this.filters.rating));
       }
 
       if (this.filters.startDate) {
         const start = new Date(this.filters.startDate);
-        result = result.filter(r => new Date(r.reviewDate) >= start);
+        result = result.filter((r) => new Date(r.reviewDate) >= start);
       }
 
       if (this.filters.endDate) {
         const end = new Date(this.filters.endDate + "T23:59:59");
-        result = result.filter(r => new Date(r.reviewDate) <= end);
+        result = result.filter((r) => new Date(r.reviewDate) <= end);
       }
 
-      if (this.filters.userFullName.trim()) {
-        const search = this.filters.userFullName.trim().toLowerCase();
-        result = result.filter(r =>
-          (r.userFullName || "").toLowerCase().includes(search)
-        );
-      }
-
-      if (this.filters.productName.trim()) {
-        const search = this.filters.productName.trim().toLowerCase();
-        result = result.filter(r =>
-          (r.productName || "").toLowerCase().includes(search)
-        );
+      if (this.filters.searchKeyword.trim()) {
+        const search = this.filters.searchKeyword.trim().toLowerCase();
+        if (this.filters.searchType === "userFullName") {
+          result = result.filter((r) =>
+            (r.userFullName || "").toLowerCase().includes(search)
+          );
+        } else if (this.filters.searchType === "productName") {
+          result = result.filter((r) =>
+            (r.productName || "").toLowerCase().includes(search)
+          );
+        }
       }
 
       this.filteredReviews = result;
+      this.currentPage = 1;
       this.updatePagination();
     },
+
     updatePagination() {
       const start = (this.currentPage - 1) * this.pageSize;
       const end = start + this.pageSize;
       this.paginatedReviews = this.filteredReviews.slice(start, end);
     },
+
     changePage(page) {
       if (page >= 1 && page <= this.totalPages) {
         this.currentPage = page;
         this.updatePagination();
       }
     },
+
     async viewReview(reviewId) {
       this.$emit("view-review", reviewId);
     },
+
     async deleteReview(reviewId) {
       if (!confirm("Bạn có chắc muốn xóa đánh giá này?")) return;
       this.loading = true;
@@ -270,15 +297,43 @@ export default {
         this.loading = false;
       }
     },
+
     clearFilters() {
       this.filters = {
         rating: "",
         startDate: "",
         endDate: "",
-        userFullName: "",
-        productName: "",
+        searchType: "userFullName",
+        searchKeyword: "",
       };
-      this.applyFilters(); // chỉ cần gọi lại lọc
+      this.applyFilters();
+    },
+
+    // 🆕 Giống User Manager
+    resetFiltersExcept(type) {
+      // Nếu không phải filter đang được giữ, mới reset
+      if (type !== "rating" && this.filters.rating) {
+        this.filters.rating = "";
+      }
+      if (type !== "date" && (this.filters.startDate || this.filters.endDate)) {
+        this.filters.startDate = "";
+        this.filters.endDate = "";
+      }
+      if (
+        type !== "search" &&
+        (this.filters.searchKeyword || this.filters.searchType !== "userFullName")
+      ) {
+        this.filters.searchKeyword = "";
+        this.filters.searchType = "userFullName";
+      }
+    },
+    async resetAndFetch() {
+      // Có thể fetch lại toàn bộ hoặc chỉ lọc trên dữ liệu đã có
+      if (this.reviews.length === 0) {
+        await this.fetchReviews();
+      } else {
+        this.applyFilters();
+      }
     },
   },
   mounted() {
