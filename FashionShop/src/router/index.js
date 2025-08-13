@@ -33,6 +33,7 @@ import ListAddressView from '@/views/ListAddressView.vue'
 import EditAddressView from '@/views/EditAddressView.vue'
 import FavoriteView from '@/views/FavoriteView.vue'
 import PaymentSuccess from '@/views/PaymentResult.vue'
+import userOrder from '@/views/admin/UserOrderView.vue'
 import { getProductDetail } from '@/api/ProductClient'
 import ErrorView from '@/views/ErrorView.vue'
 const router = createRouter({
@@ -251,6 +252,11 @@ const router = createRouter({
           path: 'user',
           name: 'User',
           component: User,
+        },
+        {
+          path: 'user/order/:userId',
+          name: 'userOrder',
+          component: userOrder,
         },
         {
           path: '/admin/users/:id/addresses',
