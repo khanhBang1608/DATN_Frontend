@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getProductById } from "@/api/adminProductAPI";
 import axios from "axios";
@@ -21,7 +21,16 @@ const isEdit = ref(false);
 const currentVariantId = ref(null);
 const productName = ref("");
 const totalStock = ref(0);
+const filterColorId = ref("");
+const filterSizeId = ref("");
 
+const filteredVariants = computed(() => {
+  return variants.value.filter(v => {
+    const matchColor = filterColorId.value ? v.colorId === filterColorId.value : true;
+    const matchSize = filterSizeId.value ? v.sizeId === filterSizeId.value : true;
+    return matchColor && matchSize;
+  });
+});
 
 const variant = ref({
   colorId: "",
@@ -302,6 +311,21 @@ onMounted(async () => {
       </div>
 
       <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+<div class="d-flex gap-3 mb-3">
+  <select class="form-select w-auto" v-model="filterColorId">
+    <option value="">-- Tất cả màu --</option>
+    <option v-for="color in colors" :key="color.colorId" :value="color.colorId">
+      {{ color.colorName }}
+    </option>
+  </select>
+
+  <select class="form-select w-auto" v-model="filterSizeId">
+    <option value="">-- Tất cả size --</option>
+    <option v-for="size in sizes" :key="size.sizeId" :value="size.sizeId">
+      {{ size.sizeName }}
+    </option>
+  </select>
+</div>
 
       <div class="table-responsive">
         <table class="table table-hover align-middle text-light custom-table">
@@ -317,7 +341,7 @@ onMounted(async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(variant, index) in variants" :key="variant.productVariantId">
+            <tr v-for="(variant, index) in filteredVariants" :key="variant.productVariantId">
               <td>{{ index + 1 }}</td>
               <td>
                 <img v-if="variant.imageName" :src="`http://localhost:8080/images/${variant.imageName}`" width="80" />
