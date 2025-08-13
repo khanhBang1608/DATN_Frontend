@@ -328,7 +328,7 @@ const getProductName = (productId) => {
               <td>{{ index + 1 }}</td>
               <td>
                 <div>
-                  ID: {{ item.productVariant?.productVariantId }} <br />
+                  ID: {{ item.productVariant?.productVariantId }} - {{ item.productName }} <br />
                   Màu: {{ item.productVariant?.colorName }} - Size:
                   {{ item.productVariant?.sizeName }}
                 </div>
