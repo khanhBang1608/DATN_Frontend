@@ -10,11 +10,10 @@ const route = useRoute();
 const router = useRouter();
 const searchKeyword = ref(route.query.keyword || "");
 const products = ref([]);
-const similarProducts = ref([]); // Thêm biến để lưu sản phẩm tương tự
+const similarProducts = ref([]);
 const isSidebarOpen = ref(false);
 const sortOption = ref("Mới nhất");
 
-// Hàm xử lý khi click vào sản phẩm
 const handleProductClick = async (productId) => {
   try {
     const token = localStorage.getItem("token");
@@ -31,7 +30,6 @@ const handleProductClick = async (productId) => {
   }
 };
 
-// Hàm xử lý khuyến mãi
 const processProducts = async (products) => {
   try {
     const activePromotions = await promotionApi.getActivePromotions();
@@ -61,13 +59,11 @@ const processProducts = async (products) => {
           product.discount = discountPercent;
         }
 
-        // Gọi API để lấy số lượng đã bán
         const soldResponse = await axios.get(
           `/api/public/products/${product.productId}/sold-count`
         );
         product.soldCount = soldResponse.data.soldCount || 0;
 
-        // Gọi API để lấy đánh giá trung bình
         const ratingResponse = await axios.get(
           `/api/public/products/${product.productId}/average-rating`
         );
@@ -86,7 +82,6 @@ const processProducts = async (products) => {
   }
 };
 
-// Hàm lấy tất cả sản phẩm
 const currentPage = ref(0);
 const totalPages = ref(0);
 const pageSize = ref(8);
@@ -108,7 +103,6 @@ const fetchProducts = async (page = 0, size = pageSize.value) => {
   }
 };
 
-// Hàm tìm kiếm sản phẩm
 const handleSearch = async (page = 0, size = pageSize.value) => {
   try {
     const response = await searchProductsByName(searchKeyword.value, page, size);
@@ -130,15 +124,11 @@ const handleSearch = async (page = 0, size = pageSize.value) => {
   }
 };
 
-// Hàm lấy sản phẩm tương tự
 const fetchSimilarProducts = async () => {
   try {
-    // Giả sử có API để lấy sản phẩm tương tự, ví dụ dựa trên danh mục
-    const response = await axios.get("/api/public/products/similar", {
-      params: { categoryId: route.query.categoryId || 1 }, // Thay categoryId bằng giá trị phù hợp
-    });
+    const response = await searchProductsByName(searchKeyword.value || "default", 0, 8);
     similarProducts.value = await processProducts(
-      response.data.filter(
+      response.data.content.filter(
         (product) =>
           product.variants &&
           product.variants.length > 0 &&
@@ -150,7 +140,6 @@ const fetchSimilarProducts = async () => {
   }
 };
 
-// Hàm xử lý sắp xếp
 const handleSort = (option) => {
   sortOption.value = option;
   let sortedProducts = [...products.value];
@@ -170,7 +159,7 @@ const handleSort = (option) => {
       sortedProducts.sort((a, b) => a.name.localeCompare(b.name));
       break;
     case "Tên: Z-A":
-      sortedProducts.sort((a, b) => b.name.localeCompare(a.name));
+      sortedProducts.sort((a, b) => b.name.localeCompare(b.name));
       break;
     case "Tồn kho: Giảm dần":
       sortedProducts.sort(
@@ -186,11 +175,14 @@ const handleSort = (option) => {
 
 const goToPage = async (page) => {
   if (page >= 0 && page < totalPages.value) {
-    await fetchProducts(page);
+    if (searchKeyword.value) {
+      await handleSearch(page);
+    } else {
+      await fetchProducts(page);
+    }
   }
 };
 
-// onMounted hook
 onMounted(async () => {
   if (searchKeyword.value) {
     await handleSearch();
@@ -202,7 +194,6 @@ onMounted(async () => {
   setupFilterSidebar();
 });
 
-// Theo dõi thay đổi URL keyword
 watch(
   () => route.query.keyword,
   async (newKeyword) => {
@@ -212,10 +203,11 @@ watch(
     } else {
       await fetchProducts();
     }
-    await fetchSimilarProducts(); // Cập nhật sản phẩm tương tự khi thay đổi keyword
+    await fetchSimilarProducts();
   }
 );
 </script>
+
 <template>
   <main>
     <div class="mainProduct">
@@ -237,7 +229,6 @@ watch(
       class="container product-sticky-toolbar d-flex flex-responsive justify-content-between align-items-start mt-2"
       :class="{ 'sidebar-open': isSidebarOpen }"
     >
-      <!-- Bộ lọc sidebar (giữ nguyên) -->
       <div class="filter-sidebar-wrapper mt-2">
         <div class="filter-header" id="toggleSidebarBtn">
           <i class="bi bi-sliders"></i>
@@ -674,7 +665,6 @@ watch(
       </div>
     </div>
 
-    <!-- Danh sách sản phẩm chính -->
     <div class="product-content-wrapper">
       <div class="container mt-5">
         <div class="row g-3">

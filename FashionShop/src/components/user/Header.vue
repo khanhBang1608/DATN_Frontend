@@ -2,11 +2,13 @@
 import { ref, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import initHeader from "@/assets/js/header.js";
+import axios from "axios";
 
 const isLoggedIn = ref(false);
 const router = useRouter();
 const userInfo = ref(null);
-import axios from "axios";
+const categories = ref([]); // Lưu danh sách danh mục từ API
+const activeSubmenu = ref(null); // Theo dõi danh mục cha đang mở submenu
 
 async function fetchUserInfo() {
   const token = localStorage.getItem("token");
@@ -18,10 +20,20 @@ async function fetchUserInfo() {
         Authorization: `Bearer ${token}`,
       },
     });
-
     userInfo.value = response.data;
   } catch (error) {
     console.error("Không thể lấy thông tin user:", error.response?.data || error.message);
+  }
+}
+
+async function fetchCategories() {
+  try {
+    const response = await axios.get(
+      "http://localhost:8080/api/public/category/categories"
+    );
+    categories.value = response.data; // Lưu roots (danh mục cha với children)
+  } catch (error) {
+    console.error("Không thể lấy danh mục:", error);
   }
 }
 
@@ -54,9 +66,22 @@ function handleUserIconClick() {
   }
 }
 
+function navigateToProducts(categoryName) {
+  router.push({ path: "/product", query: { keyword: categoryName } });
+}
+
+function toggleSubmenu(categoryId) {
+  if (activeSubmenu.value === categoryId) {
+    activeSubmenu.value = null;
+  } else {
+    activeSubmenu.value = categoryId;
+  }
+}
+
 onMounted(() => {
   checkLoginStatus();
-  fetchUserInfo(); // Gọi lấy tên khi load trang
+  fetchUserInfo();
+  fetchCategories();
 
   window.addEventListener("storage", () => {
     checkLoginStatus();
@@ -64,7 +89,6 @@ onMounted(() => {
   });
 });
 
-// Gọi lại initHeader sau khi DOM render do v-if isLoggedIn
 watch(isLoggedIn, (newVal) => {
   if (newVal) {
     nextTick(() => {
@@ -78,10 +102,8 @@ const searchKeyword = ref("");
 function handleSearch() {
   const keyword = searchKeyword.value.trim();
   if (keyword) {
-    // Nếu có từ khóa: chuyển hướng kèm keyword
     router.push({ path: "/product", query: { keyword } });
   } else {
-    // Nếu rỗng: chuyển hướng /product KHÔNG có query
     router.push({ path: "/product" });
   }
 }
@@ -128,7 +150,6 @@ function handleSearch() {
           <img src="@/assets/img/logo-brand.png" alt="Nike Logo" height="45" />
         </a>
         <div class="d-flex align-items-center d-lg-none">
-          <!-- Khi ĐÃ đăng nhập -->
           <a
             href="#"
             @click.prevent="handleUserIconClick"
@@ -136,15 +157,12 @@ function handleSearch() {
           >
             <i class="bi bi-people fs-4"></i>
           </a>
-
           <a href="/user/favorite" class="text-dark text-decoration-none mx-2">
             <i class="bi bi-heart fs-4"></i>
           </a>
-
           <a href="/user/cart" class="text-dark text-decoration-none mx-2">
             <i class="bi bi-cart fs-4"></i>
           </a>
-
           <button
             class="navbar-toggler"
             type="button"
@@ -155,7 +173,6 @@ function handleSearch() {
           >
             <span class="navbar-toggler-icon"></span>
           </button>
-
           <div
             class="offcanvas offcanvas-end"
             tabindex="-1"
@@ -176,12 +193,12 @@ function handleSearch() {
                 <li class="nav-item">
                   <a class="custom-nav-link" href="#">BEST SELLER</a>
                 </li>
-
                 <li class="nav-item custom-has-dropdown">
                   <a class="custom-nav-link custom-submenu-toggle" href="#"
                     >TÚI <span class="float-end">></span></a
                   >
                   <ul class="custom-submenu">
+                    <li><a href="#" class="custom-back-btn">&lt; TÚI</a></li>
                     <li><a href="#" class="custom-back-btn">&lt; TÚI</a></li>
                     <li><a href="#">XEM TẤT CẢ</a></li>
                     <li><a href="#">TÚI XÁCH</a></li>
@@ -190,7 +207,6 @@ function handleSearch() {
                     <li><a href="#">TÚI TOTE & BALO</a></li>
                   </ul>
                 </li>
-
                 <li class="nav-item custom-has-dropdown">
                   <a class="custom-nav-link custom-submenu-toggle" href="#"
                     >VÍ <span class="float-end">></span></a
@@ -201,7 +217,6 @@ function handleSearch() {
                     <li><a href="#">VÍ NỮ</a></li>
                   </ul>
                 </li>
-
                 <li class="nav-item custom-has-dropdown">
                   <a class="custom-nav-link custom-submenu-toggle" href="#"
                     >GIÀY <span class="float-end">></span></a
@@ -212,7 +227,6 @@ function handleSearch() {
                     <li><a href="#">GIÀY LƯỜI</a></li>
                   </ul>
                 </li>
-
                 <li class="nav-item custom-has-dropdown">
                   <a class="custom-nav-link custom-submenu-toggle" href="#"
                     >PHỤ KIỆN <span class="float-end">></span></a
@@ -223,7 +237,6 @@ function handleSearch() {
                     <li><a href="#">THẮT LƯNG</a></li>
                   </ul>
                 </li>
-
                 <li class="nav-item custom-has-dropdown">
                   <a class="custom-nav-link custom-submenu-toggle" href="#"
                     >BỘ SƯU TẬP <span class="float-end">></span></a
@@ -234,15 +247,13 @@ function handleSearch() {
                     <li><a href="#">THU ĐÔNG 2024</a></li>
                   </ul>
                 </li>
-
                 <li class="nav-item">
                   <a class="custom-nav-link" href="#">CÂU CHUYỆN</a>
                 </li>
-
                 <li v-if="isLoggedIn" class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#">
-                    TỔNG QUAN TÀI KHOẢN <span class="float-end">></span>
-                  </a>
+                  <a class="custom-nav-link custom-submenu-toggle" href="#"
+                    >TỔNG QUAN TÀI KHOẢN <span class="float-end">></span></a
+                  >
                   <ul class="custom-submenu">
                     <li>
                       <a href="#" class="custom-back-btn">&lt; TỔNG QUAN TÀI KHOẢN</a>
@@ -256,7 +267,6 @@ function handleSearch() {
                   </ul>
                 </li>
               </ul>
-
               <div class="custom-bottom-section">
                 <ul class="navbar-nav">
                   <li class="nav-item">
@@ -268,7 +278,6 @@ function handleSearch() {
                     >
                       <i class="bi bi-person fs-5"></i> ĐĂNG NHẬP
                     </a>
-
                     <a
                       class="custom-nav-link"
                       href="#"
@@ -291,24 +300,21 @@ function handleSearch() {
         </div>
       </div>
       <div class="w-100" style="border-bottom: 2px solid #e0e0e0"></div>
-
-      <template>
-        <div class="mobile-search-wrapper d-lg-none">
-          <form class="search-form" @submit.prevent="handleSearch">
-            <div class="input-group">
-              <input
-                type="text"
-                class="form-control search-input"
-                placeholder="Tìm kiếm sản phẩm..."
-                v-model="searchKeyword"
-              />
-              <button class="btn search-btn" type="submit">
-                <i class="bi bi-search"></i>
-              </button>
-            </div>
-          </form>
-        </div>
-      </template>
+      <div class="mobile-search-wrapper d-lg-none">
+        <form class="search-form" @submit.prevent="handleSearch">
+          <div class="input-group">
+            <input
+              type="text"
+              class="form-control search-input"
+              placeholder="Tìm kiếm sản phẩm..."
+              v-model="searchKeyword"
+            />
+            <button class="btn search-btn" type="submit">
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </form>
+      </div>
     </nav>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white d-none d-lg-block">
@@ -318,48 +324,45 @@ function handleSearch() {
         </a>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav mx-auto fw-bold text-dark d-none d-lg-flex">
-            <li class="nav-item"><a class="nav-link" href="/">Trang Chủ</a></li>
-            <li class="nav-item"><a class="nav-link" href="/product">Sản Phẩm</a></li>
-            <!-- <li class="nav-item dropdown">
+            <li class="nav-item">
+              <a class="nav-link" href="/">Trang Chủ</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="/product">Sản Phẩm</a>
+            </li>
+            <!-- Lặp trực tiếp danh mục cha -->
+            <li
+              v-for="parent in categories"
+              :key="parent.categoryId"
+              class="nav-item dropdown"
+            >
               <a
                 class="nav-link dropdown-toggle"
                 href="#"
-                id="desktopProductDropdown"
+                :id="`desktopProductDropdown-${parent.categoryId}`"
                 role="button"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
-                >Áo</a
               >
+                {{ parent.categoryName }}
+              </a>
+
               <ul
+                v-if="parent.children && parent.children.length"
                 class="dropdown-menu custom-dropdown shadow-sm border-0 rounded-3 mt-2"
-                aria-labelledby="desktopProductDropdown"
+                :aria-labelledby="`desktopProductDropdown-${parent.categoryId}`"
               >
-                <li><a class="dropdown-item" href="#">BST Teddy</a></li>
-                <li><a class="dropdown-item" href="#">BST WooWoo</a></li>
-                <li><a class="dropdown-item" href="#">Jersey</a></li>
-                <li><a class="dropdown-item" href="#">Sơ Mi</a></li>
+                <li v-for="child in parent.children" :key="child.categoryId">
+                  <a
+                    class="dropdown-item"
+                    href="#"
+                    @click.prevent="navigateToProducts(child.categoryName)"
+                  >
+                    {{ child.categoryName }}
+                  </a>
+                </li>
               </ul>
             </li>
-            <li class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                id="desktopProductDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                >Quần</a
-              >
-              <ul
-                class="dropdown-menu custom-dropdown shadow-sm border-0 rounded-3 mt-2"
-                aria-labelledby="desktopProductDropdown"
-              >
-                <li><a class="dropdown-item" href="#">BST Teddy</a></li>
-                <li><a class="dropdown-item" href="#">BST WooWoo</a></li>
-                <li><a class="dropdown-item" href="#">Jersey</a></li>
-                <li><a class="dropdown-item" href="#">Sơ Mi</a></li>
-              </ul>
-            </li> -->
           </ul>
 
           <div class="d-none d-lg-flex align-items-center">
@@ -373,7 +376,6 @@ function handleSearch() {
               >
                 <i class="bi bi-person fs-4"></i>
               </a>
-
               <ul
                 class="dropdown-menu header_login_menu_dropdown custom-dropdown shadow-sm border-0 rounded-3 header_login_menu_registered"
                 aria-labelledby="desktopUserDropdownToggle"
@@ -391,8 +393,6 @@ function handleSearch() {
                 </li>
               </ul>
             </div>
-
-            <!-- Nếu CHƯA đăng nhập: Chuyển đến login -->
             <div v-else>
               <a
                 href="#"
@@ -402,11 +402,9 @@ function handleSearch() {
                 <i class="bi bi-person fs-4"></i>
               </a>
             </div>
-
             <a href="/user/favorite" class="text-dark text-decoration-none mx-2">
               <i class="bi bi-heart fs-4"></i>
             </a>
-
             <a href="/user/cart" class="text-dark text-decoration-none mx-2">
               <i class="bi bi-cart fs-4"></i>
             </a>
@@ -428,4 +426,47 @@ function handleSearch() {
     </nav>
   </header>
 </template>
+
 <style src="./src/assets/css/header.css"></style>
+
+<style scoped>
+.dropdown-submenu {
+  position: relative;
+}
+
+.dropdown-submenu .dropdown-submenu-list {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  min-width: 200px;
+  z-index: 1000;
+  background-color: #fff;
+  border-radius: 0.3rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-submenu .dropdown-submenu-list.show {
+  display: block;
+}
+
+#categoryDropdown {
+  font-weight: bold;
+  color: #333;
+}
+
+.dropdown-item {
+  padding: 0.5rem 1rem;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: #000;
+}
+
+.navbar-nav .dropdown-menu {
+  min-width: 200px;
+}
+</style>
