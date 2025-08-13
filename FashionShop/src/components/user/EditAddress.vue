@@ -312,6 +312,7 @@ async function loadWards() {
 
 async function submitForm() {
   if (!validateForm()) return;
+  
 
   const Token = localStorage.getItem("token");
   if (!Token) {
@@ -351,6 +352,28 @@ async function submitForm() {
         body: JSON.stringify(payload),
       }
     );
+    if (res.status === 304) {
+    iziToast.warning({
+      title: "Thông báo",
+      message: "Không có sự thay đổi nào. Bạn có muốn tiếp tục sửa?",
+      position: "topRight",
+      buttons: [
+        [
+          "<button>Tiếp tục sửa</button>",
+          function () {
+            // Không làm gì, cho user tiếp tục sửa
+          },
+        ],
+        [
+          "<button>Quay lại</button>",
+          function () {
+            window.location.href = "/user/listaddress";
+          },
+        ],
+      ],
+    });
+    return;
+  }
 
     if (!res.ok) throw new Error("Cập nhật thất bại");
 

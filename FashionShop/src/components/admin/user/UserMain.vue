@@ -96,6 +96,7 @@
             <th>Ảnh</th>
             <th>Họ tên</th>
             <th>Email</th>
+            <th>Tổng đơn</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
             <th class="text-center">Hành động</th>
@@ -121,6 +122,15 @@
             </td>
             <td>{{ user.name }}</td>
             <td>{{ user.email }}</td>
+            <td>
+              {{ user.countOrder }}
+              <router-link
+                :to="`/admin/user/order/${user.id}`"
+                class="btn btn-sm btn-primary ms-2"
+              >
+                Chi tiết
+              </router-link>
+            </td>
             <td>
               <select
                 class="form-select form-select-sm text-light"
