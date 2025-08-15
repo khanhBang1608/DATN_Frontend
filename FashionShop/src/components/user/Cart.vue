@@ -25,6 +25,16 @@
           <div v-if="cart.details.length === 0" class="text-center">
             <p>Giỏ hàng trống</p>
           </div>
+          <div v-if="cart.details.length > 0" class="mb-3 d-flex align-items-center fs-5">
+            <input
+              type="checkbox"
+              v-model="selectAll"
+              @change="toggleSelectAll"
+              style="transform: scale(1.2); margin-right: 8px"
+            />
+            <label class="mb-0">Chọn tất cả</label>
+          </div>
+
           <div
             v-for="item in cart.details"
             :key="item.cartDetailId"
@@ -32,20 +42,19 @@
           >
             <!-- Checkbox -->
             <!-- Checkbox hoặc thông báo -->
-<div class="me-5 d-flex align-items-center">
-  <template v-if="item.productStatus && item.categoryStatus">
-    <input
-      type="checkbox"
-      :value="item.cartDetailId"
-      v-model="selectedItems"
-      style="transform: scale(1.5); width: 15px; height: 15px"
-    />
-  </template>
-  <template v-else>
-    <span class="text-danger fw-bold">Ngưng bán</span>
-  </template>
-</div>
-
+            <div class="me-5 d-flex align-items-center">
+              <template v-if="item.productStatus && item.categoryStatus">
+                <input
+                  type="checkbox"
+                  :value="item.cartDetailId"
+                  v-model="selectedItems"
+                  style="transform: scale(1.5); width: 15px; height: 15px"
+                />
+              </template>
+              <template v-else>
+                <span class="text-danger fw-bold">Ngưng bán</span>
+              </template>
+            </div>
 
             <!-- Ảnh -->
             <img
@@ -72,31 +81,36 @@
               </div>
               <p class="mb-1">Size: {{ item.size }}</p>
               <p class="mb-2">Màu: {{ item.color }}</p>
-
+              <p v-if="item.stock < 20" class="text-danger fw-bold mb-2">
+                Chỉ còn {{ item.stock }} sản phẩm
+              </p>
               <!-- Số lượng -->
               <div v-if="item.productStatus && item.categoryStatus">
-  <!-- Số lượng -->
-  <div class="input-group w-auto cart-quantity">
-    <button
-      class="btn btn-outline-secondary"
-      @click="updateQuantity(item.cartDetailId, item.quantity - 1)"
-      :disabled="item.quantity <= 1"
-    >-</button>
-    <input
-      type="text"
-      class="form-control text-center"
-      v-model.number="item.quantity"
-      style="max-width: 60px"
-      readonly
-    />
-    <button
-      class="btn btn-outline-secondary"
-      @click="updateQuantity(item.cartDetailId, item.quantity + 1)"
-      :disabled="item.quantity >= item.stock"
-    >+</button>
-  </div>
-</div>
-
+                <!-- Số lượng -->
+                <div class="input-group w-auto cart-quantity">
+                  <button
+                    class="btn btn-outline-secondary"
+                    @click="updateQuantity(item.cartDetailId, item.quantity - 1)"
+                    :disabled="item.quantity <= 1"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="text"
+                    class="form-control text-center"
+                    v-model.number="item.quantity"
+                    style="max-width: 60px"
+                    readonly
+                  />
+                  <button
+                    class="btn btn-outline-secondary"
+                    @click="updateQuantity(item.cartDetailId, item.quantity + 1)"
+                    :disabled="item.quantity >= item.stock"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
             </div>
 
             <!-- Nút xóa -->
@@ -215,6 +229,7 @@ import {
 } from "@/api/user/cartAPI";
 import promotionApi from "@/api/PromotionClien";
 import { useToast } from "vue-toastification";
+import Swal from 'sweetalert2';
 
 const toast = useToast();
 
@@ -222,6 +237,7 @@ export default {
   name: "CartPage",
   data() {
     return {
+      selectAll: false,
       selectedItems: [],
       cart: {
         cartId: null,
@@ -478,24 +494,37 @@ export default {
         this.loading = false;
       }
     },
-    async clearCart() {
-      this.loading = true;
-      try {
-        const cartData = await clearCart();
-        this.cart = {
-          ...cartData,
-          details: [],
-        };
-        this.selectedItems = [];
-        toast.success("Xóa giỏ hàng thành công!");
-      } catch (error) {
-        console.error("Error clearing cart:", error.message);
-        toast.error("Xóa giỏ hàng thất bại.");
-        this.error = "Xóa giỏ hàng thất bại.";
-      } finally {
-        this.loading = false;
-      }
-    },
+async clearCart() {
+  const result = await Swal.fire({
+    title: 'Bạn có chắc chắn?',
+    text: "Tất cả sản phẩm trong giỏ sẽ bị xóa!",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Xóa',
+    cancelButtonText: 'Hủy'
+  });
+
+  if (!result.isConfirmed) return;
+
+  this.loading = true;
+  try {
+    const cartData = await clearCart();
+    this.cart = {
+      ...cartData,
+      details: [],
+    };
+    this.selectedItems = [];
+    toast.success("Xóa giỏ hàng thành công!");
+  } catch (error) {
+    console.error("Error clearing cart:", error.message);
+    toast.error("Xóa giỏ hàng thất bại.");
+    this.error = "Xóa giỏ hàng thất bại.";
+  } finally {
+    this.loading = false;
+  }
+},
     proceedToCheckout() {
       const selectedDetails = this.cart.details
         .filter((item) => this.selectedItems.includes(item.cartDetailId))
@@ -512,6 +541,25 @@ export default {
       localStorage.setItem("orderNote", this.orderNote);
       localStorage.setItem("cartDetails", JSON.stringify(selectedDetails));
       this.$router.push("/user/checkout");
+    },
+    toggleSelectAll() {
+      if (this.selectAll) {
+        // Chỉ chọn những sản phẩm còn bán
+        this.selectedItems = this.cart.details
+          .filter((item) => item.productStatus && item.categoryStatus)
+          .map((item) => item.cartDetailId);
+      } else {
+        this.selectedItems = [];
+      }
+    },
+  },
+  watch: {
+    selectedItems(newVal) {
+      const allAvailableItems = this.cart.details
+        .filter((item) => item.productStatus && item.categoryStatus)
+        .map((item) => item.cartDetailId);
+
+      this.selectAll = newVal.length === allAvailableItems.length;
     },
   },
   mounted() {
