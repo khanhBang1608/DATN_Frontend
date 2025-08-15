@@ -117,12 +117,12 @@ body {
 }
 
 /* .filter-sidebar-wrapper {
-    z-index: 1600; 
-    position: relative; 
+    z-index: 1600;
+    position: relative;
 }
 
 #mobileFilterSidebar.offcanvas {
-    z-index: 1500 !important; 
+    z-index: 1500 !important;
 }
 
 #mobileFilterSidebar.offcanvas.show {
@@ -384,7 +384,12 @@ body {
     cursor: default;
 }
 
-
+/* Thêm vào product.css */
+.stock-count {
+  margin-top: 5px;
+  font-weight: bold;
+  color: #dc3545; /* Màu đỏ của Bootstrap */
+}
 @media (max-width: 768px) {
     .product-sidebar {
         display: none !important;

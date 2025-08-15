@@ -13,6 +13,7 @@ const products = ref([]);
 const similarProducts = ref([]);
 const isSidebarOpen = ref(false);
 const sortOption = ref("Mới nhất");
+const showNoProductsMessage = ref(false); // Thêm biến để kiểm soát thông báo
 
 const handleProductClick = async (productId) => {
   try {
@@ -69,6 +70,12 @@ const processProducts = async (products) => {
         );
         product.averageRating = ratingResponse.data || 0;
 
+        // Tính tổng stock của tất cả các biến thể
+        product.totalStock = product.variants.reduce(
+          (sum, variant) => sum + (variant.stock || 0),
+          0
+        );
+
         product.variants = [
           minVariant,
           ...product.variants.filter((v) => v !== minVariant),
@@ -97,9 +104,13 @@ const fetchProducts = async (page = 0, size = pageSize.value) => {
     totalPages.value = data.totalPages;
     currentPage.value = data.number;
 
+    // Kiểm tra nếu không có sản phẩm
+    showNoProductsMessage.value = processed.length === 0;
+
     handleSort(sortOption.value);
   } catch (err) {
     console.error("Lỗi khi tải sản phẩm:", err);
+    showNoProductsMessage.value = true; // Hiển thị thông báo nếu có lỗi
   }
 };
 
@@ -114,6 +125,9 @@ const handleSearch = async (page = 0, size = pageSize.value) => {
     totalPages.value = data.totalPages;
     currentPage.value = data.number;
 
+    // Kiểm tra nếu không có sản phẩm
+    showNoProductsMessage.value = processed.length === 0;
+
     if (!data.content || data.content.length === 0) {
       console.log("Không tìm thấy sản phẩm phù hợp.");
     }
@@ -121,6 +135,7 @@ const handleSearch = async (page = 0, size = pageSize.value) => {
     handleSort(sortOption.value);
   } catch (error) {
     console.error("Lỗi khi tìm kiếm sản phẩm:", error);
+    showNoProductsMessage.value = true; // Hiển thị thông báo nếu có lỗi
   }
 };
 
@@ -162,9 +177,7 @@ const handleSort = (option) => {
       sortedProducts.sort((a, b) => b.name.localeCompare(b.name));
       break;
     case "Tồn kho: Giảm dần":
-      sortedProducts.sort(
-        (a, b) => (b.variants[0]?.stock || 0) - (a.variants[0]?.stock || 0)
-      );
+      sortedProducts.sort((a, b) => (b.totalStock || 0) - (a.totalStock || 0));
       break;
     default:
       break;
@@ -739,9 +752,44 @@ watch(
                   <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản
                   phẩm
                 </div>
+                <!-- Hiển thị tổng stock nếu <= 20, nhỏ hơn và nằm ngang -->
+                <div
+                  class="stock-count text-danger"
+                  style="font-size: 12px; display: inline-block; margin-left: 5px"
+                  v-if="product.totalStock <= 20"
+                >
+                  <i class="bi bi-exclamation-triangle me-1"></i>Còn
+                  {{ product.totalStock }} sản phẩm
+                </div>
               </a>
             </div>
           </template>
+          <!-- Hiển thị thông báo khi không có sản phẩm -->
+          <div v-if="showNoProductsMessage" class="container text-center py-5">
+            <!-- Hình minh họa -->
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/7486/7486802.png"
+              alt="No Product"
+              class="mb-4"
+              style="max-width: 180px"
+            />
+
+            <!-- Tiêu đề -->
+            <h1 class="fw-bold text-danger mb-2">Ôi khum 😢</h1>
+
+            <!-- Mô tả -->
+            <p class="text-muted fs-5 mb-4">
+              Không có sản phẩm nào liên quan đến danh mục này.<br />
+              Hãy thử quay lại trang chủ hoặc chọn danh mục khác nhé.
+            </p>
+
+            <!-- Nút điều hướng -->
+            <div>
+              <a href="/" class="btn btn-primary btn-lg me-2">
+                <i class="fa-solid fa-house me-2"></i> Quay về Trang Chủ
+              </a>
+            </div>
+          </div>
         </div>
         <ul class="pagination mt-3">
           <li
@@ -751,7 +799,6 @@ watch(
           >
             &lt;
           </li>
-
           <li
             v-for="page in totalPages"
             :key="page"
@@ -761,7 +808,6 @@ watch(
           >
             {{ page }}
           </li>
-
           <li
             class="pagination-item pagination-arrow"
             :class="{ 'pagination-disabled': currentPage === totalPages - 1 }"
@@ -775,4 +821,16 @@ watch(
   </main>
 </template>
 
-<style src="./src/assets/css/product.css"></style>
+<style>
+.stock-count {
+  font-size: 12px; /* Giảm kích thước font */
+  display: inline-block; /* Sắp xếp ngang */
+  margin-left: 5px; /* Khoảng cách từ sold-count */
+  vertical-align: middle; /* Căn giữa theo chiều dọc với sold-count */
+}
+
+.sold-count {
+  display: inline-block; /* Sắp xếp ngang */
+  margin-right: 5px; /* Khoảng cách từ stock-count */
+}
+</style>
