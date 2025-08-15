@@ -252,7 +252,6 @@ onMounted(fetchCategories);
           <tr>
             <th style="width: 50px">STT</th>
             <th style="width: 40px" class="text-center">#</th>
-            <!-- Icon expand -->
             <th style="width: auto">Tên danh mục</th>
             <th style="width: 160px" class="text-end">Loại</th>
             <th style="width: 130px" class="text-end">Số sản phẩm</th>
@@ -263,7 +262,6 @@ onMounted(fetchCategories);
           <tr v-for="item in displayedCategories" :key="item.categoryId">
             <td class="align-middle">{{ item.index }}</td>
 
-            <!-- Icon Expand -->
             <td class="text-center align-middle">
               <span
                 v-if="item.children?.length"
@@ -274,19 +272,15 @@ onMounted(fetchCategories);
               </span>
             </td>
 
-            <!-- Tên danh mục (thụt lề theo cấp) -->
             <td class="align-middle">
               <div
-                class="d-flex align-items-center "
+                class="d-flex align-items-center"
                 :style="{ paddingLeft: `${item.level * 20}px` }"
               >
-                <!-- Tên danh mục -->
                 <div>{{ item.categoryName }}</div>
 
-                <!-- Trạng thái & nút sửa -->
-                <div class="ms-auto d-flex align-items-center gap-2 ">
+                <div class="ms-auto d-flex align-items-center gap-2">
                   <span
-                    v-if="item.parentId !== null"
                     class="d-flex align-items-center"
                     :class="['badge', item.status ? 'bg-success' : 'bg-danger']"
                     style="height: fit-content"
@@ -295,19 +289,17 @@ onMounted(fetchCategories);
                   </span>
 
                   <button
-                    v-if="item.parentId !== null"
                     class="btn btn-warning btn-sm"
                     data-bs-toggle="modal"
                     data-bs-target="#editCategoryModal"
                     @click="editCategoryData(item)"
                   >
-                    <i class="bi bi-pencil-square "></i> Sửa
+                    <i class="bi bi-pencil-square"></i> Sửa
                   </button>
                 </div>
               </div>
             </td>
 
-            <!-- Loại -->
             <td class="text-end align-middle">
               <span v-if="item.parentId === null">Danh mục cha</span>
               <span v-else>
@@ -318,7 +310,6 @@ onMounted(fetchCategories);
               </span>
             </td>
 
-            <!-- Số sản phẩm -->
             <td class="text-end align-middle">
               {{ item.productCount }}
             </td>
@@ -328,7 +319,6 @@ onMounted(fetchCategories);
     </div>
 
     <div v-if="totalPages > 1" class="admin-pagination">
-      <!-- Nút trước -->
       <div
         class="admin-button admin-prev"
         :class="{ disabled: currentPage === 1 }"
@@ -337,7 +327,6 @@ onMounted(fetchCategories);
         &lt; prev
       </div>
 
-      <!-- Số trang -->
       <div
         v-for="page in totalPages"
         :key="page"
@@ -348,7 +337,6 @@ onMounted(fetchCategories);
         {{ page }}
       </div>
 
-      <!-- Nút sau -->
       <div
         class="admin-button admin-next"
         :class="{ disabled: currentPage === totalPages }"
@@ -359,7 +347,6 @@ onMounted(fetchCategories);
     </div>
   </div>
 
-  <!-- Modal Thêm -->
   <div class="modal fade" id="addCategoryModal" tabindex="-1">
     <div class="modal-dialog">
       <form @submit.prevent="createCategory" class="modal-content">
@@ -373,7 +360,6 @@ onMounted(fetchCategories);
           ></button>
         </div>
         <div class="modal-body">
-          <!-- Label cho Tên danh mục -->
           <label for="categoryNameInput" class="form-label">Tên danh mục:</label>
           <input
             id="categoryNameInput"
@@ -385,7 +371,6 @@ onMounted(fetchCategories);
             {{ formErrors.name }}
           </div>
 
-          <!-- Label cho Danh mục cha -->
           <label for="parentCategorySelect" class="form-label">Loại:</label>
           <select
             id="parentCategorySelect"
@@ -402,7 +387,6 @@ onMounted(fetchCategories);
             </option>
           </select>
 
-          <!-- Label cho Trạng thái -->
           <label for="statusSelect" class="form-label">Trạng thái:</label>
           <select id="statusSelect" v-model="newCategory.status" class="form-select mb-2">
             <option value="1">Đang bán</option>
@@ -422,7 +406,6 @@ onMounted(fetchCategories);
     </div>
   </div>
 
-  <!-- Modal Sửa -->
   <div class="modal fade" id="editCategoryModal" tabindex="-1">
     <div class="modal-dialog">
       <form @submit.prevent="updateCategory" class="modal-content">
@@ -436,7 +419,6 @@ onMounted(fetchCategories);
           ></button>
         </div>
         <div class="modal-body">
-          <!-- Tên danh mục -->
           <label for="editCategoryName" class="form-label">Tên danh mục:</label>
           <input
             id="editCategoryName"
@@ -447,7 +429,6 @@ onMounted(fetchCategories);
             {{ formErrors.name }}
           </div>
 
-          <!-- Danh mục cha -->
           <label for="editParentCategory" class="form-label mt-2">Loại</label>
           <select
             id="editParentCategory"
@@ -464,7 +445,6 @@ onMounted(fetchCategories);
             </option>
           </select>
 
-          <!-- Trạng thái -->
           <label for="editStatus" class="form-label">Trạng thái:</label>
           <select id="editStatus" v-model="editCategory.status" class="form-select mb-1">
             <option value="1">Đang bán</option>
@@ -503,25 +483,19 @@ onMounted(fetchCategories);
 }
 
 .custom-table th:nth-child(1) {
-  width: 5%; /* STT */
+  width: 5%;
 }
 .custom-table th:nth-child(2) {
-  width: 5%; /* Icon expand */
+  width: 5%;
 }
 .custom-table th:nth-child(3) {
-  width: 35%; /* Tên danh mục */
+  width: 35%;
 }
 .custom-table th:nth-child(4) {
-  width: 15%; /* Loại */
+  width: 15%;
 }
 .custom-table th:nth-child(5) {
-  width: 15%; /* Số sản phẩm */
-}
-.custom-table th:nth-child(6) {
-  width: 10%; /* Trạng thái */
-}
-.custom-table th:nth-child(7) {
-  width: 15%; /* Hành động */
+  width: 15%;
 }
 
 .table-responsive {
