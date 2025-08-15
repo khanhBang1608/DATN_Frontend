@@ -34,6 +34,7 @@ import EditAddressView from '@/views/EditAddressView.vue'
 import FavoriteView from '@/views/FavoriteView.vue'
 import PaymentSuccess from '@/views/PaymentResult.vue'
 import userOrder from '@/views/admin/UserOrderView.vue'
+import ContactView from '@/views/ContactView.vue'
 import { getProductDetail } from '@/api/ProductClient'
 import ErrorView from '@/views/ErrorView.vue'
 const router = createRouter({
@@ -98,6 +99,11 @@ const router = createRouter({
       path: '/contact-us',
       name: 'contact-us',
       component: ContactUsView,
+    },
+    {
+      path: '/contact',
+      name: 'contact',
+      component: ContactView,
     },
     {
       path: '/user/profile',
