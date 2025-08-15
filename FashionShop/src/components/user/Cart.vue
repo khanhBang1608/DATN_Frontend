@@ -229,7 +229,7 @@ import {
 } from "@/api/user/cartAPI";
 import promotionApi from "@/api/PromotionClien";
 import { useToast } from "vue-toastification";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 
 const toast = useToast();
 
@@ -494,37 +494,37 @@ export default {
         this.loading = false;
       }
     },
-async clearCart() {
-  const result = await Swal.fire({
-    title: 'Bạn có chắc chắn?',
-    text: "Tất cả sản phẩm trong giỏ sẽ bị xóa!",
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Xóa',
-    cancelButtonText: 'Hủy'
-  });
+    async clearCart() {
+      const result = await Swal.fire({
+        title: "Bạn có chắc chắn?",
+        text: "Tất cả sản phẩm trong giỏ sẽ bị xóa!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Xóa",
+        cancelButtonText: "Hủy",
+      });
 
-  if (!result.isConfirmed) return;
+      if (!result.isConfirmed) return;
 
-  this.loading = true;
-  try {
-    const cartData = await clearCart();
-    this.cart = {
-      ...cartData,
-      details: [],
-    };
-    this.selectedItems = [];
-    toast.success("Xóa giỏ hàng thành công!");
-  } catch (error) {
-    console.error("Error clearing cart:", error.message);
-    toast.error("Xóa giỏ hàng thất bại.");
-    this.error = "Xóa giỏ hàng thất bại.";
-  } finally {
-    this.loading = false;
-  }
-},
+      this.loading = true;
+      try {
+        const cartData = await clearCart();
+        this.cart = {
+          ...cartData,
+          details: [],
+        };
+        this.selectedItems = [];
+        toast.success("Xóa giỏ hàng thành công!");
+      } catch (error) {
+        console.error("Error clearing cart:", error.message);
+        toast.error("Xóa giỏ hàng thất bại.");
+        this.error = "Xóa giỏ hàng thất bại.";
+      } finally {
+        this.loading = false;
+      }
+    },
     proceedToCheckout() {
       const selectedDetails = this.cart.details
         .filter((item) => this.selectedItems.includes(item.cartDetailId))
@@ -537,7 +537,19 @@ async clearCart() {
         toast.error("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.");
         return;
       }
-
+      // Kiểm tra số lượng hợp lệ
+      for (const item of selectedDetails) {
+        if (item.quantity < 1) {
+          toast.error(`Sản phẩm "${item.productName}" phải có số lượng lớn hơn 0.`);
+          return;
+        }
+        if (item.quantity > item.stock) {
+          toast.error(
+            `Sản phẩm "${item.productName}" chỉ còn ${item.stock} sản phẩm trong kho.`
+          );
+          return;
+        }
+      }
       localStorage.setItem("orderNote", this.orderNote);
       localStorage.setItem("cartDetails", JSON.stringify(selectedDetails));
       this.$router.push("/user/checkout");
