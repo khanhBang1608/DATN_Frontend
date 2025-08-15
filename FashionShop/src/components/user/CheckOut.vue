@@ -1,7 +1,7 @@
 <script>
 import axios from "axios";
 import { createOrder } from "@/api/user/orderAPI";
-import { clearCart } from "@/api/user/cartAPI";
+import { removeCartItem } from "@/api/user/cartAPI";
 import { useToast } from "vue-toastification";
 import { getDiscount } from "@/api/user/discountAPI";
 import { getShippingFee } from "@/api/user/ShippingFeeAPI";
@@ -234,7 +234,9 @@ export default {
             idempotencyKey,
           };
           const response = await createOrder(orderData);
-          await clearCart();
+          for (const item of this.cartDetails) {
+            await removeCartItem(item.cartDetailId);
+          }
           toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`);
           this.$router.push("/user/order-management");
         } else if (this.paymentMethod === "VNPAY") {
