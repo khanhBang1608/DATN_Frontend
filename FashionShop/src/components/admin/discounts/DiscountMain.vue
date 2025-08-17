@@ -36,8 +36,7 @@
           <input
             type="text"
             class="admin-search-text"
-            placeholder="Nhập mã giảm giá...
-            "
+            placeholder="Nhập mã giảm giá..."
             v-model="filters.code"
           />
           <i class="bi bi-search admin-search-icon"></i>
@@ -55,6 +54,11 @@
           </select>
         </div>
       </div>
+    </div>
+
+    <!-- Nút xóa tất cả bộ lọc -->
+    <div class="mb-3">
+      <button class="btn btn-secondary" @click="clearFilters">Xóa tất cả bộ lọc</button>
     </div>
 
     <div class="table-responsive">
@@ -264,7 +268,7 @@
               Đóng
             </button>
             <button type="submit" class="btn btn-success">
-              {{ isEdit ? "Cập nhập" : "Thêm mới" }}
+              {{ isEdit ? "Cập nhật" : "Thêm mới" }}
             </button>
           </div>
         </form>

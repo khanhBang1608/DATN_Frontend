@@ -125,26 +125,32 @@
           </tr>
         </tbody>
       </table>
-      <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
-        <button
-          class="btn btn-outline-secondary me-2"
-          :disabled="currentPage === 0"
-          @click="fetchOrders(currentPage - 1)"
-        >
-          &laquo;
-        </button>
+    </div>
+    <div v-if="totalPages > 1" class="admin-pagination">
+      <div
+        class="admin-button admin-prev"
+        :disabled="currentPage === 0"
+        @click="fetchOrders(currentPage - 1)"
+      >
+        &lt; prev
+      </div>
 
-        <span class="mx-2 align-self-center">
-          Trang {{ currentPage + 1 }} / {{ totalPages }}
-        </span>
+      <div
+        v-for="page in totalPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page - 1 }"
+        @click="fetchOrders(page - 1)"
+      >
+        {{ page }}
+      </div>
 
-        <button
-          class="btn btn-outline-secondary ms-2"
-          :disabled="currentPage >= totalPages - 1"
-          @click="fetchOrders(currentPage + 1)"
-        >
-          &raquo;
-        </button>
+      <div
+        class="admin-button admin-next"
+        :disabled="currentPage >= totalPages - 1"
+        @click="fetchOrders(currentPage + 1)"
+      >
+        next &gt;
       </div>
     </div>
   </div>

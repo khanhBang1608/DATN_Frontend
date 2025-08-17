@@ -17,7 +17,7 @@
           placeholder="0"
           min="0"
           max="100"
-          @input="applyFilters('filter')"
+          @input="applyFilters()"
         />
         <span class="mx-2">Đến</span>
         <input
@@ -27,7 +27,7 @@
           placeholder="100"
           min="0"
           max="100"
-          @input="applyFilters('filter')"
+          @input="applyFilters()"
         />
       </div>
     </div>
@@ -41,10 +41,7 @@
           <select
             class="admin-select"
             v-model="filters.searchType"
-            @change="
-              resetFiltersExcept('search');
-              resetAndFetch();
-            "
+            @change="applyFilters()"
           >
             <option value="code">Mã khuyến mãi</option>
             <option value="description">Tên chương trình</option>
@@ -65,7 +62,7 @@
                 : 'Nhập tên chương trình...'
             "
             v-model="filters.searchKeyword"
-            @input="applyFilters('search')"
+            @input="applyFilters()"
           />
           <i class="bi bi-search admin-search-icon"></i>
         </div>
@@ -75,11 +72,7 @@
       <div class="col-md-3">
         <label class="form-label">Trạng thái</label>
         <div class="admin-search-box">
-          <select
-            v-model="filters.status"
-            class="admin-select"
-            @change="applyFilters('filter')"
-          >
+          <select v-model="filters.status" class="admin-select" @change="applyFilters()">
             <option value="">Tất cả</option>
             <option :value="true">Đang hoạt động</option>
             <option :value="false">Ngừng hoạt động</option>
@@ -88,9 +81,10 @@
       </div>
     </div>
 
-    <!-- <div class="mb-3">
-      <button class="btn btn-secondary" @click="clearFilters">Xóa bộ lọc</button>
-    </div> -->
+    <!-- Nút xóa bộ lọc -->
+    <div class="mb-3">
+      <button class="btn btn-secondary" @click="clearFilters">Xóa tất cả bộ lọc</button>
+    </div>
 
     <!-- Bảng dữ liệu -->
     <div class="table-responsive">
@@ -102,7 +96,7 @@
             <th>Tên chương trình</th>
             <th>Giảm %</th>
             <th>Thời gian</th>
-            <th>Trạng thái</th>
+            <th>Hiện hành</th>
             <th class="text-center">Hành động</th>
           </tr>
         </thead>
@@ -339,20 +333,7 @@ const resetAndFetch = () => {
   applyFilters();
 };
 
-const applyFilters = async (mode) => {
-  // mode: "search" hoặc "filter" để biết đang thao tác gì
-  if (mode === "search") {
-    // Khi tìm kiếm thì reset toàn bộ filter
-    filters.value.status = "";
-    filters.value.discountMin = "";
-    filters.value.discountMax = "";
-    filters.value.isCurrentlyActive = false;
-  } else if (mode === "filter") {
-    // Khi lọc thì reset toàn bộ search
-    filters.value.searchKeyword = "";
-    filters.value.searchType = "code";
-  }
-
+const applyFilters = async () => {
   // Reset phân trang về trang đầu tiên
   currentPage.value = 0;
 
