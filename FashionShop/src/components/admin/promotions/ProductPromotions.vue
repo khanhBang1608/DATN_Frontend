@@ -68,7 +68,7 @@ const saveUpdatedQuantity = async () => {
 };
 
 const currentPage = ref(0);
-const pageSize = ref(1);
+const pageSize = ref(8);
 const totalPages = ref(1);
 const totalItems = ref(0);
 
