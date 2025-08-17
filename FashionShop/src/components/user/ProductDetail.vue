@@ -632,9 +632,8 @@ const fetchRelatedProducts = async () => {
           <div class="tab-content" id="productTabContent">
             <div class="tab-pane fade show active" id="desc" role="tabpanel">
               <h5 class="fw-bold mb-2">Mô tả</h5>
-              <p>
-                {{ product.description }}
-              </p>
+              <div v-html="product.description"></div>
+
             </div>
             <div class="tab-pane fade" id="size" role="tabpanel">
               <div class="text-center">
