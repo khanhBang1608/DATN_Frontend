@@ -89,7 +89,7 @@ export const getAllReturnRequests = async () => {
   return res.data
 }
 
-export const getOrdersByUserId = async (userId, page = 0, size = 2) => {
+export const getOrdersByUserId = async (userId, page = 0, size = 8) => {
   try {
     const res = await api.get(`/api/admin/orders/user/${userId}?page=${page}&size=${size}`, {
       headers: { Accept: 'application/json' },

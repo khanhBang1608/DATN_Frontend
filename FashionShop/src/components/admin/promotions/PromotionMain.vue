@@ -134,7 +134,7 @@
                 <i class="bi bi-pencil-square"></i> Sửa
               </button>
               <button
-                class="btn btn-sm btn-danger m-1"
+                class="btn btn-sm btn-danger text-dark m-1"
                 @click="deletePromotion(promo.id)"
               >
                 <i class="bi bi-trash"></i> Xoá

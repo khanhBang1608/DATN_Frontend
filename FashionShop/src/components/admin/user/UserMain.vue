@@ -11,10 +11,7 @@
           class="admin-date-input"
           v-model="fromDate"
           placeholder="Ngày"
-          @change="
-            resetFiltersExcept('search');
-            resetAndFetch();
-          "
+          @change="fetchUsers(0)"
         />
         <span class="mx-2">Đến</span>
         <input
@@ -22,10 +19,7 @@
           class="admin-date-input"
           v-model="toDate"
           placeholder="Ngày"
-          @change="
-            resetFiltersExcept('search');
-            resetAndFetch();
-          "
+          @change="fetchUsers(0)"
         />
       </div>
     </div>
@@ -35,14 +29,7 @@
       <div class="col-md-3">
         <label class="form-label">Loại tìm kiếm</label>
         <div class="admin-search-box">
-          <select
-            class="admin-select"
-            v-model="searchType"
-            @change="
-              resetFiltersExcept('search');
-              resetAndFetch();
-            "
-          >
+          <select class="admin-select" v-model="searchType" @change="fetchUsers(0)">
             <option value="name">Tìm theo họ tên</option>
             <option value="email">Tìm theo email</option>
           </select>
@@ -57,10 +44,7 @@
             class="admin-search-text"
             :placeholder="searchType === 'name' ? 'Nhập họ tên...' : 'Nhập email...'"
             v-model="searchQuery"
-            @input="
-              resetFiltersExcept('search');
-              resetAndFetch();
-            "
+            @input="fetchUsers(0)"
           />
           <i class="bi bi-search admin-search-icon"></i>
         </div>
@@ -69,19 +53,17 @@
       <div class="col-md-4">
         <label class="form-label">Trạng thái</label>
         <div class="admin-search-box">
-          <select
-            class="admin-select"
-            v-model="statusFilter"
-            @change="
-              resetFiltersExcept('status');
-              resetAndFetch();
-            "
-          >
+          <select class="admin-select" v-model="statusFilter" @change="fetchUsers(0)">
             <option value="">Tất cả trạng thái</option>
             <option value="true">Hoạt động</option>
             <option value="false">Bị khóa</option>
           </select>
         </div>
+      </div>
+    </div>
+    <div class="row mt-2 mb-3">
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-secondary" @click="resetFilter">Xóa tất cả bộ lọc</button>
       </div>
     </div>
 
@@ -142,7 +124,6 @@
                 <option :value="false">Bị khóa</option>
               </select>
             </td>
-
             <td>{{ formatDate(user.createdAt) }}</td>
             <td class="text-center">
               <button
@@ -217,26 +198,19 @@ const goToUserAddresses = (userId, userName) => {
 const totalPages = ref();
 const currentPage = ref(1);
 
-const resetFiltersExcept = (keep) => {
-  if (keep !== "search") {
-    searchQuery.value = "";
-    fromDate.value = "";
-    toDate.value = "";
-    searchType.value = "name";
-  }
-  if (keep !== "status") {
-    statusFilter.value = "";
-  }
-};
-
-const resetAndFetch = () => {
+const resetFilter = () => {
+  searchQuery.value = "";
+  fromDate.value = "";
+  toDate.value = "";
+  searchType.value = "name";
+  statusFilter.value = "";
   currentPage.value = 0;
   fetchUsers(0);
 };
 
 const fetchUsers = async (page = 0) => {
   try {
-    let url = `http://localhost:8080/api/admin/users?page=${page}&size=8`;
+    let url = `http://localhost:8080/api/admin/users?page=${page}&size=1`;
     if (searchQuery.value) {
       if (searchType.value === "name") {
         url += `&name=${searchQuery.value}`;
@@ -290,7 +264,7 @@ const updateUserStatus = async (user) => {
       position: "topRight",
     });
 
-    await fetchUsers();
+    await fetchUsers(currentPage.value);
   } catch (err) {
     iziToast.error({
       title: "Lỗi",

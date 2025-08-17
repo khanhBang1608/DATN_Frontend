@@ -48,7 +48,7 @@
 
       <!-- Tên người đặt -->
       <div class="mb-3 w-50">
-        <label class="form-label">Tên người đặt</label>
+        <label class="form-label">Tìm kiếm</label>
         <div class="admin-search-box">
           <input
             type="text"
@@ -62,7 +62,7 @@
 
       <!-- Nút lọc -->
       <div>
-        <button class="btn btn-primary me-2" @click="applyFilters">Áp dụng bộ lọc</button>
+        <!-- <button class="btn btn-primary me-2" @click="applyFilters">Áp dụng bộ lọc</button> -->
         <button class="btn btn-secondary" @click="clearFilters">Xóa tất cả bộ lọc</button>
       </div>
     </div>
@@ -171,6 +171,7 @@ export default {
         totalPages: 0,
         currentPage: 0,
       },
+      debounceTimer: null,
       statusOptions: [
         "Chờ xác nhận", // 0
         "Chờ lấy hàng", // 1
@@ -184,6 +185,29 @@ export default {
 
       toast: useToast(),
     };
+  },
+
+  watch: {
+    // ✅ Tự động lọc khi thay đổi status, startDate, endDate
+    "filters.status": {
+      handler() {
+        this.applyFilters();
+      },
+      deep: true,
+    },
+    "filters.startDate"() {
+      this.applyFilters();
+    },
+    "filters.endDate"() {
+      this.applyFilters();
+    },
+    // ✅ Debounce khi nhập tên
+    "filters.userFullName"(val) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = setTimeout(() => {
+        this.applyFilters();
+      }, 500);
+    },
   },
   methods: {
     extractPhone(address) {
@@ -205,7 +229,7 @@ export default {
     async fetchOrders(pageNum = 0) {
       this.loading = true;
       try {
-        const res = await getAllOrders(pageNum, 10);
+        const res = await getAllOrders(pageNum, 2);
         this.orders = res.content;
         this.totalPages = res.totalPages;
         this.currentPage = res.currentPage || pageNum;
@@ -260,7 +284,7 @@ export default {
         userFullName: "",
       };
       this.applyFilters();
-      this.toast.info("Đã xóa tất cả bộ lọc.");
+      // this.toast.info("Đã xóa tất cả bộ lọc.");
     },
     viewOrder(orderId) {
       this.$emit("view-order", orderId);

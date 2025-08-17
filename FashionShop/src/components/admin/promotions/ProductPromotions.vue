@@ -68,7 +68,7 @@ const saveUpdatedQuantity = async () => {
 };
 
 const currentPage = ref(0);
-const pageSize = ref(5);
+const pageSize = ref(1);
 const totalPages = ref(1);
 const totalItems = ref(0);
 
@@ -148,6 +148,10 @@ const deletePromotion = async (id) => {
       iziToast.error({ title: "Lỗi", message: "Xóa thất bại!", position: "topRight" });
     }
   }
+};
+
+const handleBack = () => {
+  router.push("/admin/promotion");
 };
 
 // ======================== ADD ========================
@@ -307,7 +311,7 @@ const getProductName = (productId) => {
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">🎁 Danh sách Sản phẩm Khuyến Mãi</h2>
         <button class="btn btn-primary" @click="showAdd">
-          + Thêm sản phẩm khuyến mãi
+          <i class="bi bi-plus-circle"></i> Thêm sản phẩm khuyến mãi
         </button>
       </div>
 
@@ -328,7 +332,8 @@ const getProductName = (productId) => {
               <td>{{ index + 1 }}</td>
               <td>
                 <div>
-                  ID: {{ item.productVariant?.productVariantId }} - {{ item.productName }} <br />
+                  ID: {{ item.productVariant?.productVariantId }} -
+                  {{ item.productName }} <br />
                   Màu: {{ item.productVariant?.colorName }} - Size:
                   {{ item.productVariant?.sizeName }}
                 </div>
@@ -349,10 +354,10 @@ const getProductName = (productId) => {
               </td>
               <td class="text-center">
                 <button
-                  class="btn btn-sm btn-danger m-1"
+                  class="btn btn-sm btn-danger text-dark m-1"
                   @click="deletePromotion(item.id)"
                 >
-                  🗑️ Xoá
+                  <i class="bi bi-trash"></i> Xoá
                 </button>
               </td>
             </tr>
@@ -365,40 +370,35 @@ const getProductName = (productId) => {
             </tr>
           </tbody>
         </table>
-        <!-- Pagination -->
-        <div class="d-flex justify-content-center align-items-center mt-3 text-white">
-          <!-- Previous Button -->
-          <button
-            class="btn btn-sm btn-outline-light me-2"
-            :disabled="currentPage === 0"
-            @click="handlePageChange(currentPage - 1)"
-          >
-            &lt;
-          </button>
-
-          <!-- Page Numbers -->
-          <span v-for="page in totalPages" :key="page" class="mx-1">
-            <button
-              class="btn btn-sm"
-              :class="
-                page - 1 === currentPage ? 'btn-light text-dark' : 'btn-outline-light'
-              "
-              @click="handlePageChange(page - 1)"
-            >
-              {{ page }}
-            </button>
-          </span>
-
-          <!-- Next Button -->
-          <button
-            class="btn btn-sm btn-outline-light ms-2"
-            :disabled="currentPage + 1 >= totalPages"
-            @click="handlePageChange(currentPage + 1)"
-          >
-            &gt;
-          </button>
+      </div>
+      <div v-if="totalPages > 1" class="admin-pagination">
+        <div
+          class="admin-button admin-prev"
+          :class="{ disabled: currentPage === 0 }"
+          @click="handlePageChange(currentPage - 1)"
+        >
+          &lt; prev
+        </div>
+        <div
+          v-for="page in totalPages"
+          :key="page"
+          class="admin-page"
+          :class="{ active: currentPage === page - 1 }"
+          @click="handlePageChange(page - 1)"
+        >
+          {{ page }}
+        </div>
+        <div
+          class="admin-button admin-next"
+          :class="{ disabled: currentPage === totalPages - 1 }"
+          @click="handlePageChange(currentPage + 1)"
+        >
+          next &gt;
         </div>
       </div>
+    </div>
+    <div class="d-flex justify-content-end mt-3">
+      <button class="btn btn-link text-white" @click="handleBack">Quay về</button>
     </div>
   </div>
 

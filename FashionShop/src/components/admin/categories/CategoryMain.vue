@@ -226,6 +226,7 @@ onMounted(fetchCategories);
 
     <div class="row mb-3">
       <div class="col-md-4">
+        <label class="form-label">Tìm kiếm</label>
         <div class="admin-search-box">
           <input
             type="text"
@@ -238,8 +239,9 @@ onMounted(fetchCategories);
         </div>
       </div>
       <div class="col-md-4">
+        <label class="form-label">Trạng thái</label>
         <select v-model="selectedStatus" class="admin-select">
-          <option value="all">-- Tất cả trạng thái --</option>
+          <option value="all">Tất cả trạng thái</option>
           <option value="active">Đang bán</option>
           <option value="inactive">Ngừng bán</option>
         </select>
