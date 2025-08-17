@@ -25,14 +25,14 @@
       </div>
 
       <!-- Ngày đặt hàng (ngang hàng) -->
-      <div class="mb-3">
+      <div class="mb-3 admin-date-filter">
         <label class="form-label">Ngày đặt hàng</label>
         <div class="d-flex gap-2 flex-wrap">
           <Datepicker
             v-model="filters.startDate"
             format="yyyy-MM-dd"
             placeholder="Ngày"
-            class="form-control"
+            class="admin-date-input"
             style="max-width: 180px"
           />
           Đến
@@ -40,7 +40,7 @@
             v-model="filters.endDate"
             format="yyyy-MM-dd"
             placeholder="Ngày"
-            class="form-control"
+            class="admin-date-input"
             style="max-width: 180px"
           />
         </div>
@@ -49,12 +49,15 @@
       <!-- Tên người đặt -->
       <div class="mb-3 w-50">
         <label class="form-label">Tên người đặt</label>
-        <input
-          type="text"
-          class="form-control"
-          v-model="filters.userFullName"
-          placeholder="Nhập tên..."
-        />
+        <div class="admin-search-box">
+          <input
+            type="text"
+            class="admin-search-text"
+            v-model="filters.userFullName"
+            placeholder="Nhập tên người đặt..."
+          />
+          <i class="bi bi-search admin-search-icon"></i>
+        </div>
       </div>
 
       <!-- Nút lọc -->
@@ -70,9 +73,9 @@
       </div>
     </div>
 
-    <div v-else class="table-responsive mt-3">
+    <div v-else class="table-responsive">
       <table class="table table-hover align-middle text-light custom-table">
-        <thead class="table-dark">
+        <thead>
           <tr>
             <th>Mã đơn hàng</th>
             <th>Tên người đặt</th>
@@ -140,7 +143,7 @@
           :disabled="currentPage >= totalPages - 1"
           @click="fetchOrders(currentPage + 1)"
         >
-           &raquo;
+          &raquo;
         </button>
       </div>
     </div>
@@ -206,9 +209,7 @@ export default {
         this.orders = res.content;
         this.totalPages = res.totalPages;
         this.currentPage = res.currentPage || pageNum;
-        // page.value = this.currentPage;
         this.applyFilters();
-        this.toast.success("Tải đơn hàng thành công!");
       } catch (err) {
         if (err.message.includes("Access denied")) {
           this.toast.error(
@@ -299,10 +300,6 @@ export default {
 .card {
   background-color: #2c3e50;
   color: #ecf0f1;
-}
-.custom-table {
-  background-color: #34495e;
-  border-radius: 6px;
 }
 .table-dark {
   background-color: #1a252f;

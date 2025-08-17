@@ -1,7 +1,12 @@
 <script setup>
 import { onMounted, ref, nextTick, watch } from "vue";
 import { setupFilterSidebar } from "@/assets/js/product";
-import { getAllProducts, searchProductsByName, getAllColors, getAllSizes } from "@/api/ProductClient";
+import {
+  getAllProducts,
+  searchProductsByName,
+  getAllColors,
+  getAllSizes,
+} from "@/api/ProductClient";
 import promotionApi from "@/api/PromotionClien";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
@@ -204,7 +209,7 @@ onMounted(async () => {
   }
   await fetchSimilarProducts();
   await nextTick();
-  await fetchColorsAndSizes();  // phải await
+  await fetchColorsAndSizes(); // phải await
   console.log("Màu:", colors.value);
   console.log("Size:", sizes.value);
   setupFilterSidebar();
@@ -493,34 +498,33 @@ const fetchColorsAndSizes = async () => {
                 class="accordion-collapse collapse"
                 data-bs-parent="#filterAccordionDesktop"
               >
-               <div class="accordion-body">
-  <ul class="list-unstyled mb-2">
-    <li
-      v-for="color in colors"
-      :key="color.colorId"
-      class="d-flex align-items-center mb-2"
-    >
-      <input
-        type="checkbox"
-        class="form-check-input me-2"
-        v-model="selectedColors"
-        :value="color.colorId"
-      />
-      <!-- Nếu không có hexCode trong DB thì có thể random hoặc để màu xám -->
-      <span
-        class="color-dot me-2"
-        :style="{ backgroundColor: color.hexCode || '#ccc' }"
-      ></span>
+                <div class="accordion-body">
+                  <ul class="list-unstyled mb-2">
+                    <li
+                      v-for="color in colors"
+                      :key="color.colorId"
+                      class="d-flex align-items-center mb-2"
+                    >
+                      <input
+                        type="checkbox"
+                        class="form-check-input me-2"
+                        v-model="selectedColors"
+                        :value="color.colorId"
+                      />
+                      <!-- Nếu không có hexCode trong DB thì có thể random hoặc để màu xám -->
+                      <span
+                        class="color-dot me-2"
+                        :style="{ backgroundColor: color.hexCode || '#ccc' }"
+                      ></span>
 
-      <span>
-        {{ color.colorName }}
-        <span class="text-muted">({{ color.productCount || 0 }})</span>
-      </span>
-    </li>
-  </ul>
-  <a href="#" class="text-decoration-underline small">Xem Thêm</a>
-</div>
-
+                      <span>
+                        {{ color.colorName }}
+                        <span class="text-muted">({{ color.productCount || 0 }})</span>
+                      </span>
+                    </li>
+                  </ul>
+                  <a href="#" class="text-decoration-underline small">Xem Thêm</a>
+                </div>
               </div>
             </div>
 
@@ -752,11 +756,7 @@ const fetchColorsAndSizes = async () => {
                   phẩm
                 </div>
                 <!-- Hiển thị tổng stock nếu <= 20, nhỏ hơn và nằm ngang -->
-                <div
-                  class="stock-count text-danger"
-                  style="font-size: 12px; display: inline-block; margin-left: 5px"
-                  v-if="product.totalStock <= 20"
-                >
+                <div class="stock-count text-danger" v-if="product.totalStock <= 20">
                   <i class="bi bi-exclamation-triangle me-1"></i>Còn
                   {{ product.totalStock }} sản phẩm
                 </div>
@@ -765,29 +765,8 @@ const fetchColorsAndSizes = async () => {
           </template>
           <!-- Hiển thị thông báo khi không có sản phẩm -->
           <div v-if="showNoProductsMessage" class="container text-center py-5">
-            <!-- Hình minh họa -->
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/7486/7486802.png"
-              alt="No Product"
-              class="mb-4"
-              style="max-width: 180px"
-            />
-
-            <!-- Tiêu đề -->
-            <h1 class="fw-bold text-danger mb-2">Ôi khum 😢</h1>
-
-            <!-- Mô tả -->
-            <p class="text-muted fs-5 mb-4">
-              Không có sản phẩm nào liên quan đến danh mục này.<br />
-              Hãy thử quay lại trang chủ hoặc chọn danh mục khác nhé.
-            </p>
-
-            <!-- Nút điều hướng -->
-            <div>
-              <a href="/" class="btn btn-primary btn-lg me-2">
-                <i class="fa-solid fa-house me-2"></i> Quay về Trang Chủ
-              </a>
-            </div>
+            <i class="bi bi-emoji-frown fs-1 text-secondary mb-3"></i>
+            <p class="text-muted fs-5 mb-4">Không có sản phẩm nào tìm thấy.</p>
           </div>
         </div>
         <ul class="pagination mt-3">
@@ -822,14 +801,6 @@ const fetchColorsAndSizes = async () => {
 
 <style>
 .stock-count {
-  font-size: 12px; /* Giảm kích thước font */
-  display: inline-block; /* Sắp xếp ngang */
-  margin-left: 5px; /* Khoảng cách từ sold-count */
-  vertical-align: middle; /* Căn giữa theo chiều dọc với sold-count */
-}
-
-.sold-count {
-  display: inline-block; /* Sắp xếp ngang */
-  margin-right: 5px; /* Khoảng cách từ stock-count */
+  font-size: 12px;
 }
 </style>
