@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import { getAllCategories } from "@/api/adminCategoryAPI";
@@ -18,7 +18,6 @@ const token = localStorage.getItem("token");
 const showModal = ref(false);
 const isEditing = ref(false);
 const currentProductId = ref(null);
-const searchKeyword = ref("");
 
 const product = ref({
   name: "",
@@ -118,7 +117,7 @@ const getTotalStockCount = computed(() => {
 const fetchProducts = async (page = 0) => {
   try {
     const response = await axios.get(
-      `http://localhost:8080/api/admin/products?page=${page}&size=10`,
+      `http://localhost:8080/api/admin/products?page=${page}&size=8`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -143,6 +142,15 @@ const fetchProducts = async (page = 0) => {
     console.error("Lỗi khi tải sản phẩm:", error);
   }
 };
+
+watch(
+  () => ({ ...filters.value }),
+  () => {
+    currentPage.value = 0;
+    fetchProducts(0);
+  },
+  { deep: true }
+);
 
 const fetchCategories = async () => {
   try {
@@ -262,98 +270,133 @@ const changePage = (page) => {
 </script>
 <template>
   <div class="card p-4">
-    <div class="card p-3 shadow-sm mb-4">
-      <!-- Tiêu đề + nút thêm -->
-      <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-        <h3 class="fw-bold text-primary m-0">🛍️ Quản lý Sản phẩm</h3>
-        <button class="btn btn-primary" @click="openAddModal">
-          <i class="bi bi-plus-circle"></i> Thêm sản phẩm
-        </button>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+      <h2 class="m-0">🛍️ Quản lý sản phẩm</h2>
+      <button class="btn btn-primary" @click="openAddModal">
+        <i class="bi bi-plus-circle"></i> Thêm sản phẩm
+      </button>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-md-3">
+        <div class="admin-date-filter">
+          <label class="form-label">Giá từ</label>
+          <input
+            v-model="filters.minPrice"
+            type="number"
+            class="admin-number-input"
+            placeholder="0"
+          />
+        </div>
       </div>
 
-      <!-- Bộ lọc & tìm kiếm -->
-      <div class="row g-3 align-items-end">
-        <div class="col-lg-3 col-md-4 col-sm-6">
-          <label class="form-label mb-1">Tìm theo</label>
-          <select v-model="filters.searchType" class="form-select form-select-sm">
+      <!-- Giá đến -->
+      <div class="col-md-3">
+        <label class="form-label">Giá đến</label>
+        <input
+          v-model="filters.maxPrice"
+          type="number"
+          class="admin-number-input"
+          placeholder="∞"
+        />
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <!-- Sắp xếp tương tác -->
+      <div class="col-md-3">
+        <label class="form-label">Sắp xếp tương tác</label>
+        <div class="admin-search-box">
+          <select v-model="filters.interactionSort" class="admin-select">
+            <option value="">Mặc định</option>
+            <option value="desc">Cao → Thấp</option>
+            <option value="asc">Thấp → Cao</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Sắp xếp giá -->
+      <div class="col-md-3">
+        <label class="form-label">Sắp xếp giá</label>
+        <div class="admin-search-box">
+          <select v-model="filters.priceSort" class="admin-select">
+            <option value="">Mặc định</option>
+            <option value="asc">Thấp → Cao</option>
+            <option value="desc">Cao → Thấp</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bộ lọc & tìm kiếm -->
+    <div class="row g-3 mb-3">
+      <!-- Tìm theo -->
+      <div class="col-md-4">
+        <label class="form-label">Loại tìm kiếm</label>
+        <div class="admin-search-box">
+          <select v-model="filters.searchType" class="admin-select">
             <option value="product">Tên sản phẩm</option>
             <option value="category">Tên danh mục</option>
           </select>
         </div>
+      </div>
 
-        <div class="col-lg-3 col-md-4 col-sm-6">
-          <label class="form-label mb-1">Từ khóa</label>
+      <!-- Từ khóa -->
+      <div class="col-md-5">
+        <label class="form-label">Từ khóa</label>
+        <div class="admin-search-box">
           <input
             v-model="filters.keyword"
             type="text"
-            class="form-control form-control-sm"
-            placeholder="Nhập từ khóa..."
+            class="admin-search-text"
+            :placeholder="
+              filters.searchType === 'product'
+                ? 'Nhập tên sản phẩm...'
+                : 'Nhập tên danh mục...'
+            "
           />
+          <i class="bi bi-search admin-search-icon"></i>
         </div>
+      </div>
 
-        <div class="col-lg-2 col-md-4 col-sm-6">
-          <label class="form-label mb-1">Giá từ</label>
-          <input
-            v-model="filters.minPrice"
-            type="number"
-            class="form-control form-control-sm"
-            placeholder="0"
-          />
-        </div>
-        <div class="col-lg-2 col-md-4 col-sm-6">
-          <label class="form-label mb-1">Giá đến</label>
-          <input
-            v-model="filters.maxPrice"
-            type="number"
-            class="form-control form-control-sm"
-            placeholder="∞"
-          />
-        </div>
-
-        <div class="col-lg-2 col-md-4 col-sm-6">
-          <label class="form-label mb-1">Trạng thái</label>
-          <select v-model="filters.status" class="form-select form-select-sm">
+      <!-- Trạng thái -->
+      <div class="col-md-3">
+        <label class="form-label">Trạng thái</label>
+        <div class="admin-search-box">
+          <select v-model="filters.status" class="admin-select">
             <option value="">Tất cả</option>
             <option value="true">Đang bán</option>
             <option value="false">Ngừng bán</option>
           </select>
         </div>
+      </div>
+    </div>
 
-        <div class="col-lg-3 col-md-4 col-sm-6">
-          <label class="form-label mb-1">Sắp xếp tương tác</label>
-          <select v-model="filters.interactionSort" class="form-select form-select-sm">
-            <option value="">Mặc định</option>
-            <option value="desc">Cao → Thấp</option>
-            <option value="asc">Thấp → Cao</option>
-          </select>
-        </div>
-
-        <div class="col-lg-3 col-md-4 col-sm-6">
-          <label class="form-label mb-1">Sắp xếp giá</label>
-          <select v-model="filters.priceSort" class="form-select form-select-sm">
-            <option value="">Mặc định</option>
-            <option value="asc">Thấp → Cao</option>
-            <option value="desc">Cao → Thấp</option>
-          </select>
-        </div>
-
-        <!-- Nút Tìm và Xóa -->
-        <div class="col-12 d-flex gap-2 mt-2">
-          <button class="btn btn-primary btn-sm" @click="applyFilter">🔍 Tìm</button>
-          <button class="btn btn-secondary btn-sm" @click="resetFilter">
-            ❌ Xóa bộ lọc
-          </button>
-        </div>
+    <!-- Nút -->
+    <div class="row mt-2 mb-3">
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-secondary" @click="resetFilter">Xóa tất cả bộ lọc</button>
       </div>
     </div>
 
     <!-- Thống kê -->
     <div class="mb-3 d-flex flex-wrap gap-2">
-      <span class="badge bg-success fs-6 shadow-sm py-2 px-3 rounded-pill">
-        📦 Tổng biến thể: <strong>{{ getTotalVariantCount }}</strong>
+      <!-- Tổng biến thể -->
+      <span
+        class="badge fs-6 shadow-sm py-2 px-3 d-flex align-items-center gap-2 text-white"
+        style="background: linear-gradient(135deg, #28a745, #20c997)"
+      >
+        <i class="bi bi-box-seam-fill fs-5"></i>
+        Tổng biến thể: <strong class="text-danger">{{ getTotalVariantCount }}</strong>
       </span>
-      <span class="badge bg-info fs-6 shadow-sm py-2 px-3 rounded-pill">
-        🏷 Tổng tồn kho: <strong>{{ getTotalStockCount }}</strong>
+
+      <!-- Tổng tồn kho -->
+      <span
+        class="badge fs-6 shadow-sm py-2 px-3 d-flex align-items-center gap-2 text-white"
+        style="background: linear-gradient(135deg, #17a2b8, #0d6efd)"
+      >
+        <i class="bi bi-tags-fill fs-5"></i>
+        Tổng tồn kho: <strong class="text-danger">{{ getTotalStockCount }}</strong>
       </span>
     </div>
 
@@ -393,10 +436,19 @@ const changePage = (page) => {
             <td>{{ product.variants?.length || 0 }}</td>
             <td>{{ product.totalStock }}</td>
             <td>
-              <div class="d-flex flex-column">
-                <span>👁 {{ product.viewCount || 0 }} lượt xem</span>
-                <span>❤️ {{ product.favoriteCount || 0 }} yêu thích</span>
-                <span>🛒 {{ product.cartCount || 0 }} trong giỏ</span>
+              <div class="d-flex flex-column gap-1">
+                <span class="d-flex align-items-center gap-2">
+                  <i class="bi bi-eye text-info"></i>
+                  {{ product.viewCount || 0 }} lượt xem
+                </span>
+                <span class="d-flex align-items-center gap-2">
+                  <i class="bi bi-heart-fill text-danger"></i>
+                  {{ product.favoriteCount || 0 }} yêu thích
+                </span>
+                <span class="d-flex align-items-center gap-2">
+                  <i class="bi bi-cart-fill"></i>
+                  {{ product.cartCount || 0 }} trong giỏ
+                </span>
               </div>
             </td>
 
@@ -412,40 +464,43 @@ const changePage = (page) => {
                 class="btn btn-sm btn-warning m-1"
                 @click="openEditModal(product.productId)"
               >
-                ✏️ Sửa
+                <i class="bi bi-pencil-square"></i> Sửa
               </button>
               <button
                 class="btn btn-sm btn-info m-1"
                 @click="goToVariantList(product.productId)"
               >
-                📦 Biến thể
+                <i class="bi bi-box-seam"></i> Biến thể
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <nav class="mt-3 d-flex justify-content-center">
-        <ul class="pagination">
-          <li class="page-item" :class="{ disabled: currentPage === 0 }">
-            <button class="page-link" @click="changePage(currentPage - 1)">«</button>
-          </li>
-
-          <li
-            class="page-item"
-            v-for="page in totalPages"
-            :key="page"
-            :class="{ active: currentPage === page - 1 }"
-          >
-            <button class="page-link" @click="changePage(page - 1)">
-              {{ page }}
-            </button>
-          </li>
-
-          <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
-            <button class="page-link" @click="changePage(currentPage + 1)">»</button>
-          </li>
-        </ul>
-      </nav>
+    </div>
+    <div v-if="totalPages > 1" class="admin-pagination">
+      <div
+        class="admin-button admin-prev"
+        :class="{ disabled: currentPage === 0 }"
+        @click="changePage(currentPage - 1)"
+      >
+        &lt; prev
+      </div>
+      <div
+        v-for="page in totalPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page - 1 }"
+        @click="changePage(page - 1)"
+      >
+        {{ page }}
+      </div>
+      <div
+        class="admin-button admin-next"
+        :class="{ disabled: currentPage === totalPages - 1 }"
+        @click="changePage(currentPage + 1)"
+      >
+        next &gt;
+      </div>
     </div>
   </div>
 

@@ -40,7 +40,7 @@
     </p>
   </div>
   <div class="d-flex justify-content-end mt-3">
-    <button class="btn btn-secondary" @click="$router.back()">Quay về</button>
+    <button class="btn btn-link text-white" @click="$router.back()">Quay về</button>
   </div>
 </template>
 
