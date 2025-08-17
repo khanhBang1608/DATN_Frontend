@@ -7,6 +7,8 @@ import { addProduct, updateProduct, getProductById } from "@/api/adminProductAPI
 import { getTotalStockByProductId } from "@/api/admin/ProductStockAPI";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
+import Editor from '@tinymce/tinymce-vue'
+
 
 const errors = ref({});
 
@@ -511,23 +513,25 @@ const changePage = (page) => {
 
             <div class="col-md-12">
               <label class="form-label">Mô tả</label>
-              <textarea
+              <Editor
+                api-key="uq49m95egvz7u4v198d5akt3drd5bc4f4h3h6tjdcz80d5wo"
                 v-model="product.description"
-                @input="errors.description = ''"
-                class="form-control"
-                rows="3"
-                placeholder="Nhập mô tả..."
-                maxlength="300"
-                :class="{ 'is-invalid': errors.description }"
-              ></textarea>
-
-              <div class="d-flex justify-content-between">
-                <div class="invalid-feedback" v-if="errors.description">
-                  {{ errors.description }}
-                </div>
-                <small class="text-muted ms-auto"
-                  >{{ product.description.length }}/300 ký tự</small
-                >
+                :init="{
+                  toolbar_mode: 'sliding',
+                  plugins: [
+                    'anchor', 'autolink', 'charmap', 'codesample', 'emoticons',
+                    'link', 'lists', 'media', 'searchreplace', 'table',
+                    'visualblocks', 'wordcount'
+                  ],
+                  toolbar:
+                    'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+                  tinycomments_mode: 'embedded',
+                  tinycomments_author: 'Author name',
+                  uploadcare_public_key: 'a1c1977a399e5039e233',
+                }"
+              />
+              <div class="invalid-feedback" v-if="errors.description">
+                {{ errors.description }}
               </div>
             </div>
 
