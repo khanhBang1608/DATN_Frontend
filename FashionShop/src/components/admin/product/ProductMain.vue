@@ -7,8 +7,7 @@ import { addProduct, updateProduct, getProductById } from "@/api/adminProductAPI
 import { getTotalStockByProductId } from "@/api/admin/ProductStockAPI";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
-import Editor from '@tinymce/tinymce-vue'
-
+import Editor from "@tinymce/tinymce-vue";
 
 const errors = ref({});
 
@@ -267,11 +266,8 @@ const changePage = (page) => {
       <!-- Tiêu đề + nút thêm -->
       <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
         <h3 class="fw-bold text-primary m-0">🛍️ Quản lý Sản phẩm</h3>
-        <button
-          class="btn btn-primary btn-sm rounded-pill shadow-sm px-4"
-          @click="openAddModal"
-        >
-          ➕ Thêm sản phẩm
+        <button class="btn btn-primary" @click="openAddModal">
+          <i class="bi bi-plus-circle"></i> Thêm sản phẩm
         </button>
       </div>
 
@@ -519,9 +515,18 @@ const changePage = (page) => {
                 :init="{
                   toolbar_mode: 'sliding',
                   plugins: [
-                    'anchor', 'autolink', 'charmap', 'codesample', 'emoticons',
-                    'link', 'lists', 'media', 'searchreplace', 'table',
-                    'visualblocks', 'wordcount'
+                    'anchor',
+                    'autolink',
+                    'charmap',
+                    'codesample',
+                    'emoticons',
+                    'link',
+                    'lists',
+                    'media',
+                    'searchreplace',
+                    'table',
+                    'visualblocks',
+                    'wordcount',
                   ],
                   toolbar:
                     'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography uploadcare | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',

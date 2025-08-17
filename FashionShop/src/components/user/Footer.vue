@@ -261,7 +261,7 @@
           </div> -->
           <div class="col-md-4 footer-column">
             <p class="mb-1">
-              <strong>CÔNG TY CỔ PHẦN MAISON RETAIL MANAGEMENT INTERNATIONAL</strong>
+              <strong>CÔNG TY CỔ PHẦN L'HEX INTERNATIONAL FASHION TRADING</strong>
             </p>
             <p class="mb-1">
               Địa chỉ:
