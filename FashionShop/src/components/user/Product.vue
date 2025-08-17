@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref, nextTick, watch } from "vue";
 import { setupFilterSidebar } from "@/assets/js/product";
-import { getAllProducts, searchProductsByName } from "@/api/ProductClient";
+import { getAllProducts, searchProductsByName, getAllColors, getAllSizes } from "@/api/ProductClient";
 import promotionApi from "@/api/PromotionClien";
 import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
@@ -204,6 +204,9 @@ onMounted(async () => {
   }
   await fetchSimilarProducts();
   await nextTick();
+  await fetchColorsAndSizes();  // phải await
+  console.log("Màu:", colors.value);
+  console.log("Size:", sizes.value);
   setupFilterSidebar();
 });
 
@@ -219,6 +222,24 @@ watch(
     await fetchSimilarProducts();
   }
 );
+// 🔹 thêm state cho Màu và Size
+const colors = ref([]);
+const sizes = ref([]);
+const selectedColors = ref([]);
+const selectedSizes = ref([]);
+
+// 👉 gọi API màu & size
+const fetchColorsAndSizes = async () => {
+  try {
+    const colorRes = await getAllColors();
+    colors.value = colorRes.data;
+
+    const sizeRes = await getAllSizes();
+    sizes.value = sizeRes.data;
+  } catch (error) {
+    console.error("Lỗi khi tải màu & size:", error);
+  }
+};
 </script>
 
 <template>
@@ -472,56 +493,34 @@ watch(
                 class="accordion-collapse collapse"
                 data-bs-parent="#filterAccordionDesktop"
               >
-                <div class="accordion-body">
-                  <ul class="list-unstyled mb-2">
-                    <li class="d-flex align-items-center mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <span class="color-dot me-2" style="background-color: black"></span>
-                      <span>Đen <span class="text-muted">(52)</span></span>
-                    </li>
-                    <li class="d-flex align-items-center mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <span
-                        class="color-dot me-2"
-                        style="background-color: white; border: 1px solid #ccc"
-                      ></span>
-                      <span>Trắng <span class="text-muted">(33)</span></span>
-                    </li>
-                    <li class="d-flex align-items-center mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <span
-                        class="color-dot me-2"
-                        style="background-color: #8b4513"
-                      ></span>
-                      <span>Nâu <span class="text-muted">(9)</span></span>
-                    </li>
-                    <li class="d-flex align-items-center mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <span
-                        class="color-dot me-2"
-                        style="background-color: #f5f5f5"
-                      ></span>
-                      <span>Trắng Xám <span class="text-muted">(9)</span></span>
-                    </li>
-                    <li class="d-flex align-items-center mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <span
-                        class="color-dot me-2"
-                        style="background-color: silver"
-                      ></span>
-                      <span>Bạc <span class="text-muted">(5)</span></span>
-                    </li>
-                    <li class="d-flex align-items-center mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <span
-                        class="color-dot me-2"
-                        style="background-color: #6a5acd"
-                      ></span>
-                      <span>Xanh Dương <span class="text-muted">(4)</span></span>
-                    </li>
-                  </ul>
-                  <a href="#" class="text-decoration-underline small">Xem Thêm</a>
-                </div>
+               <div class="accordion-body">
+  <ul class="list-unstyled mb-2">
+    <li
+      v-for="color in colors"
+      :key="color.colorId"
+      class="d-flex align-items-center mb-2"
+    >
+      <input
+        type="checkbox"
+        class="form-check-input me-2"
+        v-model="selectedColors"
+        :value="color.colorId"
+      />
+      <!-- Nếu không có hexCode trong DB thì có thể random hoặc để màu xám -->
+      <span
+        class="color-dot me-2"
+        :style="{ backgroundColor: color.hexCode || '#ccc' }"
+      ></span>
+
+      <span>
+        {{ color.colorName }}
+        <span class="text-muted">({{ color.productCount || 0 }})</span>
+      </span>
+    </li>
+  </ul>
+  <a href="#" class="text-decoration-underline small">Xem Thêm</a>
+</div>
+
               </div>
             </div>
 
