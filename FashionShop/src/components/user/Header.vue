@@ -1,14 +1,22 @@
+```vue
 <script setup>
-import { ref, onMounted, watch, nextTick } from "vue";
+import { ref, onMounted, watch, nextTick, computed } from "vue";
 import { useRouter } from "vue-router";
 import initHeader from "@/assets/js/header.js";
 import axios from "axios";
+import { getCart } from "@/api/user/cartAPI";
 
 const isLoggedIn = ref(false);
 const router = useRouter();
 const userInfo = ref(null);
 const categories = ref([]); // Lưu danh sách danh mục từ API
 const activeSubmenu = ref(null); // Theo dõi danh mục cha đang mở submenu
+const cart = ref({ details: [] }); // Lưu dữ liệu giỏ hàng
+
+// Tính số lượng cartDetailId (số mục trong giỏ hàng)
+const cartItemCount = computed(() => {
+  return cart.value.details.length;
+});
 
 async function fetchUserInfo() {
   const token = localStorage.getItem("token");
@@ -34,6 +42,15 @@ async function fetchCategories() {
     categories.value = response.data; // Lưu roots (danh mục cha với children)
   } catch (error) {
     console.error("Không thể lấy danh mục:", error);
+  }
+}
+
+async function fetchCart() {
+  try {
+    const cartData = await getCart();
+    cart.value = cartData;
+  } catch (error) {
+    console.error("Không thể lấy dữ liệu giỏ hàng:", error.message);
   }
 }
 
@@ -82,6 +99,7 @@ onMounted(() => {
   checkLoginStatus();
   fetchUserInfo();
   fetchCategories();
+  fetchCart(); // Gọi hàm để lấy dữ liệu giỏ hàng
 
   window.addEventListener("storage", () => {
     checkLoginStatus();
@@ -160,8 +178,18 @@ function handleSearch() {
           <a href="/user/favorite" class="text-dark text-decoration-none mx-2">
             <i class="bi bi-heart fs-4"></i>
           </a>
-          <a href="/user/cart" class="text-dark text-decoration-none mx-2">
+          <a
+            href="/user/cart"
+            class="text-dark text-decoration-none mx-2 position-relative"
+          >
             <i class="bi bi-cart fs-4"></i>
+            <span
+              v-if="cartItemCount > 0"
+              class="badge bg-danger rounded-circle position-absolute"
+              style="top: -10px; right: -10px"
+            >
+              {{ cartItemCount }}
+            </span>
           </a>
           <button
             class="navbar-toggler"
@@ -198,7 +226,6 @@ function handleSearch() {
                     >TÚI <span class="float-end">></span></a
                   >
                   <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; TÚI</a></li>
                     <li><a href="#" class="custom-back-btn">&lt; TÚI</a></li>
                     <li><a href="#">XEM TẤT CẢ</a></li>
                     <li><a href="#">TÚI XÁCH</a></li>
@@ -349,12 +376,12 @@ function handleSearch() {
 
               <ul
                 v-if="parent.children && parent.children.length"
-                class="dropdown-menu custom-dropdown shadow-sm border-0 rounded-3 mt-2"
+                class="dropdown-menu shadow border-0 rounded-4 mt-2 p-2 elegant-dropdown"
                 :aria-labelledby="`desktopProductDropdown-${parent.categoryId}`"
               >
-                <li v-for="child in parent.children" :key="child.categoryId">
+                <li v-for="child in parent.children" :key="child.categoryId" class="mb-1">
                   <a
-                    class="dropdown-item"
+                    class="dropdown-item px-3 py-2 rounded-3 fw-medium text-dark elegant-item"
                     href="#"
                     @click.prevent="navigateToProducts(child.categoryName)"
                   >
@@ -405,8 +432,18 @@ function handleSearch() {
             <a href="/user/favorite" class="text-dark text-decoration-none mx-2">
               <i class="bi bi-heart fs-4"></i>
             </a>
-            <a href="/user/cart" class="text-dark text-decoration-none mx-2">
+            <a
+              href="/user/cart"
+              class="text-dark text-decoration-none mx-2 position-relative"
+            >
               <i class="bi bi-cart fs-4"></i>
+              <span
+                v-if="cartItemCount > 0"
+                class="badge bg-danger rounded-circle position-absolute"
+                style="top: -10px; right: -10px"
+              >
+                {{ cartItemCount }}
+              </span>
             </a>
             <form
               @submit.prevent="handleSearch"
@@ -430,6 +467,14 @@ function handleSearch() {
 <style src="./src/assets/css/header.css"></style>
 
 <style scoped>
+.badge {
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 4px 6px;
+  min-width: 20px;
+  text-align: center;
+}
+
 .dropdown-submenu {
   position: relative;
 }
@@ -469,4 +514,23 @@ function handleSearch() {
 .navbar-nav .dropdown-menu {
   min-width: 200px;
 }
+.elegant-dropdown {
+  background: #fff; /* nền trắng tinh */
+  backdrop-filter: blur(10px);
+  min-width: 220px;
+}
+
+.elegant-item {
+  transition: all 0.25s ease;
+  border-left: 3px solid transparent;
+}
+
+.elegant-item:hover {
+  background: #f2f2f2; /* nền xám nhạt khi hover */
+  border-left: 3px solid #000; /* line đen khi hover */
+  color: #000 !important; /* chữ đen rõ ràng */
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
 </style>
+```
