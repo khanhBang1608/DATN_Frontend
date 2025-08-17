@@ -2,7 +2,7 @@
 import { RouterLink, RouterView } from "vue-router";
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
-
+import ChatBox from "./components/Chatbox.vue";
 // const router = useRouter();
 
 // // ✅ Hàm kiểm tra token hết hạn
@@ -30,4 +30,5 @@ import { useRouter } from "vue-router";
 
 <template>
   <RouterView />
+  <ChatBox />
 </template>
