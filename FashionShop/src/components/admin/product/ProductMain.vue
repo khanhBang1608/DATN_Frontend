@@ -4,7 +4,10 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import { getAllCategories } from "@/api/adminCategoryAPI";
 import { addProduct, updateProduct, getProductById } from "@/api/adminProductAPI";
-import { getTotalStockByProductId } from "@/api/admin/ProductStockAPI";
+import {
+  getTotalStockByProductId,
+  getSystemProductStats,
+} from "@/api/admin/ProductStockAPI";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 import Editor from "@tinymce/tinymce-vue";
@@ -102,17 +105,18 @@ const filteredProducts = computed(() => {
   return list;
 });
 
-const getTotalVariantCount = computed(() => {
-  return products.value.reduce((total, product) => {
-    return total + (product.variants?.length || 0);
-  }, 0);
-});
+const totalVariantsSystem = ref(0);
+const totalStockSystem = ref(0);
 
-const getTotalStockCount = computed(() => {
-  return products.value.reduce((total, product) => {
-    return total + (product.totalStock || 0);
-  }, 0);
-});
+const fetchSystemStats = async () => {
+  try {
+    const data = await getSystemProductStats();
+    totalVariantsSystem.value = data.totalVariants || 0;
+    totalStockSystem.value = data.totalStock || 0;
+  } catch (error) {
+    console.error("Lỗi khi lấy thống kê hệ thống:", error);
+  }
+};
 
 const fetchProducts = async (page = 0) => {
   try {
@@ -260,7 +264,10 @@ const formatDate = (dateStr) => {
   )}/${d.getFullYear()}`;
 };
 
-onMounted(fetchProducts);
+onMounted(async () => {
+  await fetchProducts();
+  await fetchSystemStats();
+});
 
 const changePage = (page) => {
   if (page >= 0 && page < totalPages.value) {
@@ -381,22 +388,24 @@ const changePage = (page) => {
 
     <!-- Thống kê -->
     <div class="mb-3 d-flex flex-wrap gap-2">
-      <!-- Tổng biến thể -->
+      <!-- Tổng biến thể toàn hệ thống -->
       <span
         class="badge fs-6 shadow-sm py-2 px-3 d-flex align-items-center gap-2 text-white"
-        style="background: linear-gradient(135deg, #28a745, #20c997)"
+        style="background: linear-gradient(135deg, #ffc107, #fd7e14)"
       >
-        <i class="bi bi-box-seam-fill fs-5"></i>
-        Tổng biến thể: <strong class="text-danger">{{ getTotalVariantCount }}</strong>
+        <i class="bi bi-box-seam fs-5"></i>
+        Tổng biến thể (hệ thống):
+        <strong class="text-danger">{{ totalVariantsSystem }}</strong>
       </span>
 
-      <!-- Tổng tồn kho -->
+      <!-- Tổng tồn kho toàn hệ thống -->
       <span
         class="badge fs-6 shadow-sm py-2 px-3 d-flex align-items-center gap-2 text-white"
-        style="background: linear-gradient(135deg, #17a2b8, #0d6efd)"
+        style="background: linear-gradient(135deg, #6f42c1, #6610f2)"
       >
-        <i class="bi bi-tags-fill fs-5"></i>
-        Tổng tồn kho: <strong class="text-danger">{{ getTotalStockCount }}</strong>
+        <i class="bi bi-tags fs-5"></i>
+        Tổng tồn kho (hệ thống):
+        <strong class="text-danger">{{ totalStockSystem }}</strong>
       </span>
     </div>
 
