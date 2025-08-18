@@ -129,101 +129,166 @@
 /* Hero */
 .hero-section {
   background: url("https://source.unsplash.com/1600x800/?fashion,brand") center/cover no-repeat;
-  min-height: 80vh;
+  min-height: 85vh;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
 }
 .hero-section .overlay {
   position: absolute;
-  top:0; left:0; right:0; bottom:0;
+  inset: 0;
   background: rgba(0,0,0,0.55);
 }
 .hero-title {
-  font-size: 3rem;
-  font-weight: 700;
+  font-size: 3.5rem;
+  font-weight: 800;
+  letter-spacing: 3px;
   text-transform: uppercase;
+  position: relative;
+  z-index: 2;
 }
 .hero-subtitle {
-  font-size: 1.2rem;
-  opacity: 0.9;
-  margin-top: 10px;
+  font-size: 1.4rem;
+  margin-top: 12px;
+  opacity: 0.95;
+  z-index: 2;
 }
 
 /* Highlights */
+.highlights {
+  background: linear-gradient(135deg, #f9f9f9, #ffffff);
+}
 .highlight-number {
-  font-size: 2.5rem;
+  font-size: 2.8rem;
   font-weight: 700;
   color: #111;
+  margin-bottom: 5px;
+}
+.highlights p {
+  font-size: 1rem;
+  color: #555;
+  margin: 0;
 }
 
 /* Sections */
 .section-container {
-  padding: 70px 20px;
+  padding: 80px 20px;
 }
 .section-title {
   text-align: center;
-  margin-bottom: 30px;
-  font-size: 2rem;
-  font-weight: bold;
+  margin-bottom: 40px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #111;
   position: relative;
 }
 .section-title::after {
   content: "";
-  width: 60px; height: 3px;
-  background: #111;
+  width: 80px;
+  height: 3px;
+  background: #000;
   display: block;
-  margin: 10px auto 0;
+  margin: 12px auto 0;
+  border-radius: 2px;
 }
 .section-paragraph {
-  line-height: 1.8;
-  font-size: 1rem;
+  line-height: 1.9;
+  font-size: 1.05rem;
   color: #444;
   text-align: justify;
+  max-width: 850px;
+  margin: 0 auto;
 }
 
 /* Values */
+.values {
+  background: #f8f9fa;
+}
 .value-card {
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.05);
-  transition: transform 0.3s ease;
+  border-radius: 16px;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.06);
+  transition: all 0.3s ease;
+  border: 1px solid #eee;
+}
+.value-card h4 {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.value-card p {
+  color: #555;
+  line-height: 1.7;
 }
 .value-card:hover {
-  transform: translateY(-5px);
+  transform: translateY(-8px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+/* Gallery */
+.gallery-section img {
+  transition: all 0.4s ease;
+  border-radius: 12px;
+}
+.gallery-section img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 
 /* Timeline */
 .timeline {
   list-style: none;
   padding-left: 0;
+  margin: 0 auto;
+  max-width: 700px;
   position: relative;
 }
 .timeline li {
-  padding: 15px 0;
+  padding: 20px 0 20px 25px;
   border-left: 3px solid #111;
-  padding-left: 20px;
-  margin-left: 20px;
   position: relative;
+  color: #444;
 }
 .timeline li::before {
   content: "";
-  width: 14px; height: 14px;
+  width: 16px; height: 16px;
   background: #111;
   border-radius: 50%;
   position: absolute;
-  left: -8px; top: 20px;
+  left: -9px; top: 28px;
+  box-shadow: 0 0 0 4px #fff;
 }
 .timeline .year {
-  font-weight: bold;
-  margin-right: 10px;
-  color: #111;
+  font-weight: 700;
+  color: #000;
+  margin-right: 8px;
+  font-size: 1.1rem;
 }
 
 /* CTA */
 .cta-section {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #111, #333);
+  color: #fff;
 }
 .cta-section h2 {
-  font-weight: bold;
+  font-weight: 700;
+  font-size: 2rem;
 }
+.cta-section p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+.cta-section .btn {
+  border-radius: 30px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+.cta-section .btn:hover {
+  background: #fff;
+  color: #111;
+}
+
 </style>
