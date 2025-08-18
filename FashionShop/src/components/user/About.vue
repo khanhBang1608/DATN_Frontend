@@ -127,35 +127,32 @@
 
 <style scoped>
 /* Hero */
+/* Hero */
 .hero-section {
-  background: url("https://source.unsplash.com/1600x800/?fashion,brand") center/cover no-repeat;
-  min-height: 85vh;
-  position: relative;
+  background: #3b3a3a; /* nền đen sang trọng */
+  min-height: 45vh; /* thấp hơn thay vì 85vh */
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
   color: #fff;
-  text-shadow: 0 2px 10px rgba(0,0,0,0.6);
+  padding: 60px 20px; /* thêm padding cho thoáng */
 }
 .hero-section .overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
+  display: none; /* bỏ overlay vì không còn ảnh */
 }
 .hero-title {
-  font-size: 3.5rem;
+  font-size: 2.8rem;
   font-weight: 800;
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  position: relative;
-  z-index: 2;
 }
 .hero-subtitle {
-  font-size: 1.4rem;
-  margin-top: 12px;
-  opacity: 0.95;
-  z-index: 2;
+  font-size: 1.2rem;
+  margin-top: 10px;
+  opacity: 0.9;
 }
+
 
 /* Highlights */
 .highlights {
