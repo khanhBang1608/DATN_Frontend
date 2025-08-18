@@ -1,17 +1,13 @@
+<script setup>
+import Header from '../components/user/Header.vue'
+import About from '../components/user/About.vue'
+import Footer from '../components/user/Footer.vue'
+</script>
+
 <template>
-  <div class="about">
-    <h1>This is an about page</h1>
-  </div>
+  <main>
+    <Header />
+    <About />
+    <Footer />
+  </main>
 </template>
-
-<style>
-@media (min-width: 1024px) {
-  .about {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
-}
-
-
-</style>
