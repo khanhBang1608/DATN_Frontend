@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import Swal from "sweetalert2";
 import iziToast from "izitoast";
@@ -29,6 +29,48 @@ const debounce = (func, delay) => {
     timeoutId = setTimeout(() => func(...args), delay);
   };
 };
+
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
+});
 
 // Lấy danh sách màu có phân trang
 const fetchColors = async () => {
@@ -203,7 +245,6 @@ onMounted(() => {
   <div class="card p-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2>🎨 Danh sách Màu</h2>
-
       <button
         class="btn btn-primary"
         data-bs-toggle="modal"
@@ -256,29 +297,29 @@ onMounted(() => {
         </tbody>
       </table>
     </div>
-    <div class="admin-pagination" v-if="totalItems > pageSize">
+    <div class="admin-pagination" v-if="totalPages > 1">
       <div
         class="admin-button admin-prev"
         :class="{ disabled: currentPage === 0 }"
         @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="changePage(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
       >
         {{ page }}
       </div>
       <div
         class="admin-button admin-next"
-        :class="{ disabled: currentPage + 1 >= totalPages }"
+        :class="{ disabled: currentPage === totalPages - 1 }"
         @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
@@ -302,8 +343,8 @@ onMounted(() => {
             v-model="newColor.colorName"
             @input="formErrors.name = ''"
             class="form-control mb-2"
+            :class="{ 'is-invalid': formErrors.name }"
           />
-
           <div v-if="formErrors.name" class="text-danger small mb-2">
             {{ formErrors.name }}
           </div>
@@ -337,8 +378,8 @@ onMounted(() => {
             v-model="editColor.colorName"
             @input="formErrors.name = ''"
             class="form-control mb-2"
+            :class="{ 'is-invalid': formErrors.name }"
           />
-
           <div v-if="formErrors.name" class="text-danger small mb-2">
             {{ formErrors.name }}
           </div>

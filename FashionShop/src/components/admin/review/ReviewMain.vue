@@ -103,7 +103,7 @@
             </td>
           </tr>
           <tr v-for="review in paginatedReviews" :key="review.reviewId">
-            <td>{{ review.reviewId }}</td>
+            <td>{{ (currentPage - 1) * pageSize + review.reviewId }}</td>
             <td>{{ review.productName || "Không xác định" }}</td>
             <td>{{ review.userFullName || "Không xác định" }}</td>
             <td>
@@ -131,14 +131,14 @@
         :class="{ disabled: currentPage === 1 }"
         @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page }"
-        @click="changePage(page)"
+        :class="{ active: currentPage === page, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page)"
       >
         {{ page }}
       </div>
@@ -147,7 +147,7 @@
         :class="{ disabled: currentPage === totalPages }"
         @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
@@ -184,6 +184,48 @@ export default {
       return this.filters.searchType === "userFullName"
         ? "Nhập tên khách hàng..."
         : "Nhập tên sản phẩm...";
+    },
+    // Tính toán các trang hiển thị
+    displayedPages() {
+      const pages = [];
+      const maxPagesToShow = 5;
+
+      if (this.totalPages <= maxPagesToShow) {
+        for (let i = 1; i <= this.totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        if (this.currentPage < 3) {
+          pages.push(2, 3, 4);
+          if (this.totalPages > 4) {
+            pages.push("...");
+          }
+          pages.push(this.totalPages);
+        } else if (this.currentPage >= this.totalPages - 2) {
+          if (this.totalPages > 4) {
+            pages.push("...");
+          }
+          pages.push(
+            this.totalPages - 3,
+            this.totalPages - 2,
+            this.totalPages - 1,
+            this.totalPages
+          );
+        } else {
+          pages.push("...");
+          const startPage = this.currentPage + 1;
+          const endPage = Math.min(this.currentPage + 3, this.totalPages - 1);
+          for (let i = startPage; i <= endPage; i++) {
+            if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+          }
+          if (endPage < this.totalPages) {
+            pages.push(this.totalPages);
+          }
+        }
+      }
+
+      return pages;
     },
   },
   methods: {
