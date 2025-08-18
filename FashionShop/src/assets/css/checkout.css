@@ -4,12 +4,12 @@
     margin-bottom: 20px;
 }
 
-.checkout-form .form-control,
+/* .checkout-form .form-control,
 .checkout-form .form-select {
     border-radius: 6px;
     height: 48px;
     font-size: 15px;
-}
+} */
 
 .checkout-form .form-select:focus,
 .checkout-form .form-control:focus {

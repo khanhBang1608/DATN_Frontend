@@ -96,7 +96,7 @@
             <th>Tên chương trình</th>
             <th>Giảm %</th>
             <th>Thời gian</th>
-            <th>Hiện hành</th>
+            <th>Trạng thái</th>
             <th class="text-center">Hành động</th>
           </tr>
         </thead>
@@ -108,7 +108,9 @@
             </td>
           </tr>
           <tr v-for="promo in promotions" :key="promo.id">
-            <td>{{ promo.id }}</td>
+            <td>
+              {{ promo.id }}
+            </td>
             <td>{{ promo.code }}</td>
             <td>{{ promo.description }}</td>
             <td>{{ formatDiscount(promo.discountAmount) }}</td>
@@ -152,14 +154,14 @@
         :class="{ disabled: currentPage === 0 }"
         @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="changePage(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
       >
         {{ page }}
       </div>
@@ -168,7 +170,7 @@
         :class="{ disabled: currentPage === totalPages - 1 }"
         @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
@@ -270,7 +272,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import Swal from "sweetalert2";
 import iziToast from "izitoast";
@@ -517,6 +519,48 @@ const isCurrentlyActive = (promo) => {
   const today = new Date().toISOString().split("T")[0];
   return promo.status === true && promo.startDate <= today && promo.endDate >= today;
 };
+
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
+});
 
 onMounted(fetchPromotions);
 </script>

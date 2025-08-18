@@ -92,7 +92,7 @@
             </td>
           </tr>
           <tr v-for="(user, index) in users" :key="user.id">
-            <td>{{ index + 1 }}</td>
+            <td>{{ currentPage * pageSize + index + 1 }}</td>
             <td>
               <img
                 :src="user.avatar || 'https://via.placeholder.com/50'"
@@ -144,16 +144,16 @@
         :class="{ disabled: currentPage === 0 }"
         @click="currentPage > 0 && fetchUsers(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
 
       <!-- Số trang -->
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="fetchUsers(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && fetchUsers(page - 1)"
       >
         {{ page }}
       </div>
@@ -164,14 +164,14 @@
         :class="{ disabled: currentPage + 1 >= totalPages }"
         @click="currentPage + 1 < totalPages && fetchUsers(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue"; // Thêm computed
 import { useRouter } from "vue-router";
 import axios from "axios";
 import iziToast from "izitoast";
@@ -188,15 +188,16 @@ const fromDate = ref("");
 const toDate = ref("");
 const statusFilter = ref("");
 
+const pageSize = ref(8); // Thêm pageSize với giá trị mặc định 10
+const totalPages = ref(0);
+const currentPage = ref(0); // Sửa thành 0 để đồng bộ với API (0-based)
+
 const goToUserAddresses = (userId, userName) => {
   router.push({
     path: `/admin/users/${userId}/addresses`,
     query: { name: userName },
   });
 };
-
-const totalPages = ref();
-const currentPage = ref(1);
 
 const resetFilter = () => {
   searchQuery.value = "";
@@ -208,9 +209,52 @@ const resetFilter = () => {
   fetchUsers(0);
 };
 
+// Tính toán các trang hiển thị
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
+});
+
 const fetchUsers = async (page = 0) => {
   try {
-    let url = `http://localhost:8080/api/admin/users?page=${page}&size=1`;
+    let url = `http://localhost:8080/api/admin/users?page=${page}&size=${pageSize.value}`;
     if (searchQuery.value) {
       if (searchType.value === "name") {
         url += `&name=${searchQuery.value}`;

@@ -84,7 +84,9 @@
             </td>
           </tr>
           <tr v-for="discount in filteredDiscounts" :key="discount.discountId">
-            <td>{{ discount.discountId }}</td>
+            <td>
+              {{ discount.discountId }}
+            </td>
             <td>
               <strong>{{ discount.discountCode }}</strong>
             </td>
@@ -127,25 +129,25 @@
       <div
         class="admin-button admin-prev"
         :class="{ disabled: currentPage === 0 }"
-        @click="fetchDiscounts(currentPage - 1)"
+        @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="fetchDiscounts(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
       >
         {{ page }}
       </div>
       <div
         class="admin-button admin-next"
         :class="{ disabled: currentPage === totalPages - 1 }"
-        @click="fetchDiscounts(currentPage + 1)"
+        @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
@@ -324,6 +326,12 @@ const fetchDiscounts = async (page = 0) => {
   }
 };
 
+const changePage = (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    fetchDiscounts(page);
+  }
+};
+
 const openModal = async (id = null) => {
   currentEditId.value = id;
   isEdit.value = !!id;
@@ -473,6 +481,7 @@ watch(
   filters,
   () => {
     currentPage.value = 0;
+    fetchDiscounts(0); // Gọi lại API với trang 0 khi bộ lọc thay đổi
   },
   { deep: true }
 );
@@ -513,6 +522,48 @@ const filteredDiscounts = computed(() => {
 
     return matchCode && matchPercentMin && matchPercentMax && matchStatus;
   });
+});
+
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
 });
 
 const clearFilters = () => {

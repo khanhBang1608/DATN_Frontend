@@ -38,6 +38,10 @@
     transition: opacity 0.3s ease;
 }
 
+.admin-page.ellipsis {
+  cursor: default; /* Không cho phép nhấp vào dấu ... */
+  opacity: 0.6; /* Làm mờ dấu ... để phân biệt */
+}
 .admin-page:hover,
 .admin-button:hover {
     opacity: 0.8;

@@ -4,10 +4,7 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import { getAllCategories } from "@/api/adminCategoryAPI";
 import { addProduct, updateProduct, getProductById } from "@/api/adminProductAPI";
-import {
-  getTotalStockByProductId,
-  getSystemProductStats,
-} from "@/api/admin/ProductStockAPI";
+import { getTotalStockByProductId } from "@/api/admin/ProductStockAPI";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 import Editor from "@tinymce/tinymce-vue";
@@ -21,6 +18,8 @@ const token = localStorage.getItem("token");
 const showModal = ref(false);
 const isEditing = ref(false);
 const currentProductId = ref(null);
+
+// ... (phần còn lại của code hiện có của bạn)
 
 const product = ref({
   name: "",
@@ -105,18 +104,17 @@ const filteredProducts = computed(() => {
   return list;
 });
 
-const totalVariantsSystem = ref(0);
-const totalStockSystem = ref(0);
+const getTotalVariantCount = computed(() => {
+  return products.value.reduce((total, product) => {
+    return total + (product.variants?.length || 0);
+  }, 0);
+});
 
-const fetchSystemStats = async () => {
-  try {
-    const data = await getSystemProductStats();
-    totalVariantsSystem.value = data.totalVariants || 0;
-    totalStockSystem.value = data.totalStock || 0;
-  } catch (error) {
-    console.error("Lỗi khi lấy thống kê hệ thống:", error);
-  }
-};
+const getTotalStockCount = computed(() => {
+  return products.value.reduce((total, product) => {
+    return total + (product.totalStock || 0);
+  }, 0);
+});
 
 const fetchProducts = async (page = 0) => {
   try {
@@ -264,10 +262,46 @@ const formatDate = (dateStr) => {
   )}/${d.getFullYear()}`;
 };
 
-onMounted(async () => {
-  await fetchProducts();
-  await fetchSystemStats();
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      pages.push(currentPage.value, currentPage.value + 1, currentPage.value + 2);
+      if (currentPage.value + 2 < totalPages.value - 1) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    }
+  }
+
+  return pages;
 });
+
+onMounted(fetchProducts);
 
 const changePage = (page) => {
   if (page >= 0 && page < totalPages.value) {
@@ -388,24 +422,22 @@ const changePage = (page) => {
 
     <!-- Thống kê -->
     <div class="mb-3 d-flex flex-wrap gap-2">
-      <!-- Tổng biến thể toàn hệ thống -->
+      <!-- Tổng biến thể -->
       <span
         class="badge fs-6 shadow-sm py-2 px-3 d-flex align-items-center gap-2 text-white"
-        style="background: linear-gradient(135deg, #ffc107, #fd7e14)"
+        style="background: linear-gradient(135deg, #28a745, #20c997)"
       >
-        <i class="bi bi-box-seam fs-5"></i>
-        Tổng biến thể (hệ thống):
-        <strong class="text-danger">{{ totalVariantsSystem }}</strong>
+        <i class="bi bi-box-seam-fill fs-5"></i>
+        Tổng biến thể: <strong class="text-danger">{{ getTotalVariantCount }}</strong>
       </span>
 
-      <!-- Tổng tồn kho toàn hệ thống -->
+      <!-- Tổng tồn kho -->
       <span
         class="badge fs-6 shadow-sm py-2 px-3 d-flex align-items-center gap-2 text-white"
-        style="background: linear-gradient(135deg, #6f42c1, #6610f2)"
+        style="background: linear-gradient(135deg, #17a2b8, #0d6efd)"
       >
-        <i class="bi bi-tags fs-5"></i>
-        Tổng tồn kho (hệ thống):
-        <strong class="text-danger">{{ totalStockSystem }}</strong>
+        <i class="bi bi-tags-fill fs-5"></i>
+        Tổng tồn kho: <strong class="text-danger">{{ getTotalStockCount }}</strong>
       </span>
     </div>
 
@@ -492,23 +524,26 @@ const changePage = (page) => {
         :class="{ disabled: currentPage === 0 }"
         @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
+
+      <!-- Hiển thị các trang động -->
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="changePage(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
       >
         {{ page }}
       </div>
+
       <div
         class="admin-button admin-next"
         :class="{ disabled: currentPage === totalPages - 1 }"
         @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>

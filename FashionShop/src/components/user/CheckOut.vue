@@ -344,11 +344,9 @@ export default {
 };
 </script>
 
-<!-- Template giữ nguyên -->
 <template>
   <div class="checkout-container container">
     <div class="row g-0">
-      <!-- Thông tin đơn hàng mobile -->
       <div class="col-md-5 bg-light px-4 py-3 d-md-none">
         <div class="checkout-sidebar">
           <div
@@ -446,11 +444,11 @@ export default {
             <img
               src="@/assets/img/logo-brand.png"
               alt="L'hex Logo"
-              style="height: 48px"
+              style="height: 62px"
             />
           </div>
           <nav class="checkout-breadcrumb mb-3">
-            <router-link to="/cart" class="text-muted text-decoration-none"
+            <router-link to="/user/cart" class="text-muted text-decoration-none"
               >Giỏ hàng</router-link
             >
             >
@@ -463,62 +461,66 @@ export default {
 
           <form class="checkout-form" @submit.prevent="placeOrder">
             <!-- Dropdown địa chỉ -->
-            <div class="mb-3">
-              <label class="form-label fw-semibold">Chọn địa chỉ giao hàng:</label>
-              <select
-                v-model="selectedAddressId"
-                @change="onSelectAddress"
-                class="form-select"
-              >
-                <option disabled value="">-- Chọn địa chỉ đã lưu --</option>
-                <option
-                  v-for="address in addressList"
-                  :key="address.addressId"
-                  :value="address.addressId"
+            <div class="row mb-3">
+              <div class="col-md-9">
+                <label class="form-label fw-semibold">Chọn địa chỉ giao hàng:</label>
+                <select
+                  v-model="selectedAddressId"
+                  @change="onSelectAddress"
+                  class="form-select"
                 >
-                  {{ address.customerName }} -
-                  {{ address.fullAddress || address.address }} -
-                  {{ address.phone }}
-                </option>
-              </select>
+                  <option disabled value="">-- Chọn địa chỉ đã lưu --</option>
+                  <option
+                    v-for="address in addressList"
+                    :key="address.addressId"
+                    :value="address.addressId"
+                  >
+                    {{ address.customerName }} -
+                    {{ address.fullAddress || address.address }} -
+                    {{ address.phone }}
+                  </option>
+                </select>
+              </div>
 
-              <!-- Nút thêm địa chỉ -->
-              <div class="mt-2">
-                <router-link to="/user/address" class="btn btn-outline-primary btn-sm">
+              <div class="col-md-3 d-flex align-items-end">
+                <router-link
+                  to="/user/address"
+                  class="btn btn-outline-primary btn-sm w-100"
+                >
                   ➕ Thêm địa chỉ mới
                 </router-link>
               </div>
             </div>
 
             <!-- Input tên, SĐT, địa chỉ -->
-            <div class="mb-3">
-              <h5>Họ tên người nhận :</h5>
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Họ tên người nhận"
-                v-model="form.fullName"
-                required
-              />
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Họ tên người nhận</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Nhập họ và tên..."
+                  v-model="form.fullName"
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Số điện thoại</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Nhập số điện thoại..."
+                  v-model="form.phone"
+                />
+              </div>
             </div>
+
             <div class="mb-3">
-              <h5>Số điện thoại :</h5>
+              <label class="form-label fw-bold">Địa chỉ chi tiết</label>
               <input
                 type="text"
                 class="form-control"
-                placeholder="Số điện thoại"
-                v-model="form.phone"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <h5>Địa chỉ chi tiết :</h5>
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Địa chỉ chi tiết"
+                placeholder="Nhập địa chỉ chi tiết..."
                 v-model="form.address"
-                required
               />
             </div>
 
@@ -568,7 +570,9 @@ export default {
             <div
               class="checkout-actions d-flex justify-content-between align-items-center gap-3"
             >
-              <router-link to="/cart" class="link-cart text-center">Giỏ hàng</router-link>
+              <router-link to="/user/cart" class="link-cart text-center"
+                >Giỏ hàng</router-link
+              >
               <button type="submit" class="btn btn-complete" :disabled="loading">
                 {{ loading ? "Đang xử lý..." : "Hoàn tất đơn hàng" }}
               </button>

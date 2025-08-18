@@ -235,7 +235,7 @@ export default {
     async fetchOrders(pageNum = 0) {
       this.loading = true;
       try {
-        const res = await getAllOrders(pageNum, 2);
+        const res = await getAllOrders(pageNum, 8);
         this.orders = res.content;
         this.totalPages = res.totalPages;
         this.currentPage = res.currentPage || pageNum;
@@ -330,12 +330,6 @@ export default {
 .card {
   background-color: #2c3e50;
   color: #ecf0f1;
-}
-.table-dark {
-  background-color: #1a252f;
-}
-.table-hover tbody tr:hover {
-  background-color: #3e5c76;
 }
 .btn-primary {
   background-color: #3498db;

@@ -82,25 +82,27 @@
         :class="{ disabled: page === 0 }"
         @click="changePage(page - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
 
+      <!-- Số trang -->
       <div
-        class="admin-page"
-        v-for="p in totalPages"
+        v-for="p in displayedPages"
         :key="p"
-        :class="{ active: p - 1 === page }"
-        @click="changePage(p - 1)"
+        class="admin-page"
+        :class="{ active: p - 1 === page, ellipsis: p === '...' }"
+        @click="p !== '...' && changePage(p - 1)"
       >
         {{ p }}
       </div>
+
       <!-- Next -->
       <div
         class="admin-button admin-next"
         :class="{ disabled: page >= totalPages - 1 }"
         @click="changePage(page + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
@@ -108,6 +110,7 @@
 
 <script>
 import { getOrdersByUserId } from "@/api/admin/orderAPI";
+import { computed } from "vue"; // Import computed từ Vue
 
 export default {
   name: "OrderTable",
@@ -121,11 +124,55 @@ export default {
       expandedOrders: [], // lưu danh sách các order đang mở chi tiết
     };
   },
+  computed: {
+    // Tính toán các trang hiển thị
+    displayedPages() {
+      const pages = [];
+      const maxPagesToShow = 5;
+
+      if (this.totalPages <= maxPagesToShow) {
+        for (let i = 1; i <= this.totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        if (this.page < 3) {
+          pages.push(2, 3, 4);
+          if (this.totalPages > 4) {
+            pages.push("...");
+          }
+          pages.push(this.totalPages);
+        } else if (this.page >= this.totalPages - 2) {
+          if (this.totalPages > 4) {
+            pages.push("...");
+          }
+          pages.push(
+            this.totalPages - 3,
+            this.totalPages - 2,
+            this.totalPages - 1,
+            this.totalPages
+          );
+        } else {
+          pages.push("...");
+          const startPage = this.page + 1;
+          const endPage = Math.min(this.page + 3, this.totalPages - 1);
+          for (let i = startPage; i <= endPage; i++) {
+            if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+          }
+          if (endPage < this.totalPages) {
+            pages.push(this.totalPages);
+          }
+        }
+      }
+
+      return pages;
+    },
+  },
   methods: {
     async fetchOrders() {
       this.loading = true;
       try {
-        const res = await getOrdersByUserId(this.userId, this.page, 2);
+        const res = await getOrdersByUserId(this.userId, this.page, 8);
         this.orders = res.content;
         this.totalPages = res.totalPages;
       } catch (error) {
@@ -169,7 +216,6 @@ export default {
       ];
       return statusOptions[status] || "Không xác định";
     },
-
     getImageUrl(fileName) {
       return `http://localhost:8080/images/${fileName}`;
     },
