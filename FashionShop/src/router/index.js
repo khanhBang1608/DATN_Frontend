@@ -182,8 +182,12 @@ const router = createRouter({
       beforeEnter: (to, from, next) => {
         localStorage.removeItem('token')
         localStorage.removeItem('role')
-        // Nếu bạn lưu thêm thông tin user, có thể xoá thêm:
-        localStorage.removeItem('user')
+        localStorage.removeItem('chatMessages')
+        localStorage.removeItem('editAddress')
+        localStorage.removeItem('pendingOrder')
+        localStorage.removeItem('orderNote')
+        localStorage.removeItem('tokenExpiresAt')
+        localStorage.removeItem('cartDetails')
 
         // Chuyển hướng đến trang login
         next('/login')

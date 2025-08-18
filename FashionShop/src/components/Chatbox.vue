@@ -1,3 +1,164 @@
+<script setup>
+import axios from "axios";
+import { ref, onMounted, nextTick, watch } from "vue";
+import { useRouter } from "vue-router"; // thêm dòng này
+
+const router = useRouter();
+
+const isOpen = ref(false);
+const userInput = ref("");
+const isLoading = ref(false);
+const messages = ref([
+  {
+    sender: "bot",
+    text: "Xin chào! Tôi có thể giúp bạn tìm sản phẩm phù hợp. Bạn muốn hỏi gì?",
+    timestamp: new Date(),
+  },
+]);
+const messagesContainer = ref(null);
+
+const toggleChat = () => {
+  isOpen.value = !isOpen.value;
+  if (isOpen.value) {
+    nextTick(() => scrollToBottom());
+  }
+};
+
+// Định dạng thời gian
+const formatTimestamp = (timestamp) => {
+  if (!timestamp) return "";
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+// Định dạng tin nhắn
+const formatMessage = (text) => {
+  if (!text) return "<p>Không có nội dung.</p>";
+
+  let messageText = text;
+  try {
+    const json = JSON.parse(text);
+    if (json.candidates && json.candidates[0]?.content?.parts?.[0]?.text) {
+      messageText = json.candidates[0].content.parts[0].text;
+    }
+  } catch (e) {
+    // Không phải JSON, xử lý như văn bản thường
+  }
+
+  const lines = messageText.split("\n").filter((line) => line.trim() !== "");
+  let html = "";
+  let inList = false;
+
+  lines.forEach((line) => {
+    if (line.match(/^[^\*].*?:$/)) {
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      html += `<h6 class="message-header">${line}</h6>`;
+    } else if (line.startsWith("* ")) {
+      if (!inList) {
+        html += "<ul class='message-list'>";
+        inList = true;
+      }
+
+      // Lấy toàn bộ text
+      const fullText = line.replace(/^\* /, "").trim();
+
+      // Tách tên sản phẩm trước dấu ":" (hoặc format bạn định nghĩa)
+      const productName = fullText.split(":")[0].replace(/\*\*/g, "").trim();
+
+      // Hiển thị: thay **...** bằng <strong class="clickable-product">...</strong>
+      const listContent = fullText.replace(
+        /\*\*(.*?)\*\*/g,
+        `<strong class="clickable-product" data-product="${productName.replace(
+          /'/g,
+          "\\'"
+        )}">$1</strong>`
+      );
+
+      html += `<li>${listContent}</li>`;
+    } else {
+      if (inList) {
+        html += "</ul>";
+        inList = false;
+      }
+      html += `<p>${line}</p>`;
+    }
+  });
+
+  if (inList) {
+    html += "</ul>";
+  }
+
+  return html;
+};
+
+const sendMessage = async () => {
+  if (!userInput.value.trim() || isLoading.value) return;
+
+  messages.value.push({ sender: "user", text: userInput.value, timestamp: new Date() });
+  isLoading.value = true;
+
+  try {
+    const response = await axios.post("/api/public/chat", {
+      message: userInput.value,
+    });
+    const botResponse = response.data;
+    messages.value.push({
+      sender: "bot",
+      text: JSON.stringify(botResponse),
+      timestamp: new Date(),
+    });
+  } catch (error) {
+    console.error("Lỗi khi gọi API chatbot:", error);
+    messages.value.push({
+      sender: "bot",
+      text: "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại!",
+      timestamp: new Date(),
+    });
+  }
+
+  userInput.value = "";
+  isLoading.value = false;
+  await nextTick();
+  scrollToBottom();
+};
+
+const scrollToBottom = () => {
+  if (messagesContainer.value) {
+    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+  }
+};
+watch(
+  messages,
+  async (newVal) => {
+    localStorage.setItem("chatMessages", JSON.stringify(newVal));
+
+    // Đợi render xong rồi gắn sự kiện click
+    await nextTick();
+    document.querySelectorAll(".clickable-product").forEach((el) => {
+      el.onclick = () => {
+        const productName = el.getAttribute("data-product");
+        router.push({ path: "/product", query: { keyword: productName } });
+      };
+    });
+  },
+  { deep: true }
+);
+// Khi load component thì khôi phục lại từ localStorage
+onMounted(() => {
+  const saved = localStorage.getItem("chatMessages");
+  if (saved) {
+    messages.value = JSON.parse(saved);
+  }
+
+  // Giữ hàm handleSearchFromChat
+  window.handleSearchFromChat = (productName) => {
+    router.push({ path: "/product", query: { keyword: productName } });
+  };
+});
+</script>
 <template>
   <div class="chatbox-container">
     <!-- Nút mở chat -->
@@ -61,124 +222,6 @@
     </transition>
   </div>
 </template>
-
-<script setup>
-import axios from "axios";
-import { ref, onMounted, nextTick } from "vue";
-
-const isOpen = ref(false);
-const userInput = ref("");
-const isLoading = ref(false);
-const messages = ref([
-  {
-    sender: "bot",
-    text: "Xin chào! Tôi có thể giúp bạn tìm sản phẩm phù hợp. Bạn muốn hỏi gì?",
-    timestamp: new Date(),
-  },
-]);
-const messagesContainer = ref(null);
-
-const toggleChat = () => {
-  isOpen.value = !isOpen.value;
-  if (isOpen.value) {
-    nextTick(() => scrollToBottom());
-  }
-};
-
-// Định dạng thời gian
-const formatTimestamp = (timestamp) => {
-  if (!timestamp) return "";
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-};
-
-// Định dạng tin nhắn
-const formatMessage = (text) => {
-  if (!text) return "<p>Không có nội dung.</p>";
-
-  let messageText = text;
-  try {
-    const json = JSON.parse(text);
-    if (json.candidates && json.candidates[0]?.content?.parts?.[0]?.text) {
-      messageText = json.candidates[0].content.parts[0].text;
-    }
-  } catch (e) {
-    // Không phải JSON, xử lý như văn bản thường
-  }
-
-  const lines = messageText.split("\n").filter((line) => line.trim() !== "");
-  let html = "";
-  let inList = false;
-
-  lines.forEach((line) => {
-    if (line.match(/^[^\*].*?:$/)) {
-      if (inList) {
-        html += "</ul>";
-        inList = false;
-      }
-      html += `<h6 class="message-header">${line}</h6>`;
-    } else if (line.startsWith("* ")) {
-      if (!inList) {
-        html += "<ul class='message-list'>";
-        inList = true;
-      }
-      const listContent = line
-        .replace(/^\* /, "")
-        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      html += `<li>${listContent}</li>`;
-    } else {
-      if (inList) {
-        html += "</ul>";
-        inList = false;
-      }
-      html += `<p>${line}</p>`;
-    }
-  });
-
-  if (inList) {
-    html += "</ul>";
-  }
-
-  return html;
-};
-
-const sendMessage = async () => {
-  if (!userInput.value.trim() || isLoading.value) return;
-
-  messages.value.push({ sender: "user", text: userInput.value, timestamp: new Date() });
-  isLoading.value = true;
-
-  try {
-    const response = await axios.post("/api/public/chat", {
-      message: userInput.value,
-    });
-    const botResponse = response.data;
-    messages.value.push({
-      sender: "bot",
-      text: JSON.stringify(botResponse),
-      timestamp: new Date(),
-    });
-  } catch (error) {
-    console.error("Lỗi khi gọi API chatbot:", error);
-    messages.value.push({
-      sender: "bot",
-      text: "Xin lỗi, có lỗi xảy ra. Vui lòng thử lại!",
-      timestamp: new Date(),
-    });
-  }
-
-  userInput.value = "";
-  isLoading.value = false;
-  await nextTick();
-  scrollToBottom();
-};
-
-const scrollToBottom = () => {
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
-  }
-};
-</script>
 
 <style scoped>
 /* Container */
