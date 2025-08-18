@@ -40,7 +40,6 @@
             :key="item.cartDetailId"
             class="d-flex p-3 cart-item"
           >
-            <!-- Checkbox -->
             <!-- Checkbox hoặc thông báo -->
             <div class="me-5 d-flex align-items-center">
               <template v-if="item.productStatus && item.categoryStatus">
@@ -86,7 +85,6 @@
               </p>
               <!-- Số lượng -->
               <div v-if="item.productStatus && item.categoryStatus">
-                <!-- Số lượng -->
                 <div class="input-group w-auto cart-quantity">
                   <button
                     class="btn btn-outline-secondary"
@@ -226,6 +224,7 @@ import {
   removeCartItem,
   clearCart,
   getRelatedProducts,
+  getCartItemCount,
 } from "@/api/user/cartAPI";
 import promotionApi from "@/api/PromotionClien";
 import { useToast } from "vue-toastification";
@@ -273,7 +272,6 @@ export default {
       const toastId = toast.info("Đang tải giỏ hàng...", { timeout: false });
       try {
         const cartData = await getCart();
-        // Fetch active promotions
         const promos = await promotionApi.getActivePromotions();
         const promotionMap = new Map();
         promos.forEach((promo) => {
@@ -282,7 +280,6 @@ export default {
           });
         });
 
-        // Apply promotions to cart items
         this.cart = {
           ...cartData,
           details: cartData.details.map((item) => {
@@ -306,6 +303,7 @@ export default {
             };
           }),
         };
+        await this.fetchCartItemCount();
         toast.success("Tải giỏ hàng thành công!");
       } catch (error) {
         console.error("Error fetching cart:", error.message);
@@ -319,7 +317,6 @@ export default {
       this.loadingRelated = true;
       try {
         const products = await getRelatedProducts();
-        // Apply promotions to related products
         const promos = await promotionApi.getActivePromotions();
         const promotionMap = new Map();
         promos.forEach((promo) => {
@@ -360,7 +357,6 @@ export default {
       this.error = null;
       try {
         const cartData = await addToCart(productVariantId, quantity);
-        // Fetch promotions again to apply to the newly added item
         const promos = await promotionApi.getActivePromotions();
         const promotionMap = new Map();
         promos.forEach((promo) => {
@@ -392,6 +388,7 @@ export default {
             };
           }),
         };
+        await this.fetchCartItemCount();
         toast.success("Thêm sản phẩm vào giỏ thành công!");
       } catch (error) {
         console.error("Error adding to cart:", error.message);
@@ -407,7 +404,6 @@ export default {
       this.error = null;
       try {
         const cartData = await updateCartItem(cartDetailId, quantity);
-        // Reapply promotions
         const promos = await promotionApi.getActivePromotions();
         const promotionMap = new Map();
         promos.forEach((promo) => {
@@ -439,6 +435,7 @@ export default {
             };
           }),
         };
+        await this.fetchCartItemCount();
         toast.success("Cập nhật số lượng thành công!");
       } catch (error) {
         console.error("Error updating quantity:", error.message);
@@ -453,7 +450,6 @@ export default {
       this.error = null;
       try {
         const cartData = await removeCartItem(cartDetailId);
-        // Reapply promotions
         const promos = await promotionApi.getActivePromotions();
         const promotionMap = new Map();
         promos.forEach((promo) => {
@@ -485,6 +481,7 @@ export default {
             };
           }),
         };
+        await this.fetchCartItemCount();
         toast.success("Xóa sản phẩm thành công!");
       } catch (error) {
         console.error("Error removing item:", error.message);
@@ -516,6 +513,7 @@ export default {
           details: [],
         };
         this.selectedItems = [];
+        await this.fetchCartItemCount();
         toast.success("Xóa giỏ hàng thành công!");
       } catch (error) {
         console.error("Error clearing cart:", error.message);
@@ -525,19 +523,29 @@ export default {
         this.loading = false;
       }
     },
+    async fetchCartItemCount() {
+      try {
+        const count = await getCartItemCount();
+        // Cập nhật cartItemCount trong header (nếu cần global, sử dụng store hoặc event bus)
+        // Ở đây giả sử sử dụng ref từ header, nhưng vì là component riêng, có thể dùng event hoặc store
+        // Để đơn giản, chỉ log hoặc cập nhật local
+        console.log("Updated cart item count:", count);
+      } catch (error) {
+        console.error("Error fetching cart item count:", error.message);
+      }
+    },
     proceedToCheckout() {
       const selectedDetails = this.cart.details
         .filter((item) => this.selectedItems.includes(item.cartDetailId))
         .map((item) => ({
           ...item,
-          price: item.discountedPrice || item.price, // Đảm bảo luôn lấy giá khuyến mãi
+          price: item.discountedPrice || item.price,
         }));
 
       if (selectedDetails.length === 0) {
         toast.error("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.");
         return;
       }
-      // Kiểm tra số lượng hợp lệ
       for (const item of selectedDetails) {
         if (item.quantity < 1) {
           toast.error(`Sản phẩm "${item.productName}" phải có số lượng lớn hơn 0.`);
@@ -556,7 +564,6 @@ export default {
     },
     toggleSelectAll() {
       if (this.selectAll) {
-        // Chỉ chọn những sản phẩm còn bán
         this.selectedItems = this.cart.details
           .filter((item) => item.productStatus && item.categoryStatus)
           .map((item) => item.cartDetailId);
