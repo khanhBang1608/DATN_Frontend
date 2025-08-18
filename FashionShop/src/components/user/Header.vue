@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted, watch, nextTick, computed } from "vue";
+import { ref, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import initHeader from "@/assets/js/header.js";
 import axios from "axios";
-import { getCart } from "@/api/user/cartAPI";
+import { getCart, getCartItemCount } from "@/api/user/cartAPI";
 
 const isLoggedIn = ref(false);
 const router = useRouter();
@@ -11,11 +11,7 @@ const userInfo = ref(null);
 const categories = ref([]); // Lưu danh sách danh mục từ API
 const activeSubmenu = ref(null); // Theo dõi danh mục cha đang mở submenu
 const cart = ref({ details: [] }); // Lưu dữ liệu giỏ hàng
-
-// Tính số lượng cartDetailId (số mục trong giỏ hàng)
-const cartItemCount = computed(() => {
-  return cart.value.details.length;
-});
+const cartItemCount = ref(0); // Số lượng sản phẩm trong giỏ hàng từ API
 
 async function fetchUserInfo() {
   const token = localStorage.getItem("token");
@@ -50,6 +46,16 @@ async function fetchCart() {
     cart.value = cartData;
   } catch (error) {
     console.error("Không thể lấy dữ liệu giỏ hàng:", error.message);
+  }
+}
+
+async function fetchCartItemCount() {
+  try {
+    const count = await getCartItemCount();
+    cartItemCount.value = count;
+  } catch (error) {
+    console.error("Không thể lấy số lượng giỏ hàng:", error.message);
+    cartItemCount.value = 0;
   }
 }
 
@@ -99,6 +105,7 @@ onMounted(async () => {
   await fetchUserInfo();
   await fetchCategories();
   await fetchCart();
+  await fetchCartItemCount(); // Gọi API để lấy số lượng giỏ hàng
   nextTick(() => {
     initHeader(); // Gọi lại initHeader sau khi DOM được cập nhật
   });
@@ -106,14 +113,18 @@ onMounted(async () => {
   window.addEventListener("storage", () => {
     checkLoginStatus();
     fetchUserInfo();
+    fetchCartItemCount(); // Cập nhật số lượng khi có thay đổi
   });
 });
 
 watch(isLoggedIn, (newVal) => {
   if (newVal) {
+    fetchCartItemCount(); // Cập nhật số lượng khi đăng nhập
     nextTick(() => {
       initHeader();
     });
+  } else {
+    cartItemCount.value = 0; // Reset khi đăng xuất
   }
 });
 
@@ -184,10 +195,7 @@ function handleSearch() {
             href="/user/cart"
             class="text-dark text-decoration-none mx-2 position-relative d-inline-block"
           >
-            <!-- Icon giỏ hàng -->
             <i class="bi bi-cart3 fs-4"></i>
-
-            <!-- Badge số lượng -->
             <span v-if="cartItemCount > 0" class="cart-badge">
               {{ cartItemCount }}
             </span>
@@ -253,46 +261,6 @@ function handleSearch() {
                     </li>
                   </ul>
                 </li>
-                <!-- <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >VÍ <span class="float-end">></span></a
-                  >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; VÍ</a></li>
-                    <li><a href="#">VÍ NAM</a></li>
-                    <li><a href="#">VÍ NỮ</a></li>
-                  </ul>
-                </li>
-                <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >GIÀY <span class="float-end">></span></a
-                  >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; GIÀY</a></li>
-                    <li><a href="#">GIÀY SNEAKER</a></li>
-                    <li><a href="#">GIÀY LƯỜI</a></li>
-                  </ul>
-                </li>
-                <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >PHỤ KIỆN <span class="float-end">></span></a
-                  >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; PHỤ KIỆN</a></li>
-                    <li><a href="#">MŨ</a></li>
-                    <li><a href="#">THẮT LƯNG</a></li>
-                  </ul>
-                </li>
-                <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >BỘ SƯU TẬP <span class="float-end">></span></a
-                  >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; BỘ SƯU TẬP</a></li>
-                    <li><a href="#">XUÂN HÈ 2025</a></li>
-                    <li><a href="#">THU ĐÔNG 2024</a></li>
-                  </ul>
-                </li> -->
                 <li v-if="isLoggedIn" class="nav-item custom-has-dropdown">
                   <a class="custom-nav-link custom-submenu-toggle" href="#"
                     >TỔNG QUAN TÀI KHOẢN <span class="float-end">></span></a
@@ -373,7 +341,6 @@ function handleSearch() {
             <li class="nav-item">
               <a class="nav-link" href="/product">Sản Phẩm</a>
             </li>
-            <!-- Lặp trực tiếp danh mục cha -->
             <li
               v-for="parent in categories"
               :key="parent.categoryId"
@@ -452,10 +419,7 @@ function handleSearch() {
               href="/user/cart"
               class="text-dark text-decoration-none mx-2 position-relative d-inline-block"
             >
-              <!-- Icon giỏ hàng -->
               <i class="bi bi-cart3 fs-4"></i>
-
-              <!-- Badge số lượng -->
               <span v-if="cartItemCount > 0" class="cart-badge">
                 {{ cartItemCount }}
               </span>
@@ -479,7 +443,7 @@ function handleSearch() {
   </header>
 </template>
 
-<style src="./src/assets/css/header.css"></style>
+<style src="@/assets/css/header.css"></style>
 
 <style scoped>
 .badge {

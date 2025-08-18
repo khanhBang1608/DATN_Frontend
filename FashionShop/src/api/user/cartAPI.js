@@ -94,3 +94,13 @@ export const getRelatedProducts = async () => {
     throw error.response?.data || { message: error.message };
   }
 };
+export const getCartItemCount = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/item-count`, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: error.message };
+  }
+};
