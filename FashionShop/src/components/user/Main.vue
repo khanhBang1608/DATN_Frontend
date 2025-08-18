@@ -1,26 +1,5 @@
 <template>
   <div>
-    <!-- Danh mục -->
-    <div class="scroll-wrapper mt-3" @mouseenter="pauseScroll" @mouseleave="resumeScroll">
-      <div class="scroll-content" ref="scrollContent">
-        <div
-          v-for="(category, index) in categories"
-          :key="index"
-          class="product-category"
-        >
-          <a href="#" class="product-link">
-            <img
-              :src="category.image"
-              :alt="category.alt"
-              class="product-image"
-              onerror="this.onerror=null;this.src='https://placehold.co/150x150?text=Image+Not+Found';"
-            />
-            <div class="product-title">{{ category.title }}</div>
-          </a>
-        </div>
-      </div>
-    </div>
-
     <!-- Sản phẩm mới -->
     <div class="product-content-wrapper">
       <div class="container mt-5">
@@ -402,15 +381,12 @@
 
 <script setup>
 import axios from "axios";
-import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import { useRouter } from "vue-router";
-import { categories, useScrollCategory } from "@/assets/js/scrollcategory.js";
 import { fetchAverageRating } from "@/api/ProductClient";
 import promotionApi from "@/api/PromotionClien";
 
 // Khởi tạo các ref
-const scrollContent = ref(null);
-const { pauseScroll, resumeScroll } = useScrollCategory(scrollContent);
 const topNewestProducts = ref([]);
 const recentViewedProducts = ref([]);
 const topBestSellingProducts = ref([]);
@@ -575,7 +551,7 @@ const pageSize = ref(4);
 const fetchTopBestSellingProducts = async (page = 0) => {
   try {
     const response = await axios.get("/api/public/top50-products", {
-      params: { page, size: pageSize.value }, // <-- sửa lại ở đây
+      params: { page, size: pageSize.value },
     });
 
     const processed = await processProducts(
@@ -613,11 +589,6 @@ onMounted(async () => {
   await nextTick();
 });
 
-// onBeforeUnmount hook
-onBeforeUnmount(() => {
-  // Không cần xóa sự kiện vì không sử dụng Swiper
-});
 </script>
 
 <style src="./src/assets/css/product.css"></style>
-```
