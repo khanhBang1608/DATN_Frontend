@@ -96,7 +96,7 @@ const processProducts = async (products) => {
 
 const currentPage = ref(0);
 const totalPages = ref(0);
-const pageSize = ref(8);
+const pageSize = ref(9);
 
 const fetchProducts = async (page = 0, size = pageSize.value) => {
   try {
