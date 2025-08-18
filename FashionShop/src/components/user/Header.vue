@@ -1,4 +1,3 @@
-```vue
 <script setup>
 import { ref, onMounted, watch, nextTick, computed } from "vue";
 import { useRouter } from "vue-router";
@@ -95,11 +94,14 @@ function toggleSubmenu(categoryId) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   checkLoginStatus();
-  fetchUserInfo();
-  fetchCategories();
-  fetchCart(); // Gọi hàm để lấy dữ liệu giỏ hàng
+  await fetchUserInfo();
+  await fetchCategories();
+  await fetchCart();
+  nextTick(() => {
+    initHeader(); // Gọi lại initHeader sau khi DOM được cập nhật
+  });
 
   window.addEventListener("storage", () => {
     checkLoginStatus();
@@ -180,14 +182,13 @@ function handleSearch() {
           </a>
           <a
             href="/user/cart"
-            class="text-dark text-decoration-none mx-2 position-relative"
+            class="text-dark text-decoration-none mx-2 position-relative d-inline-block"
           >
-            <i class="bi bi-cart fs-4"></i>
-            <span
-              v-if="cartItemCount > 0"
-              class="badge bg-danger rounded-circle position-absolute"
-              style="top: -10px; right: -10px"
-            >
+            <!-- Icon giỏ hàng -->
+            <i class="bi bi-cart3 fs-4"></i>
+
+            <!-- Badge số lượng -->
+            <span v-if="cartItemCount > 0" class="cart-badge">
               {{ cartItemCount }}
             </span>
           </a>
@@ -217,24 +218,42 @@ function handleSearch() {
             </div>
             <div class="offcanvas-body p-0 position-relative">
               <ul class="navbar-nav fw-normal text-dark custom-main-menu">
-                <li class="nav-item"><a class="custom-nav-link" href="#">HÀNG MỚI</a></li>
                 <li class="nav-item">
-                  <a class="custom-nav-link" href="#">BEST SELLER</a>
+                  <a class="custom-nav-link" href="/">TRANG CHỦ</a>
                 </li>
-                <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >TÚI <span class="float-end">></span></a
+                <li class="nav-item">
+                  <a class="custom-nav-link" href="/product">SẢN PHẨM</a>
+                </li>
+                <li
+                  v-for="parent in categories"
+                  :key="parent.categoryId"
+                  class="nav-item custom-has-dropdown"
+                  :data-category-id="parent.categoryId"
+                >
+                  <a class="custom-nav-link custom-submenu-toggle" href="#">
+                    {{ parent.categoryName }} <span class="float-end">></span>
+                  </a>
+                  <ul
+                    class="custom-submenu"
+                    v-show="parent.children && parent.children.length"
                   >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; TÚI</a></li>
-                    <li><a href="#">XEM TẤT CẢ</a></li>
-                    <li><a href="#">TÚI XÁCH</a></li>
-                    <li><a href="#">TÚI ĐEO CHÉO</a></li>
-                    <li><a href="#">TÚI ĐEO VAI</a></li>
-                    <li><a href="#">TÚI TOTE & BALO</a></li>
+                    <li>
+                      <a href="#" class="custom-back-btn"
+                        >&lt; {{ parent.categoryName }}</a
+                      >
+                    </li>
+                    <li v-for="child in parent.children" :key="child.categoryId">
+                      <a
+                        href="#"
+                        @click.prevent="navigateToProducts(child.categoryName)"
+                        data-bs-dismiss="offcanvas"
+                      >
+                        {{ child.categoryName }}
+                      </a>
+                    </li>
                   </ul>
                 </li>
-                <li class="nav-item custom-has-dropdown">
+                <!-- <li class="nav-item custom-has-dropdown">
                   <a class="custom-nav-link custom-submenu-toggle" href="#"
                     >VÍ <span class="float-end">></span></a
                   >
@@ -273,10 +292,7 @@ function handleSearch() {
                     <li><a href="#">XUÂN HÈ 2025</a></li>
                     <li><a href="#">THU ĐÔNG 2024</a></li>
                   </ul>
-                </li>
-                <li class="nav-item">
-                  <a class="custom-nav-link" href="#">CÂU CHUYỆN</a>
-                </li>
+                </li> -->
                 <li v-if="isLoggedIn" class="nav-item custom-has-dropdown">
                   <a class="custom-nav-link custom-submenu-toggle" href="#"
                     >TỔNG QUAN TÀI KHOẢN <span class="float-end">></span></a
@@ -434,14 +450,13 @@ function handleSearch() {
             </a>
             <a
               href="/user/cart"
-              class="text-dark text-decoration-none mx-2 position-relative"
+              class="text-dark text-decoration-none mx-2 position-relative d-inline-block"
             >
-              <i class="bi bi-cart fs-4"></i>
-              <span
-                v-if="cartItemCount > 0"
-                class="badge bg-danger rounded-circle position-absolute"
-                style="top: -10px; right: -10px"
-              >
+              <!-- Icon giỏ hàng -->
+              <i class="bi bi-cart3 fs-4"></i>
+
+              <!-- Badge số lượng -->
+              <span v-if="cartItemCount > 0" class="cart-badge">
                 {{ cartItemCount }}
               </span>
             </a>
@@ -533,4 +548,3 @@ function handleSearch() {
   letter-spacing: 0.3px;
 }
 </style>
-```
