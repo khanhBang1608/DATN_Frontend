@@ -77,7 +77,7 @@
           />
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Địa chỉ</label>
+          <label class="form-label fw-bold">Tên người nhận</label>
           <input type="text" class="form-control" :value="extractedCustomerName" disabled />
         </div>
       </div>

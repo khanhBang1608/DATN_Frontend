@@ -96,7 +96,7 @@ const processProducts = async (products) => {
 
 const currentPage = ref(0);
 const totalPages = ref(0);
-const pageSize = ref(8);
+const pageSize = ref(9);
 
 const fetchProducts = async (page = 0, size = pageSize.value) => {
   try {
@@ -511,6 +511,7 @@ const fetchColorsAndSizes = async () => {
                         v-model="selectedColors"
                         :value="color.colorId"
                       />
+                      <!-- Nếu không có hexCode trong DB thì có thể random hoặc để màu xám -->
                       <span
                         class="color-dot me-2"
                         :style="{ backgroundColor: color.hexCode || '#ccc' }"
@@ -641,8 +642,8 @@ const fetchColorsAndSizes = async () => {
           </div>
         </div>
       </div>
-
-      <!-- <p
+<!--
+      <p
         class="ps-5 product-count-text d-none d-md-block mt-2"
         style="font-style: italic; color: #999; font-size: 14px"
       >
