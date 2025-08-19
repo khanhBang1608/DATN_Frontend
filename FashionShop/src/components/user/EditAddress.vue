@@ -353,27 +353,30 @@ async function submitForm() {
       }
     );
     if (res.status === 304) {
-    iziToast.warning({
-      title: "Thông báo",
-      message: "Không có sự thay đổi nào. Bạn có muốn tiếp tục sửa?",
-      position: "topRight",
-      buttons: [
-        [
-          "<button>Tiếp tục sửa</button>",
-          function () {
-            // Không làm gì, cho user tiếp tục sửa
-          },
+      iziToast.warning({
+        title: "Thông báo",
+        message: "Không có sự thay đổi nào. Bạn có muốn tiếp tục sửa?",
+        position: "topRight",
+        timeout: false, // Không auto đóng
+        buttons: [
+          [
+            "<button>Tiếp tục sửa</button>",
+            function (instance, toast) {
+              instance.hide({ transitionOut: "fadeOut" }, toast, "button");
+              isLoading.value = false; // thoát loading
+            },
+          ],
+          [
+            "<button>Không!</button>",
+            function () {
+              window.location.href = "/user/listaddress";
+            },
+          ],
         ],
-        [
-          "<button>Quay lại</button>",
-          function () {
-            window.location.href = "/user/listaddress";
-          },
-        ],
-      ],
-    });
-    return;
-  }
+      });
+      return; // Dừng hàm
+    }
+
 
     if (!res.ok) throw new Error("Cập nhật thất bại");
 
