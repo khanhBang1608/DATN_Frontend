@@ -11,10 +11,7 @@
           class="admin-date-input"
           v-model="fromDate"
           placeholder="Ngày"
-          @change="
-            resetFiltersExcept('search');
-            resetAndFetch();
-          "
+          @change="fetchUsers(0)"
         />
         <span class="mx-2">Đến</span>
         <input
@@ -22,10 +19,7 @@
           class="admin-date-input"
           v-model="toDate"
           placeholder="Ngày"
-          @change="
-            resetFiltersExcept('search');
-            resetAndFetch();
-          "
+          @change="fetchUsers(0)"
         />
       </div>
     </div>
@@ -35,14 +29,7 @@
       <div class="col-md-3">
         <label class="form-label">Loại tìm kiếm</label>
         <div class="admin-search-box">
-          <select
-            class="admin-select"
-            v-model="searchType"
-            @change="
-              resetFiltersExcept('search');
-              resetAndFetch();
-            "
-          >
+          <select class="admin-select" v-model="searchType" @change="fetchUsers(0)">
             <option value="name">Tìm theo họ tên</option>
             <option value="email">Tìm theo email</option>
           </select>
@@ -57,10 +44,7 @@
             class="admin-search-text"
             :placeholder="searchType === 'name' ? 'Nhập họ tên...' : 'Nhập email...'"
             v-model="searchQuery"
-            @input="
-              resetFiltersExcept('search');
-              resetAndFetch();
-            "
+            @input="fetchUsers(0)"
           />
           <i class="bi bi-search admin-search-icon"></i>
         </div>
@@ -69,19 +53,17 @@
       <div class="col-md-4">
         <label class="form-label">Trạng thái</label>
         <div class="admin-search-box">
-          <select
-            class="admin-select"
-            v-model="statusFilter"
-            @change="
-              resetFiltersExcept('status');
-              resetAndFetch();
-            "
-          >
+          <select class="admin-select" v-model="statusFilter" @change="fetchUsers(0)">
             <option value="">Tất cả trạng thái</option>
             <option value="true">Hoạt động</option>
             <option value="false">Bị khóa</option>
           </select>
         </div>
+      </div>
+    </div>
+    <div class="row mt-2 mb-3">
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-secondary" @click="resetFilter">Xóa tất cả bộ lọc</button>
       </div>
     </div>
 
@@ -110,7 +92,7 @@
             </td>
           </tr>
           <tr v-for="(user, index) in users" :key="user.id">
-            <td>{{ index + 1 }}</td>
+            <td>{{ currentPage * pageSize + index + 1 }}</td>
             <td>
               <img
                 :src="user.avatar || 'https://via.placeholder.com/50'"
@@ -142,7 +124,6 @@
                 <option :value="false">Bị khóa</option>
               </select>
             </td>
-
             <td>{{ formatDate(user.createdAt) }}</td>
             <td class="text-center">
               <button
@@ -163,16 +144,16 @@
         :class="{ disabled: currentPage === 0 }"
         @click="currentPage > 0 && fetchUsers(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
 
       <!-- Số trang -->
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="fetchUsers(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && fetchUsers(page - 1)"
       >
         {{ page }}
       </div>
@@ -183,14 +164,14 @@
         :class="{ disabled: currentPage + 1 >= totalPages }"
         @click="currentPage + 1 < totalPages && fetchUsers(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue"; // Thêm computed
 import { useRouter } from "vue-router";
 import axios from "axios";
 import iziToast from "izitoast";
@@ -207,6 +188,10 @@ const fromDate = ref("");
 const toDate = ref("");
 const statusFilter = ref("");
 
+const pageSize = ref(8); // Thêm pageSize với giá trị mặc định 10
+const totalPages = ref(0);
+const currentPage = ref(0); // Sửa thành 0 để đồng bộ với API (0-based)
+
 const goToUserAddresses = (userId, userName) => {
   router.push({
     path: `/admin/users/${userId}/addresses`,
@@ -214,29 +199,62 @@ const goToUserAddresses = (userId, userName) => {
   });
 };
 
-const totalPages = ref();
-const currentPage = ref(1);
-
-const resetFiltersExcept = (keep) => {
-  if (keep !== "search") {
-    searchQuery.value = "";
-    fromDate.value = "";
-    toDate.value = "";
-    searchType.value = "name";
-  }
-  if (keep !== "status") {
-    statusFilter.value = "";
-  }
-};
-
-const resetAndFetch = () => {
+const resetFilter = () => {
+  searchQuery.value = "";
+  fromDate.value = "";
+  toDate.value = "";
+  searchType.value = "name";
+  statusFilter.value = "";
   currentPage.value = 0;
   fetchUsers(0);
 };
 
+// Tính toán các trang hiển thị
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
+});
+
 const fetchUsers = async (page = 0) => {
   try {
-    let url = `http://localhost:8080/api/admin/users?page=${page}&size=8`;
+    let url = `http://localhost:8080/api/admin/users?page=${page}&size=${pageSize.value}`;
     if (searchQuery.value) {
       if (searchType.value === "name") {
         url += `&name=${searchQuery.value}`;
@@ -290,7 +308,7 @@ const updateUserStatus = async (user) => {
       position: "topRight",
     });
 
-    await fetchUsers();
+    await fetchUsers(currentPage.value);
   } catch (err) {
     iziToast.error({
       title: "Lỗi",

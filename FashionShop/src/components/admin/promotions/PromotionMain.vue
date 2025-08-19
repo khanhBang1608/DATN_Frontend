@@ -17,7 +17,7 @@
           placeholder="0"
           min="0"
           max="100"
-          @input="applyFilters('filter')"
+          @input="applyFilters()"
         />
         <span class="mx-2">Đến</span>
         <input
@@ -27,7 +27,7 @@
           placeholder="100"
           min="0"
           max="100"
-          @input="applyFilters('filter')"
+          @input="applyFilters()"
         />
       </div>
     </div>
@@ -41,10 +41,7 @@
           <select
             class="admin-select"
             v-model="filters.searchType"
-            @change="
-              resetFiltersExcept('search');
-              resetAndFetch();
-            "
+            @change="applyFilters()"
           >
             <option value="code">Mã khuyến mãi</option>
             <option value="description">Tên chương trình</option>
@@ -65,7 +62,7 @@
                 : 'Nhập tên chương trình...'
             "
             v-model="filters.searchKeyword"
-            @input="applyFilters('search')"
+            @input="applyFilters()"
           />
           <i class="bi bi-search admin-search-icon"></i>
         </div>
@@ -75,11 +72,7 @@
       <div class="col-md-3">
         <label class="form-label">Trạng thái</label>
         <div class="admin-search-box">
-          <select
-            v-model="filters.status"
-            class="admin-select"
-            @change="applyFilters('filter')"
-          >
+          <select v-model="filters.status" class="admin-select" @change="applyFilters()">
             <option value="">Tất cả</option>
             <option :value="true">Đang hoạt động</option>
             <option :value="false">Ngừng hoạt động</option>
@@ -88,9 +81,10 @@
       </div>
     </div>
 
-    <!-- <div class="mb-3">
-      <button class="btn btn-secondary" @click="clearFilters">Xóa bộ lọc</button>
-    </div> -->
+    <!-- Nút xóa bộ lọc -->
+    <div class="mb-3">
+      <button class="btn btn-secondary" @click="clearFilters">Xóa tất cả bộ lọc</button>
+    </div>
 
     <!-- Bảng dữ liệu -->
     <div class="table-responsive">
@@ -102,7 +96,7 @@
             <th>Tên chương trình</th>
             <th>Giảm %</th>
             <th>Thời gian</th>
-            <th>Trạng thái</th>
+            <th>Hiện hành</th>
             <th class="text-center">Hành động</th>
           </tr>
         </thead>
@@ -114,7 +108,9 @@
             </td>
           </tr>
           <tr v-for="promo in promotions" :key="promo.id">
-            <td>{{ promo.id }}</td>
+            <td>
+              {{ promo.id }}
+            </td>
             <td>{{ promo.code }}</td>
             <td>{{ promo.description }}</td>
             <td>{{ formatDiscount(promo.discountAmount) }}</td>
@@ -134,7 +130,7 @@
                 <i class="bi bi-pencil-square"></i> Sửa
               </button>
               <button
-                class="btn btn-sm btn-danger m-1"
+                class="btn btn-sm btn-danger text-dark m-1"
                 @click="deletePromotion(promo.id)"
               >
                 <i class="bi bi-trash"></i> Xoá
@@ -158,14 +154,14 @@
         :class="{ disabled: currentPage === 0 }"
         @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="changePage(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
       >
         {{ page }}
       </div>
@@ -174,7 +170,7 @@
         :class="{ disabled: currentPage === totalPages - 1 }"
         @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
@@ -276,7 +272,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import Swal from "sweetalert2";
 import iziToast from "izitoast";
@@ -339,20 +335,7 @@ const resetAndFetch = () => {
   applyFilters();
 };
 
-const applyFilters = async (mode) => {
-  // mode: "search" hoặc "filter" để biết đang thao tác gì
-  if (mode === "search") {
-    // Khi tìm kiếm thì reset toàn bộ filter
-    filters.value.status = "";
-    filters.value.discountMin = "";
-    filters.value.discountMax = "";
-    filters.value.isCurrentlyActive = false;
-  } else if (mode === "filter") {
-    // Khi lọc thì reset toàn bộ search
-    filters.value.searchKeyword = "";
-    filters.value.searchType = "code";
-  }
-
+const applyFilters = async () => {
   // Reset phân trang về trang đầu tiên
   currentPage.value = 0;
 
@@ -536,6 +519,48 @@ const isCurrentlyActive = (promo) => {
   const today = new Date().toISOString().split("T")[0];
   return promo.status === true && promo.startDate <= today && promo.endDate >= today;
 };
+
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
+});
 
 onMounted(fetchPromotions);
 </script>

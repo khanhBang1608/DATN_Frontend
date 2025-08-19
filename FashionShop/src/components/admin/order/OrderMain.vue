@@ -25,14 +25,14 @@
       </div>
 
       <!-- Ngày đặt hàng (ngang hàng) -->
-      <div class="mb-3">
+      <div class="mb-3 admin-date-filter">
         <label class="form-label">Ngày đặt hàng</label>
         <div class="d-flex gap-2 flex-wrap">
           <Datepicker
             v-model="filters.startDate"
             format="yyyy-MM-dd"
             placeholder="Ngày"
-            class="form-control"
+            class="admin-date-input"
             style="max-width: 180px"
           />
           Đến
@@ -40,7 +40,7 @@
             v-model="filters.endDate"
             format="yyyy-MM-dd"
             placeholder="Ngày"
-            class="form-control"
+            class="admin-date-input"
             style="max-width: 180px"
           />
         </div>
@@ -48,18 +48,21 @@
 
       <!-- Tên người đặt -->
       <div class="mb-3 w-50">
-        <label class="form-label">Tên người đặt</label>
-        <input
-          type="text"
-          class="form-control"
-          v-model="filters.userFullName"
-          placeholder="Nhập tên..."
-        />
+        <label class="form-label">Tìm kiếm</label>
+        <div class="admin-search-box">
+          <input
+            type="text"
+            class="admin-search-text"
+            v-model="filters.userFullName"
+            placeholder="Nhập tên người đặt..."
+          />
+          <i class="bi bi-search admin-search-icon"></i>
+        </div>
       </div>
 
       <!-- Nút lọc -->
       <div>
-        <button class="btn btn-primary me-2" @click="applyFilters">Áp dụng bộ lọc</button>
+        <!-- <button class="btn btn-primary me-2" @click="applyFilters">Áp dụng bộ lọc</button> -->
         <button class="btn btn-secondary" @click="clearFilters">Xóa tất cả bộ lọc</button>
       </div>
     </div>
@@ -70,9 +73,9 @@
       </div>
     </div>
 
-    <div v-else class="table-responsive mt-3">
+    <div v-else class="table-responsive">
       <table class="table table-hover align-middle text-light custom-table">
-        <thead class="table-dark">
+        <thead>
           <tr>
             <th>Mã đơn hàng</th>
             <th>Tên người đặt</th>
@@ -122,26 +125,32 @@
           </tr>
         </tbody>
       </table>
-      <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
-        <button
-          class="btn btn-outline-secondary me-2"
-          :disabled="currentPage === 0"
-          @click="fetchOrders(currentPage - 1)"
-        >
-          &laquo;
-        </button>
+    </div>
+    <div v-if="totalPages > 1" class="admin-pagination">
+      <div
+        class="admin-button admin-prev"
+        :disabled="currentPage === 0"
+        @click="fetchOrders(currentPage - 1)"
+      >
+        &lt; prev
+      </div>
 
-        <span class="mx-2 align-self-center">
-          Trang {{ currentPage + 1 }} / {{ totalPages }}
-        </span>
+      <div
+        v-for="page in totalPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page - 1 }"
+        @click="fetchOrders(page - 1)"
+      >
+        {{ page }}
+      </div>
 
-        <button
-          class="btn btn-outline-secondary ms-2"
-          :disabled="currentPage >= totalPages - 1"
-          @click="fetchOrders(currentPage + 1)"
-        >
-           &raquo;
-        </button>
+      <div
+        class="admin-button admin-next"
+        :disabled="currentPage >= totalPages - 1"
+        @click="fetchOrders(currentPage + 1)"
+      >
+        next &gt;
       </div>
     </div>
   </div>
@@ -168,6 +177,7 @@ export default {
         totalPages: 0,
         currentPage: 0,
       },
+      debounceTimer: null,
       statusOptions: [
         "Chờ xác nhận", // 0
         "Chờ lấy hàng", // 1
@@ -182,12 +192,35 @@ export default {
       toast: useToast(),
     };
   },
+
+  watch: {
+    // ✅ Tự động lọc khi thay đổi status, startDate, endDate
+    "filters.status": {
+      handler() {
+        this.applyFilters();
+      },
+      deep: true,
+    },
+    "filters.startDate"() {
+      this.applyFilters();
+    },
+    "filters.endDate"() {
+      this.applyFilters();
+    },
+    // ✅ Debounce khi nhập tên
+    "filters.userFullName"(val) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = setTimeout(() => {
+        this.applyFilters();
+      }, 500);
+    },
+  },
   methods: {
     extractPhone(address) {
       return address?.split(" - ")[0] || "Không xác định";
     },
     extractAddress(address) {
-      return address?.split(" - ")[1] || address;
+      return address?.split(" - ")[2] || address;
     },
 
     formatPrice(price) {
@@ -202,13 +235,11 @@ export default {
     async fetchOrders(pageNum = 0) {
       this.loading = true;
       try {
-        const res = await getAllOrders(pageNum, 10);
+        const res = await getAllOrders(pageNum, 8);
         this.orders = res.content;
         this.totalPages = res.totalPages;
         this.currentPage = res.currentPage || pageNum;
-        // page.value = this.currentPage;
         this.applyFilters();
-        this.toast.success("Tải đơn hàng thành công!");
       } catch (err) {
         if (err.message.includes("Access denied")) {
           this.toast.error(
@@ -259,7 +290,7 @@ export default {
         userFullName: "",
       };
       this.applyFilters();
-      this.toast.info("Đã xóa tất cả bộ lọc.");
+      // this.toast.info("Đã xóa tất cả bộ lọc.");
     },
     viewOrder(orderId) {
       this.$emit("view-order", orderId);
@@ -299,16 +330,6 @@ export default {
 .card {
   background-color: #2c3e50;
   color: #ecf0f1;
-}
-.custom-table {
-  background-color: #34495e;
-  border-radius: 6px;
-}
-.table-dark {
-  background-color: #1a252f;
-}
-.table-hover tbody tr:hover {
-  background-color: #3e5c76;
 }
 .btn-primary {
   background-color: #3498db;

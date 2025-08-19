@@ -36,8 +36,7 @@
           <input
             type="text"
             class="admin-search-text"
-            placeholder="Nhập mã giảm giá...
-            "
+            placeholder="Nhập mã giảm giá..."
             v-model="filters.code"
           />
           <i class="bi bi-search admin-search-icon"></i>
@@ -46,7 +45,7 @@
 
       <!-- Trạng thái -->
       <div class="col-md-3">
-        <label class="form-label">Trạng thái</label>
+        <label class="form-label">Hiện hành</label>
         <div class="admin-search-box">
           <select v-model="filters.status" class="admin-select">
             <option value="">Tất cả</option>
@@ -55,6 +54,11 @@
           </select>
         </div>
       </div>
+    </div>
+
+    <!-- Nút xóa tất cả bộ lọc -->
+    <div class="mb-3">
+      <button class="btn btn-secondary" @click="clearFilters">Xóa tất cả bộ lọc</button>
     </div>
 
     <div class="table-responsive">
@@ -68,7 +72,7 @@
             <th>Giảm tối đa</th>
             <th>Số lượng</th>
             <th>Hiệu lực</th>
-            <th>Trạng thái</th>
+            <th>Hiện hành</th>
             <th class="text-center">Hành động</th>
           </tr>
         </thead>
@@ -80,7 +84,9 @@
             </td>
           </tr>
           <tr v-for="discount in filteredDiscounts" :key="discount.discountId">
-            <td>{{ discount.discountId }}</td>
+            <td>
+              {{ discount.discountId }}
+            </td>
             <td>
               <strong>{{ discount.discountCode }}</strong>
             </td>
@@ -123,25 +129,25 @@
       <div
         class="admin-button admin-prev"
         :class="{ disabled: currentPage === 0 }"
-        @click="fetchDiscounts(currentPage - 1)"
+        @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="fetchDiscounts(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
       >
         {{ page }}
       </div>
       <div
         class="admin-button admin-next"
         :class="{ disabled: currentPage === totalPages - 1 }"
-        @click="fetchDiscounts(currentPage + 1)"
+        @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
@@ -264,7 +270,7 @@
               Đóng
             </button>
             <button type="submit" class="btn btn-success">
-              {{ isEdit ? "Cập nhập" : "Thêm mới" }}
+              {{ isEdit ? "Cập nhật" : "Thêm mới" }}
             </button>
           </div>
         </form>
@@ -317,6 +323,12 @@ const fetchDiscounts = async (page = 0) => {
     currentPage.value = res.data.number;
   } catch (err) {
     iziToast.error({ title: "Lỗi", message: "Không thể tải mã giảm giá." });
+  }
+};
+
+const changePage = (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    fetchDiscounts(page);
   }
 };
 
@@ -469,6 +481,7 @@ watch(
   filters,
   () => {
     currentPage.value = 0;
+    fetchDiscounts(0); // Gọi lại API với trang 0 khi bộ lọc thay đổi
   },
   { deep: true }
 );
@@ -509,6 +522,48 @@ const filteredDiscounts = computed(() => {
 
     return matchCode && matchPercentMin && matchPercentMax && matchStatus;
   });
+});
+
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
 });
 
 const clearFilters = () => {

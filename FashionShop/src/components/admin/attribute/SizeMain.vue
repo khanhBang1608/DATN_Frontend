@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue"; // Thêm computed
 import axios from "axios";
 import Swal from "sweetalert2";
 import iziToast from "izitoast";
@@ -14,7 +14,7 @@ const formErrors = ref({ name: "" });
 
 const searchKeyword = ref("");
 const currentPage = ref(0);
-const pageSize = 10;
+const pageSize = 8;
 const totalPages = ref(0);
 const totalItems = ref(0);
 
@@ -62,6 +62,49 @@ const onSearchInput = () => {
   currentPage.value = 0; // Luôn về trang đầu tiên
   debouncedFetchSizes();
 };
+
+// Tính toán các trang hiển thị
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
+});
 
 const validateSizeForm = (form) => {
   formErrors.value.name = "";
@@ -246,23 +289,23 @@ onMounted(() => {
         :class="{ disabled: currentPage === 0 }"
         @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="changePage(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
       >
         {{ page }}
       </div>
       <div
         class="admin-button admin-next"
-        :class="{ disabled: currentPage + 1 >= totalPages }"
+        :class="{ disabled: currentPage === totalPages - 1 }"
         @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>

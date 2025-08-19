@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import HomeView from '../views/indexView.vue'
 import Dashboard from '@/views/DashboardView.vue'
 import Promotion from '@/views/PromotionView.vue'
 import Discount from '@/views/DiscountView.vue'
@@ -182,8 +182,12 @@ const router = createRouter({
       beforeEnter: (to, from, next) => {
         localStorage.removeItem('token')
         localStorage.removeItem('role')
-        // Nếu bạn lưu thêm thông tin user, có thể xoá thêm:
-        localStorage.removeItem('user')
+        localStorage.removeItem('chatMessages')
+        localStorage.removeItem('editAddress')
+        localStorage.removeItem('pendingOrder')
+        localStorage.removeItem('orderNote')
+        localStorage.removeItem('tokenExpiresAt')
+        localStorage.removeItem('cartDetails')
 
         // Chuyển hướng đến trang login
         next('/login')

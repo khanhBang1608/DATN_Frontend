@@ -3,12 +3,15 @@ import { ref, onMounted, watch, nextTick } from "vue";
 import { useRouter } from "vue-router";
 import initHeader from "@/assets/js/header.js";
 import axios from "axios";
+import { getCart, getCartItemCount } from "@/api/user/cartAPI";
 
 const isLoggedIn = ref(false);
 const router = useRouter();
 const userInfo = ref(null);
 const categories = ref([]); // Lưu danh sách danh mục từ API
 const activeSubmenu = ref(null); // Theo dõi danh mục cha đang mở submenu
+const cart = ref({ details: [] }); // Lưu dữ liệu giỏ hàng
+const cartItemCount = ref(0); // Số lượng sản phẩm trong giỏ hàng từ API
 
 async function fetchUserInfo() {
   const token = localStorage.getItem("token");
@@ -34,6 +37,25 @@ async function fetchCategories() {
     categories.value = response.data; // Lưu roots (danh mục cha với children)
   } catch (error) {
     console.error("Không thể lấy danh mục:", error);
+  }
+}
+
+async function fetchCart() {
+  try {
+    const cartData = await getCart();
+    cart.value = cartData;
+  } catch (error) {
+    console.error("Không thể lấy dữ liệu giỏ hàng:", error.message);
+  }
+}
+
+async function fetchCartItemCount() {
+  try {
+    const count = await getCartItemCount();
+    cartItemCount.value = count;
+  } catch (error) {
+    console.error("Không thể lấy số lượng giỏ hàng:", error.message);
+    cartItemCount.value = 0;
   }
 }
 
@@ -78,22 +100,31 @@ function toggleSubmenu(categoryId) {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   checkLoginStatus();
-  fetchUserInfo();
-  fetchCategories();
+  await fetchUserInfo();
+  await fetchCategories();
+  await fetchCart();
+  await fetchCartItemCount(); // Gọi API để lấy số lượng giỏ hàng
+  nextTick(() => {
+    initHeader(); // Gọi lại initHeader sau khi DOM được cập nhật
+  });
 
   window.addEventListener("storage", () => {
     checkLoginStatus();
     fetchUserInfo();
+    fetchCartItemCount(); // Cập nhật số lượng khi có thay đổi
   });
 });
 
 watch(isLoggedIn, (newVal) => {
   if (newVal) {
+    fetchCartItemCount(); // Cập nhật số lượng khi đăng nhập
     nextTick(() => {
       initHeader();
     });
+  } else {
+    cartItemCount.value = 0; // Reset khi đăng xuất
   }
 });
 
@@ -160,8 +191,14 @@ function handleSearch() {
           <a href="/user/favorite" class="text-dark text-decoration-none mx-2">
             <i class="bi bi-heart fs-4"></i>
           </a>
-          <a href="/user/cart" class="text-dark text-decoration-none mx-2">
-            <i class="bi bi-cart fs-4"></i>
+          <a
+            href="/user/cart"
+            class="text-dark text-decoration-none mx-2 position-relative d-inline-block"
+          >
+            <i class="bi bi-cart3 fs-4"></i>
+            <span v-if="cartItemCount > 0" class="cart-badge">
+              {{ cartItemCount }}
+            </span>
           </a>
           <button
             class="navbar-toggler"
@@ -189,66 +226,40 @@ function handleSearch() {
             </div>
             <div class="offcanvas-body p-0 position-relative">
               <ul class="navbar-nav fw-normal text-dark custom-main-menu">
-                <li class="nav-item"><a class="custom-nav-link" href="#">HÀNG MỚI</a></li>
                 <li class="nav-item">
-                  <a class="custom-nav-link" href="#">BEST SELLER</a>
-                </li>
-                <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >TÚI <span class="float-end">></span></a
-                  >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; TÚI</a></li>
-                    <li><a href="#" class="custom-back-btn">&lt; TÚI</a></li>
-                    <li><a href="#">XEM TẤT CẢ</a></li>
-                    <li><a href="#">TÚI XÁCH</a></li>
-                    <li><a href="#">TÚI ĐEO CHÉO</a></li>
-                    <li><a href="#">TÚI ĐEO VAI</a></li>
-                    <li><a href="#">TÚI TOTE & BALO</a></li>
-                  </ul>
-                </li>
-                <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >VÍ <span class="float-end">></span></a
-                  >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; VÍ</a></li>
-                    <li><a href="#">VÍ NAM</a></li>
-                    <li><a href="#">VÍ NỮ</a></li>
-                  </ul>
-                </li>
-                <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >GIÀY <span class="float-end">></span></a
-                  >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; GIÀY</a></li>
-                    <li><a href="#">GIÀY SNEAKER</a></li>
-                    <li><a href="#">GIÀY LƯỜI</a></li>
-                  </ul>
-                </li>
-                <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >PHỤ KIỆN <span class="float-end">></span></a
-                  >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; PHỤ KIỆN</a></li>
-                    <li><a href="#">MŨ</a></li>
-                    <li><a href="#">THẮT LƯNG</a></li>
-                  </ul>
-                </li>
-                <li class="nav-item custom-has-dropdown">
-                  <a class="custom-nav-link custom-submenu-toggle" href="#"
-                    >BỘ SƯU TẬP <span class="float-end">></span></a
-                  >
-                  <ul class="custom-submenu">
-                    <li><a href="#" class="custom-back-btn">&lt; BỘ SƯU TẬP</a></li>
-                    <li><a href="#">XUÂN HÈ 2025</a></li>
-                    <li><a href="#">THU ĐÔNG 2024</a></li>
-                  </ul>
+                  <a class="custom-nav-link" href="/">TRANG CHỦ</a>
                 </li>
                 <li class="nav-item">
-                  <a class="custom-nav-link" href="#">CÂU CHUYỆN</a>
+                  <a class="custom-nav-link" href="/product">SẢN PHẨM</a>
+                </li>
+                <li
+                  v-for="parent in categories"
+                  :key="parent.categoryId"
+                  class="nav-item custom-has-dropdown"
+                  :data-category-id="parent.categoryId"
+                >
+                  <a class="custom-nav-link custom-submenu-toggle" href="#">
+                    {{ parent.categoryName }} <span class="float-end">></span>
+                  </a>
+                  <ul
+                    class="custom-submenu"
+                    v-show="parent.children && parent.children.length"
+                  >
+                    <li>
+                      <a href="#" class="custom-back-btn"
+                        >&lt; {{ parent.categoryName }}</a
+                      >
+                    </li>
+                    <li v-for="child in parent.children" :key="child.categoryId">
+                      <a
+                        href="#"
+                        @click.prevent="navigateToProducts(child.categoryName)"
+                        data-bs-dismiss="offcanvas"
+                      >
+                        {{ child.categoryName }}
+                      </a>
+                    </li>
+                  </ul>
                 </li>
                 <li v-if="isLoggedIn" class="nav-item custom-has-dropdown">
                   <a class="custom-nav-link custom-submenu-toggle" href="#"
@@ -330,7 +341,6 @@ function handleSearch() {
             <li class="nav-item">
               <a class="nav-link" href="/product">Sản Phẩm</a>
             </li>
-            <!-- Lặp trực tiếp danh mục cha -->
             <li
               v-for="parent in categories"
               :key="parent.categoryId"
@@ -349,12 +359,12 @@ function handleSearch() {
 
               <ul
                 v-if="parent.children && parent.children.length"
-                class="dropdown-menu custom-dropdown shadow-sm border-0 rounded-3 mt-2"
+                class="dropdown-menu shadow border-0 rounded-4 mt-2 p-2 elegant-dropdown"
                 :aria-labelledby="`desktopProductDropdown-${parent.categoryId}`"
               >
-                <li v-for="child in parent.children" :key="child.categoryId">
+                <li v-for="child in parent.children" :key="child.categoryId" class="mb-1">
                   <a
-                    class="dropdown-item"
+                    class="dropdown-item px-3 py-2 rounded-3 fw-medium text-dark elegant-item"
                     href="#"
                     @click.prevent="navigateToProducts(child.categoryName)"
                   >
@@ -405,8 +415,14 @@ function handleSearch() {
             <a href="/user/favorite" class="text-dark text-decoration-none mx-2">
               <i class="bi bi-heart fs-4"></i>
             </a>
-            <a href="/user/cart" class="text-dark text-decoration-none mx-2">
-              <i class="bi bi-cart fs-4"></i>
+            <a
+              href="/user/cart"
+              class="text-dark text-decoration-none mx-2 position-relative d-inline-block"
+            >
+              <i class="bi bi-cart3 fs-4"></i>
+              <span v-if="cartItemCount > 0" class="cart-badge">
+                {{ cartItemCount }}
+              </span>
             </a>
             <form
               @submit.prevent="handleSearch"
@@ -427,9 +443,17 @@ function handleSearch() {
   </header>
 </template>
 
-<style src="./src/assets/css/header.css"></style>
+<style src="@/assets/css/header.css"></style>
 
 <style scoped>
+.badge {
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 4px 6px;
+  min-width: 20px;
+  text-align: center;
+}
+
 .dropdown-submenu {
   position: relative;
 }
@@ -468,5 +492,23 @@ function handleSearch() {
 
 .navbar-nav .dropdown-menu {
   min-width: 200px;
+}
+.elegant-dropdown {
+  background: #fff; /* nền trắng tinh */
+  backdrop-filter: blur(10px);
+  min-width: 220px;
+}
+
+.elegant-item {
+  transition: all 0.25s ease;
+  border-left: 3px solid transparent;
+}
+
+.elegant-item:hover {
+  background: #f2f2f2; /* nền xám nhạt khi hover */
+  border-left: 3px solid #000; /* line đen khi hover */
+  color: #000 !important; /* chữ đen rõ ràng */
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 </style>

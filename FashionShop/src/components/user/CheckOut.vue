@@ -49,6 +49,9 @@ export default {
   },
 
   computed: {
+    defaultAddress() {
+      return this.addressList.find((a) => a.isDefault) || this.addressList[0];
+    },
     subtotal() {
       return this.cartDetails.reduce(
         (total, item) => total + item.price * item.quantity,
@@ -69,11 +72,10 @@ export default {
   },
 
   watch: {
-    selectedAddressId(newId) {
-      if (newId) {
-        this.onSelectAddress(); // Lấy thông tin địa chỉ và gọi tính phí
-      }
+    confirmAddress() {
+      this.onSelectAddress();
     },
+
     "form.province"(provinceName) {
       const selectedProvince = this.provinces.find((p) => p.name === provinceName);
       if (selectedProvince) {
@@ -101,6 +103,21 @@ export default {
   },
 
   methods: {
+    goToNewAddress() {
+      // Đóng modal trước
+      const modal = bootstrap.Modal.getInstance(document.getElementById("addressModal"));
+      if (modal) modal.hide();
+
+      // Điều hướng sang trang thêm địa chỉ
+      this.$router.push("/user/address");
+    },
+    openAddressModal() {
+      const modal = new bootstrap.Modal(document.getElementById("addressModal"));
+      modal.show();
+    },
+    confirmAddress() {
+      this.onSelectAddress();
+    },
     formatPrice(price) {
       return new Intl.NumberFormat("vi-VN", {
         style: "currency",
@@ -344,11 +361,9 @@ export default {
 };
 </script>
 
-<!-- Template giữ nguyên -->
 <template>
   <div class="checkout-container container">
     <div class="row g-0">
-      <!-- Thông tin đơn hàng mobile -->
       <div class="col-md-5 bg-light px-4 py-3 d-md-none">
         <div class="checkout-sidebar">
           <div
@@ -364,7 +379,7 @@ export default {
           </div>
 
           <!-- Mã giảm giá -->
-          <div class="checkout-discount mb-3">
+          <!-- <div class="checkout-discount mb-3">
             <div class="input-group">
               <input
                 type="text"
@@ -375,6 +390,22 @@ export default {
               <button class="btn btn-secondary" @click="applyDiscount">Sử dụng</button>
             </div>
             <div v-if="discountError" class="text-danger mt-2">{{ discountError }}</div>
+          </div> -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Mã giảm giá:</label>
+            <select
+              class="form-select small-text"
+              v-model="selectedDiscount"
+              @change="applyDiscount"
+            >
+              <option v-for="d in validDiscounts" :key="d.discountId" :value="d">
+                {{ d.discountCode }} | {{ d.discountPercent }}% tối đa
+                {{ formatPrice(d.maxDiscountAmount || 0) }} | đơn từ
+                {{ formatPrice(d.minOrderAmount) }} | còn {{ d.quantityLimit }}
+              </option>
+            </select>
+
+            <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
           </div>
 
           <!-- Collapse đơn hàng -->
@@ -446,11 +477,11 @@ export default {
             <img
               src="@/assets/img/logo-brand.png"
               alt="L'hex Logo"
-              style="height: 48px"
+              style="height: 62px"
             />
           </div>
           <nav class="checkout-breadcrumb mb-3">
-            <router-link to="/cart" class="text-muted text-decoration-none"
+            <router-link to="/user/cart" class="text-muted text-decoration-none"
               >Giỏ hàng</router-link
             >
             >
@@ -462,63 +493,162 @@ export default {
           </div>
 
           <form class="checkout-form" @submit.prevent="placeOrder">
-            <!-- Dropdown địa chỉ -->
             <div class="mb-3">
-              <label class="form-label fw-semibold">Chọn địa chỉ giao hàng:</label>
-              <select
-                v-model="selectedAddressId"
-                @change="onSelectAddress"
-                class="form-select"
-              >
-                <option disabled value="">-- Chọn địa chỉ đã lưu --</option>
-                <option
-                  v-for="address in addressList"
-                  :key="address.addressId"
-                  :value="address.addressId"
-                >
-                  {{ address.customerName }} -
-                  {{ address.fullAddress || address.address }} -
-                  {{ address.phone }}
-                </option>
-              </select>
+              <label class="form-label fw-semibold d-block">Địa Chỉ Nhận Hàng</label>
 
-              <!-- Nút thêm địa chỉ -->
-              <div class="mt-2">
-                <router-link to="/user/address" class="btn btn-outline-primary btn-sm">
-                  ➕ Thêm địa chỉ mới
-                </router-link>
+              <!-- Hiển thị khi chưa chọn -->
+              <div
+                v-if="!selectedAddressId"
+                class="alert alert-warning py-2 d-flex justify-content-between align-items-center"
+              >
+                <span>Bạn chưa chọn địa chỉ giao hàng.</span>
+                <span
+                  class="text-primary choose-address"
+                  role="button"
+                  @click="openAddressModal"
+                >
+                  Chọn ngay
+                </span>
+              </div>
+
+              <!-- Hiển thị sau khi chọn -->
+              <div
+                v-else
+                class="border rounded p-2 bg-light d-flex justify-content-between align-items-start"
+              >
+                <div class="d-flex justify-content-between align-items-center w-100">
+                  <div>
+                    <strong>{{ form.fullName }}</strong>
+                    <strong class="ms-2">{{ form.phone }}</strong>
+                    <div>
+                      {{
+                        [form.address, form.ward, form.district, form.province]
+                          .filter(Boolean)
+                          .join(", ")
+                      }}
+                    </div>
+                  </div>
+                  <div>
+                    <span
+                      class="text-primary choose-address"
+                      role="button"
+                      @click="openAddressModal"
+                    >
+                      Thay đổi
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Modal chọn địa chỉ -->
+              <div
+                class="modal fade"
+                id="addressModal"
+                tabindex="-1"
+                aria-labelledby="addressModalLabel"
+                aria-hidden="true"
+              >
+                <div class="modal-dialog">
+                  <div class="modal-content border-0 shadow">
+                    <!-- Header -->
+                    <div class="modal-header border-bottom">
+                      <h5
+                        class="modal-title fw-semibold text-dark"
+                        id="addressModalLabel"
+                      >
+                        Địa Chỉ Của Tôi
+                      </h5>
+                      <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                      ></button>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="modal-body">
+                      <!-- Danh sách địa chỉ -->
+                      <div
+                        v-for="address in addressList"
+                        :key="address.addressId"
+                        class="border-bottom py-3 d-flex align-items-start"
+                      >
+                        <!-- Radio + Thông tin -->
+                        <div class="flex-grow-1">
+                          <div class="d-flex align-items-center mb-1">
+                            <input
+                              type="radio"
+                              :value="address.addressId"
+                              v-model="selectedAddressId"
+                              class="form-check-input me-2"
+                            />
+                            <strong class="me-2 text-dark">{{
+                              address.customerName
+                            }}</strong>
+                            <span class="text-muted">{{ address.phone }}</span>
+                          </div>
+                          <div class="text-secondary small">
+                            {{ address.fullAddress || address.address }}
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Thêm địa chỉ mới -->
+                      <div class="mt-3 d-flex justify-content-start">
+                        <button class="btn btn-outline-secondary" @click="goToNewAddress">
+                          Thêm Địa Chỉ Mới
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer border-top">
+                      <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                        Hủy
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-dark"
+                        @click="confirmAddress"
+                        data-bs-dismiss="modal"
+                      >
+                        Xác nhận
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- Input tên, SĐT, địa chỉ -->
-            <div class="mb-3">
-              <h5>Họ tên người nhận :</h5>
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Họ tên người nhận"
-                v-model="form.fullName"
-                required
-              />
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Họ tên người nhận</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Nhập họ và tên..."
+                  v-model="form.fullName"
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">Số điện thoại</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  placeholder="Nhập số điện thoại..."
+                  v-model="form.phone"
+                />
+              </div>
             </div>
+
             <div class="mb-3">
-              <h5>Số điện thoại :</h5>
+              <label class="form-label fw-bold">Địa chỉ chi tiết</label>
               <input
                 type="text"
                 class="form-control"
-                placeholder="Số điện thoại"
-                v-model="form.phone"
-                required
-              />
-            </div>
-            <div class="mb-3">
-              <h5>Địa chỉ chi tiết :</h5>
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Địa chỉ chi tiết"
+                placeholder="Nhập địa chỉ chi tiết..."
                 v-model="form.address"
-                required
               />
             </div>
 
@@ -568,7 +698,9 @@ export default {
             <div
               class="checkout-actions d-flex justify-content-between align-items-center gap-3"
             >
-              <router-link to="/cart" class="link-cart text-center">Giỏ hàng</router-link>
+              <router-link to="/user/cart" class="link-cart text-center"
+                >Giỏ hàng</router-link
+              >
               <button type="submit" class="btn btn-complete" :disabled="loading">
                 {{ loading ? "Đang xử lý..." : "Hoàn tất đơn hàng" }}
               </button>

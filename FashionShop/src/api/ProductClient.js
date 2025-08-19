@@ -42,3 +42,11 @@ export const fetchAverageRating = (productId) =>
 
 export const getFavoriteCount = (productId) =>
   axios.get(`${API_BASE}/products/${productId}/favorite-count`);
+
+// ✅ mới thêm – lấy toàn bộ màu
+export const getAllColors = () =>
+  axios.get(`${API_BASE}/colors/all`);
+
+// ✅ mới thêm – lấy toàn bộ size
+export const getAllSizes = () =>
+  axios.get(`${API_BASE}/sizes/all`);

@@ -3,7 +3,6 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="mb-0">⭐ Quản lý Đánh giá sản phẩm</h2>
     </div>
-
     <!-- Lọc theo ngày đánh giá -->
     <div class="mb-4 admin-date-filter">
       <label class="form-label">Ngày đánh giá</label>
@@ -12,20 +11,14 @@
           type="date"
           class="admin-date-input"
           v-model="filters.startDate"
-          @change="
-            resetFiltersExcept('date');
-            resetAndFetch();
-          "
+          @change="fetchReviews(0)"
         />
         <span class="mx-2">Đến</span>
         <input
           type="date"
           class="admin-date-input"
           v-model="filters.endDate"
-          @change="
-            resetFiltersExcept('date');
-            resetAndFetch();
-          "
+          @change="fetchReviews(0)"
         />
       </div>
     </div>
@@ -38,10 +31,7 @@
           <select
             class="admin-select"
             v-model="filters.searchType"
-            @change="
-              resetFiltersExcept('search');
-              resetAndFetch();
-            "
+            @change="fetchReviews(0)"
           >
             <option value="userFullName">Tên khách hàng</option>
             <option value="productName">Tên sản phẩm</option>
@@ -61,10 +51,7 @@
                 : 'Nhập tên sản phẩm...'
             "
             v-model="filters.searchKeyword"
-            @input="
-              resetFiltersExcept('search');
-              resetAndFetch();
-            "
+            @input="fetchReviews(0)"
           />
           <i class="bi bi-search admin-search-icon"></i>
         </div>
@@ -73,20 +60,19 @@
       <div class="col-md-3">
         <label class="form-label">Đánh giá sao</label>
         <div class="admin-search-box">
-          <select
-            class="admin-select"
-            v-model="filters.rating"
-            @change="
-              resetFiltersExcept('rating');
-              resetAndFetch();
-            "
-          >
+          <select class="admin-select" v-model="filters.rating" @change="fetchReviews(0)">
             <option value="">Tất cả</option>
             <option v-for="star in [1, 2, 3, 4, 5]" :key="star" :value="star">
               {{ star }} sao
             </option>
           </select>
         </div>
+      </div>
+    </div>
+
+    <div class="row mt-2 mb-3">
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-secondary" @click="resetFilter">Xóa tất cả bộ lọc</button>
       </div>
     </div>
 
@@ -117,7 +103,7 @@
             </td>
           </tr>
           <tr v-for="review in paginatedReviews" :key="review.reviewId">
-            <td>{{ review.reviewId }}</td>
+            <td>{{ (currentPage - 1) * pageSize + review.reviewId }}</td>
             <td>{{ review.productName || "Không xác định" }}</td>
             <td>{{ review.userFullName || "Không xác định" }}</td>
             <td>
@@ -127,7 +113,7 @@
             <td>{{ formatDate(review.reviewDate) }}</td>
             <td class="text-center">
               <button
-                class="btn btn-sm btn-info text-white m-1"
+                class="btn btn-sm btn-info m-1"
                 @click="viewReview(review.reviewId)"
               >
                 <i class="bi bi-eye-fill"></i> Xem đánh giá
@@ -145,14 +131,14 @@
         :class="{ disabled: currentPage === 1 }"
         @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page }"
-        @click="changePage(page)"
+        :class="{ active: currentPage === page, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page)"
       >
         {{ page }}
       </div>
@@ -161,7 +147,7 @@
         :class="{ disabled: currentPage === totalPages }"
         @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
@@ -199,6 +185,48 @@ export default {
         ? "Nhập tên khách hàng..."
         : "Nhập tên sản phẩm...";
     },
+    // Tính toán các trang hiển thị
+    displayedPages() {
+      const pages = [];
+      const maxPagesToShow = 5;
+
+      if (this.totalPages <= maxPagesToShow) {
+        for (let i = 1; i <= this.totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        if (this.currentPage < 3) {
+          pages.push(2, 3, 4);
+          if (this.totalPages > 4) {
+            pages.push("...");
+          }
+          pages.push(this.totalPages);
+        } else if (this.currentPage >= this.totalPages - 2) {
+          if (this.totalPages > 4) {
+            pages.push("...");
+          }
+          pages.push(
+            this.totalPages - 3,
+            this.totalPages - 2,
+            this.totalPages - 1,
+            this.totalPages
+          );
+        } else {
+          pages.push("...");
+          const startPage = this.currentPage + 1;
+          const endPage = Math.min(this.currentPage + 3, this.totalPages - 1);
+          for (let i = startPage; i <= endPage; i++) {
+            if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+          }
+          if (endPage < this.totalPages) {
+            pages.push(this.totalPages);
+          }
+        }
+      }
+
+      return pages;
+    },
   },
   methods: {
     formatDate(date) {
@@ -215,12 +243,14 @@ export default {
       return "★".repeat(rating) + "☆".repeat(5 - rating);
     },
 
-    async fetchReviews() {
+    async fetchReviews(page = 0) {
       this.loading = true;
       this.error = null;
       try {
         this.reviews = await getAllReviews();
         this.applyFilters();
+        this.currentPage = page + 1;
+        this.updatePagination();
       } catch (error) {
         console.error("Error fetching reviews:", error.message);
         this.error = error.message.includes("Access denied")
@@ -289,7 +319,7 @@ export default {
       this.error = null;
       try {
         await deleteReview(reviewId);
-        await this.fetchReviews();
+        await this.fetchReviews(this.currentPage - 1);
       } catch (error) {
         console.error("Error deleting review:", error.message);
         this.error = "Không thể xóa đánh giá.";
@@ -298,7 +328,7 @@ export default {
       }
     },
 
-    clearFilters() {
+    resetFilter() {
       this.filters = {
         rating: "",
         startDate: "",
@@ -306,34 +336,8 @@ export default {
         searchType: "userFullName",
         searchKeyword: "",
       };
-      this.applyFilters();
-    },
-
-    // 🆕 Giống User Manager
-    resetFiltersExcept(type) {
-      // Nếu không phải filter đang được giữ, mới reset
-      if (type !== "rating" && this.filters.rating) {
-        this.filters.rating = "";
-      }
-      if (type !== "date" && (this.filters.startDate || this.filters.endDate)) {
-        this.filters.startDate = "";
-        this.filters.endDate = "";
-      }
-      if (
-        type !== "search" &&
-        (this.filters.searchKeyword || this.filters.searchType !== "userFullName")
-      ) {
-        this.filters.searchKeyword = "";
-        this.filters.searchType = "userFullName";
-      }
-    },
-    async resetAndFetch() {
-      // Có thể fetch lại toàn bộ hoặc chỉ lọc trên dữ liệu đã có
-      if (this.reviews.length === 0) {
-        await this.fetchReviews();
-      } else {
-        this.applyFilters();
-      }
+      this.currentPage = 1;
+      this.fetchReviews(0);
     },
   },
   mounted() {
