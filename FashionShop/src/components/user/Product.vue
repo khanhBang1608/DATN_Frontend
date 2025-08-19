@@ -490,10 +490,12 @@ const fetchColorsAndSizes = async () => {
         </div>
       </div>
 
-      <p class="ps-5 product-count-text d-none d-md-block mt-2"
-        style="font-style: italic; color: #999; font-size: 14px">
+      <p
+        class="ps-5 product-count-text d-none d-md-block mt-2"
+        style="font-style: italic; color: #999; font-size: 14px"
+      >
         Hiển thị 1 - 80 trong tổng số 127 sản phẩm
-      </p>
+      </p> -->
 
       <div class="dropdown product-sort-dropdown">
         <button class="btn btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown">

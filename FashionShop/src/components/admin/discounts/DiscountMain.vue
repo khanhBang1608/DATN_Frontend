@@ -45,7 +45,7 @@
 
       <!-- Trạng thái -->
       <div class="col-md-3">
-        <label class="form-label">Trạng thái</label>
+        <label class="form-label">Hiện hành</label>
         <div class="admin-search-box">
           <select v-model="filters.status" class="admin-select">
             <option value="">Tất cả</option>
@@ -72,7 +72,7 @@
             <th>Giảm tối đa</th>
             <th>Số lượng</th>
             <th>Hiệu lực</th>
-            <th>Trạng thái</th>
+            <th>Hiện hành</th>
             <th class="text-center">Hành động</th>
           </tr>
         </thead>

@@ -96,7 +96,7 @@
             <th>Tên chương trình</th>
             <th>Giảm %</th>
             <th>Thời gian</th>
-            <th>Trạng thái</th>
+            <th>Hiện hành</th>
             <th class="text-center">Hành động</th>
           </tr>
         </thead>
