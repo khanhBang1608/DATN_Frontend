@@ -146,7 +146,7 @@
             />
             <small v-if="errors.address" class="text-danger">{{ errors.address }}</small>
           </div>
-          <div class="mb-3 form-check">
+          <!-- <div class="mb-3 form-check">
             <input
               type="checkbox"
               class="form-check-input address-form-checkbox"
@@ -156,7 +156,7 @@
             <label class="form-check-label" for="defaultAddress"
               >Đặt làm địa chỉ mặc định</label
             >
-          </div>
+          </div> -->
           <button type="submit" class="btn address-form-btn" :disabled="isLoading">
             <span v-if="isLoading">Đang cập nhật...</span>
             <span v-else>Cập nhật địa chỉ</span>
@@ -226,30 +226,47 @@ function validateForm() {
   if (!form.phone.trim()) {
     errors.phone = "Số điện thoại không được để trống";
     valid = false;
-  } else if (!/^[0-9]{10,11}$/.test(form.phone)) {
-    errors.phone = "Số điện thoại không hợp lệ";
+  } else if (!/^\d+$/.test(form.phone)) {
+    errors.phone = "Số điện thoại chỉ được chứa số (0-9)";
+    valid = false;
+  } else if (form.phone.length !== 10) {
+    errors.phone = "Số điện thoại phải đúng 10 số";
+    valid = false;
+  } else if (!/^(03[2-9]|05[2689]|07[06789]|08[1-9]|09[0-9])/.test(form.phone)) {
+    errors.phone = "Số điện thoại phải bắt đầu bằng 03, 05, 07, 08 hoặc 09";
     valid = false;
   }
 
+
   if (!form.provinceId) {
-    errors.provinceId = "Tỉnh/Thành phố không được để trống";
+    errors.provinceId = "Vui lòng chọn Tỉnh/Thành";
     valid = false;
   }
 
   if (!form.districtId) {
-    errors.districtId = "Quận/Huyện không được để trống";
+    errors.districtId = "Vui lòng chọn Quận/Huyện";
     valid = false;
   }
 
   if (!form.wardId) {
-    errors.wardId = "Phường/Xã không được để trống";
+    errors.wardId = "Vui lòng chọn Phường/Xã";
     valid = false;
   }
 
   if (!form.address.trim()) {
-    errors.address = "Địa chỉ chi tiết không được để trống";
+    errors.address = "Địa chỉ cụ thể không được để trống";
+    valid = false;
+  } else if (form.address.length < 5) {
+    errors.address = "Địa chỉ phải có ít nhất 5 ký tự";
+    valid = false;
+  } else if (form.address.length > 200) {
+    errors.address = "Địa chỉ cụ thể không được vượt quá 200 ký tự";
+    valid = false;
+  } else if (!/^[A-Za-zÀ-ỹ0-9\s,./-]+$/.test(form.address)) {
+    errors.address = "Địa chỉ chỉ được chứa chữ, số và ký tự thông dụng (, . / -)";
     valid = false;
   }
+
 
   return valid;
 }
@@ -295,6 +312,7 @@ async function loadWards() {
 
 async function submitForm() {
   if (!validateForm()) return;
+  
 
   const Token = localStorage.getItem("token");
   if (!Token) {
@@ -334,6 +352,28 @@ async function submitForm() {
         body: JSON.stringify(payload),
       }
     );
+    if (res.status === 304) {
+    iziToast.warning({
+      title: "Thông báo",
+      message: "Không có sự thay đổi nào. Bạn có muốn tiếp tục sửa?",
+      position: "topRight",
+      buttons: [
+        [
+          "<button>Tiếp tục sửa</button>",
+          function () {
+            // Không làm gì, cho user tiếp tục sửa
+          },
+        ],
+        [
+          "<button>Quay lại</button>",
+          function () {
+            window.location.href = "/user/listaddress";
+          },
+        ],
+      ],
+    });
+    return;
+  }
 
     if (!res.ok) throw new Error("Cập nhật thất bại");
 

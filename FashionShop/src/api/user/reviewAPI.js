@@ -82,6 +82,17 @@ export const getReviewsByUserId = async (userId) => {
   }
 };
 
+export const getReviewsByCurrentUser = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/user`, {
+      headers: getAuthHeaders(),
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: error.message };
+  }
+};
+
 export const updateReview = async (reviewId, reviewData) => {
   try {
     const response = await axios.put(`${API_URL}/${reviewId}`, reviewData, {

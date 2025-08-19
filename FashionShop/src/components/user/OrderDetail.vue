@@ -34,6 +34,7 @@
 
         <p><strong>Phí vận chuyển:</strong> {{ formatPrice(order.shippingFee) }}</p>
         <p><strong>Giảm giá:</strong> {{ formatPrice(order.discountAmount) }}</p>
+        <p><strong>Người nhận</strong> {{ order.address?.split(' - ')[1] }}</p>
       </div>
     </div>
 

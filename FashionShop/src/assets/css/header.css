@@ -1,17 +1,36 @@
 header {
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 900;
     background: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
-
-
 
 .contact-info {
     font-family: 'Roboto', sans-serif;
     font-size: 14px;
     margin-left: 15px;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  background: linear-gradient(135deg, #ff4d4d, #cc0000);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: bold;
+  border-radius: 50%;
+  min-width: 20px;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease;
+}
+.cart-badge:hover {
+  transform: scale(1.1);
 }
 
 .contact-info a {

@@ -52,13 +52,35 @@ const goToPage = (page) => {
 };
 
 const handleToggleFavorite = async () => {
+  const token = localStorage.getItem("token"); // Kiểm tra token
+  if (!token) {
+    iziToast.warning({
+      title: "Cảnh báo",
+      message: "Bạn cần đăng nhập để yêu thích sản phẩm.",
+      position: "topRight",
+    });
+    router.push({
+      path: "/login",
+      query: { redirect: route.fullPath }, // Lưu lại trang hiện tại để redirect sau khi login
+    });
+    return; // Dừng xử lý nếu chưa đăng nhập
+  }
+
   try {
+    // Thực hiện toggle favorite
     await toggleFavorite(product.value.productId);
     isFavorite.value = !isFavorite.value;
+
+    // Cập nhật lại số lượt yêu thích
     const countRes = await getFavoriteCount(product.value.productId);
     favoriteCount.value = countRes.data.favoriteCount;
   } catch (err) {
     console.error("Lỗi khi thay đổi trạng thái yêu thích:", err);
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không thể thay đổi trạng thái yêu thích.",
+      position: "topRight",
+    });
   }
 };
 
@@ -632,9 +654,8 @@ const fetchRelatedProducts = async () => {
           <div class="tab-content" id="productTabContent">
             <div class="tab-pane fade show active" id="desc" role="tabpanel">
               <h5 class="fw-bold mb-2">Mô tả</h5>
-              <p>
-                {{ product.description }}
-              </p>
+              <div v-html="product.description"></div>
+
             </div>
             <div class="tab-pane fade" id="size" role="tabpanel">
               <div class="text-center">

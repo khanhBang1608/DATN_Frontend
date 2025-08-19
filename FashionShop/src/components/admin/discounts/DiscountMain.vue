@@ -2,55 +2,77 @@
   <div class="card p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="mb-0">🎁 Quản lý Mã Giảm Giá</h2>
-      <button class="btn btn-primary" @click="openModal()">+ Thêm mã giảm giá</button>
+      <button class="btn btn-primary" @click="openModal()">
+        <i class="bi bi-plus-circle"></i> Thêm mã giảm giá
+      </button>
     </div>
-    <!-- Bộ lọc -->
-    <div class="row mb-3 g-2">
-      <div class="col-md-3">
-        <input v-model="filters.code" placeholder="🔍 Mã giảm giá" class="form-control" />
-      </div>
-
-      <div class="col-md-3">
+    <div class="mb-4 admin-date-filter">
+      <label class="form-label">Giảm giá (%)</label>
+      <div class="d-flex align-items-center w-50">
         <input
           v-model.number="filters.percentMin"
           type="number"
           placeholder="Phần trăm giảm tối thiểu"
-          class="form-control"
+          class="admin-number-input"
+          min="0"
+          max="100"
         />
-      </div>
-      <div class="col-md-3">
+        <span class="mx-2">Đến</span>
         <input
           v-model.number="filters.percentMax"
           type="number"
           placeholder="Phần trăm giảm tối đa"
-          class="form-control"
+          class="admin-number-input"
+          min="0"
+          max="100"
         />
       </div>
+    </div>
+    <div class="row g-3 mb-4">
+      <!-- Từ khóa -->
+      <div class="col-md-5">
+        <label class="form-label">Tìm kiếm</label>
+        <div class="admin-search-box">
+          <input
+            type="text"
+            class="admin-search-text"
+            placeholder="Nhập mã giảm giá..."
+            v-model="filters.code"
+          />
+          <i class="bi bi-search admin-search-icon"></i>
+        </div>
+      </div>
 
+      <!-- Trạng thái -->
       <div class="col-md-3">
-        <select v-model="filters.status" class="form-select">
-          <option value="">-- Trạng thái --</option>
-          <option value="active">Đang hoạt động</option>
-          <option value="inactive">Ngừng hoạt động</option>
-        </select>
+        <label class="form-label">Hiện hành</label>
+        <div class="admin-search-box">
+          <select v-model="filters.status" class="admin-select">
+            <option value="">Tất cả</option>
+            <option value="active">Đang hoạt động</option>
+            <option value="inactive">Ngừng hoạt động</option>
+          </select>
+        </div>
       </div>
-      <div class="col-md-3 d-flex gap-2">
-        <button class="btn btn-success w-100" @click="searchDiscounts">🔍 Tìm</button>
-        <button class="btn btn-secondary w-100" @click="clearFilters">❌ Xóa</button>
-      </div>
+    </div>
+
+    <!-- Nút xóa tất cả bộ lọc -->
+    <div class="mb-3">
+      <button class="btn btn-secondary" @click="clearFilters">Xóa tất cả bộ lọc</button>
     </div>
 
     <div class="table-responsive">
       <table class="table table-hover align-middle text-light custom-table">
         <thead>
           <tr>
+            <th>STT</th>
             <th>Mã</th>
             <th>Giảm (%)</th>
             <th>Đơn tối thiểu</th>
             <th>Giảm tối đa</th>
             <th>Số lượng</th>
             <th>Hiệu lực</th>
-            <th>Trạng thái</th>
+            <th>Hiện hành</th>
             <th class="text-center">Hành động</th>
           </tr>
         </thead>
@@ -62,6 +84,9 @@
             </td>
           </tr>
           <tr v-for="discount in filteredDiscounts" :key="discount.discountId">
+            <td>
+              {{ discount.discountId }}
+            </td>
             <td>
               <strong>{{ discount.discountCode }}</strong>
             </td>
@@ -87,173 +112,175 @@
                 class="btn btn-sm btn-warning m-1"
                 @click="openModal(discount.discountId)"
               >
-                ✏️ Sửa
+                <i class="bi bi-pencil-square"></i> Sửa
               </button>
               <button
                 class="btn btn-sm btn-danger m-1"
                 @click="deleteDiscount(discount.discountId)"
               >
-                🗑️ Xóa
+                <i class="bi bi-trash"></i> Xóa
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <nav v-if="totalPages > 1" class="mt-3">
-        <ul class="pagination justify-content-center">
-          <li class="page-item" :class="{ disabled: currentPage === 0 }">
-            <button class="page-link" @click="fetchDiscounts(currentPage - 1)">«</button>
-          </li>
-
-          <li
-            v-for="page in totalPages"
-            :key="page"
-            class="page-item"
-            :class="{ active: currentPage === page - 1 }"
-          >
-            <button class="page-link" @click="fetchDiscounts(page - 1)">
-              {{ page }}
-            </button>
-          </li>
-
-          <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
-            <button class="page-link" @click="fetchDiscounts(currentPage + 1)">»</button>
-          </li>
-        </ul>
-      </nav>
     </div>
+    <div v-if="totalPages > 1" class="admin-pagination">
+      <div
+        class="admin-button admin-prev"
+        :class="{ disabled: currentPage === 0 }"
+        @click="changePage(currentPage - 1)"
+      >
+        &lt; Trước
+      </div>
+      <div
+        v-for="page in displayedPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
+      >
+        {{ page }}
+      </div>
+      <div
+        class="admin-button admin-next"
+        :class="{ disabled: currentPage === totalPages - 1 }"
+        @click="changePage(currentPage + 1)"
+      >
+        Sau &gt;
+      </div>
+    </div>
+  </div>
+  <!-- Modal -->
+  <div
+    v-if="showModal"
+    class="modal fade show d-block"
+    tabindex="-1"
+    style="background: rgba(0, 0, 0, 0.5)"
+  >
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ isEdit ? "Sửa" : "Thêm" }} Mã Giảm Giá</h5>
+          <button type="button" class="btn-close" @click="closeModal"></button>
+        </div>
 
-    <!-- Modal -->
-    <div
-      v-if="showModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0, 0, 0, 0.5)"
-    >
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ isEdit ? "Sửa" : "Thêm" }} Mã Giảm Giá</h5>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+        <form @submit.prevent="saveDiscount">
+          <div class="modal-body row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Mã giảm giá</label>
+              <input
+                v-model="form.discountCode"
+                @input="clearError('discountCode')"
+                class="form-control"
+              />
+              <div v-if="errors.discountCode" class="text-danger">
+                {{ errors.discountCode }}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Phần trăm giảm (%)</label>
+              <input
+                v-model="form.discountPercent"
+                type="number"
+                @input="clearError('discountPercent')"
+                class="form-control"
+              />
+              <div v-if="errors.discountPercent" class="text-danger">
+                {{ errors.discountPercent }}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Đơn hàng tối thiểu</label>
+              <input
+                v-model="form.minOrderAmount"
+                type="number"
+                @input="clearError('minOrderAmount')"
+                class="form-control"
+              />
+              <div v-if="errors.minOrderAmount" class="text-danger">
+                {{ errors.minOrderAmount }}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Giảm tối đa</label>
+              <input
+                v-model="form.maxDiscountAmount"
+                type="number"
+                @input="clearError('maxDiscountAmount')"
+                class="form-control"
+              />
+              <div v-if="errors.maxDiscountAmount" class="text-danger">
+                {{ errors.maxDiscountAmount }}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Số lượng giới hạn</label>
+              <input
+                v-model="form.quantityLimit"
+                type="number"
+                @input="clearError('quantityLimit')"
+                class="form-control"
+              />
+              <div v-if="errors.quantityLimit" class="text-danger">
+                {{ errors.quantityLimit }}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Trạng thái</label>
+              <select v-model="form.status" class="form-select">
+                <option :value="true">Đang hoạt động</option>
+                <option :value="false">Ngừng hoạt động</option>
+              </select>
+              <div v-if="errors.status" class="text-danger">{{ errors.status }}</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Ngày bắt đầu</label>
+              <input
+                v-model="form.startDate"
+                type="date"
+                @input="clearError('startDate')"
+                class="form-control"
+              />
+              <div v-if="errors.startDate" class="text-danger">
+                {{ errors.startDate }}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Ngày kết thúc</label>
+              <input
+                v-model="form.endDate"
+                type="date"
+                @input="clearError('endDate')"
+                class="form-control"
+              />
+              <div v-if="errors.endDate" class="text-danger">{{ errors.endDate }}</div>
+            </div>
           </div>
 
-          <form @submit.prevent="saveDiscount">
-            <div class="modal-body row g-3">
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Mã giảm giá</label>
-                <input
-                  v-model="form.discountCode"
-                  @input="clearError('discountCode')"
-                  class="form-control"
-                />
-                <div v-if="errors.discountCode" class="text-danger">
-                  {{ errors.discountCode }}
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Phần trăm giảm (%)</label>
-                <input
-                  v-model="form.discountPercent"
-                  type="number"
-                  @input="clearError('discountPercent')"
-                  class="form-control"
-                />
-                <div v-if="errors.discountPercent" class="text-danger">
-                  {{ errors.discountPercent }}
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Đơn hàng tối thiểu</label>
-                <input
-                  v-model="form.minOrderAmount"
-                  type="number"
-                  @input="clearError('minOrderAmount')"
-                  class="form-control"
-                />
-                <div v-if="errors.minOrderAmount" class="text-danger">
-                  {{ errors.minOrderAmount }}
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Giảm tối đa</label>
-                <input
-                  v-model="form.maxDiscountAmount"
-                  type="number"
-                  @input="clearError('maxDiscountAmount')"
-                  class="form-control"
-                />
-                <div v-if="errors.maxDiscountAmount" class="text-danger">
-                  {{ errors.maxDiscountAmount }}
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Số lượng giới hạn</label>
-                <input
-                  v-model="form.quantityLimit"
-                  type="number"
-                  @input="clearError('quantityLimit')"
-                  class="form-control"
-                />
-                <div v-if="errors.quantityLimit" class="text-danger">
-                  {{ errors.quantityLimit }}
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Trạng thái</label>
-                <select v-model="form.status" class="form-select">
-                  <option :value="true">Đang hoạt động</option>
-                  <option :value="false">Ngừng hoạt động</option>
-                </select>
-                <div v-if="errors.status" class="text-danger">{{ errors.status }}</div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Ngày bắt đầu</label>
-                <input
-                  v-model="form.startDate"
-                  type="date"
-                  @input="clearError('startDate')"
-                  class="form-control"
-                />
-                <div v-if="errors.startDate" class="text-danger">
-                  {{ errors.startDate }}
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Ngày kết thúc</label>
-                <input
-                  v-model="form.endDate"
-                  type="date"
-                  @input="clearError('endDate')"
-                  class="form-control"
-                />
-                <div v-if="errors.endDate" class="text-danger">{{ errors.endDate }}</div>
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeModal">
-                Đóng
-              </button>
-              <button type="submit" class="btn btn-success">
-                {{ isEdit ? "Cập nhập" : "Thêm mới" }}
-              </button>
-            </div>
-          </form>
-        </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeModal">
+              Đóng
+            </button>
+            <button type="submit" class="btn btn-success">
+              {{ isEdit ? "Cập nhật" : "Thêm mới" }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import axios from "axios";
 import Swal from "sweetalert2";
 import iziToast from "izitoast";
@@ -296,6 +323,12 @@ const fetchDiscounts = async (page = 0) => {
     currentPage.value = res.data.number;
   } catch (err) {
     iziToast.error({ title: "Lỗi", message: "Không thể tải mã giảm giá." });
+  }
+};
+
+const changePage = (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    fetchDiscounts(page);
   }
 };
 
@@ -435,8 +468,7 @@ const clearError = (field) => {
   errors.value[field] = null;
 };
 
-import { computed } from "vue";
-
+// ====== BỘ LỌC & TÌM KIẾM TỰ ĐỘNG ======
 const filters = ref({
   code: "",
   percentMin: null,
@@ -444,7 +476,17 @@ const filters = ref({
   status: "",
 });
 
-// Hàm kiểm tra trạng thái thực tế (3 điều kiện)
+// Watch filters để khi thay đổi sẽ reset về trang 0
+watch(
+  filters,
+  () => {
+    currentPage.value = 0;
+    fetchDiscounts(0); // Gọi lại API với trang 0 khi bộ lọc thay đổi
+  },
+  { deep: true }
+);
+
+// Hàm kiểm tra trạng thái thực tế
 const isActive = (discount) => {
   const today = new Date().toISOString().split("T")[0];
   return (
@@ -455,7 +497,6 @@ const isActive = (discount) => {
   );
 };
 
-// Danh sách lọc sau khi áp dụng bộ lọc
 const filteredDiscounts = computed(() => {
   return discounts.value.filter((d) => {
     const matchCode = filters.value.code
@@ -463,13 +504,13 @@ const filteredDiscounts = computed(() => {
       : true;
 
     const matchPercentMin =
-      filters.value.percentMin != null
-        ? d.discountPercent >= filters.value.percentMin
+      filters.value.percentMin !== null && filters.value.percentMin !== ""
+        ? d.discountPercent >= Number(filters.value.percentMin)
         : true;
 
     const matchPercentMax =
-      filters.value.percentMax != null
-        ? d.discountPercent <= filters.value.percentMax
+      filters.value.percentMax !== null && filters.value.percentMax !== ""
+        ? d.discountPercent <= Number(filters.value.percentMax)
         : true;
 
     const matchStatus =
@@ -482,11 +523,48 @@ const filteredDiscounts = computed(() => {
     return matchCode && matchPercentMin && matchPercentMax && matchStatus;
   });
 });
-const searchDiscounts = () => {
-  // Với computed filteredDiscounts đã xử lý, bạn không cần fetch lại
-  // nhưng nếu muốn reset về trang đầu, có thể làm thêm:
-  currentPage.value = 0;
-};
+
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
+});
 
 const clearFilters = () => {
   filters.value = {

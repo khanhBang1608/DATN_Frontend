@@ -2,226 +2,277 @@
   <div class="card p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h2 class="mb-0">📢 Quản lý Khuyến mãi</h2>
-      <button class="btn btn-primary" @click="openModal()">+ Thêm khuyến mãi</button>
+      <button class="btn btn-primary" @click="openModal()">
+        <i class="bi bi-plus-circle"></i> Thêm khuyến mãi
+      </button>
     </div>
 
+    <div class="mb-4 admin-date-filter">
+      <label class="form-label">Giảm giá (%)</label>
+      <div class="d-flex align-items-center w-50">
+        <input
+          v-model="filters.discountMin"
+          type="number"
+          class="admin-number-input"
+          placeholder="0"
+          min="0"
+          max="100"
+          @input="applyFilters()"
+        />
+        <span class="mx-2">Đến</span>
+        <input
+          v-model="filters.discountMax"
+          type="number"
+          class="admin-number-input"
+          placeholder="100"
+          min="0"
+          max="100"
+          @input="applyFilters()"
+        />
+      </div>
+    </div>
+
+    <!-- Bộ lọc -->
     <div class="row g-3 mb-4">
-      <div class="col-md-2">
-        <label class="form-label">Mã</label>
-        <input
-          v-model="filters.code"
-          type="text"
-          class="form-control"
-          placeholder="Nhập mã..."
-        />
+      <!-- Loại tìm kiếm -->
+      <div class="col-md-4">
+        <label class="form-label">Loại tìm kiếm</label>
+        <div class="admin-search-box">
+          <select
+            class="admin-select"
+            v-model="filters.searchType"
+            @change="applyFilters()"
+          >
+            <option value="code">Mã khuyến mãi</option>
+            <option value="description">Tên chương trình</option>
+          </select>
+        </div>
       </div>
-      <div class="col-md-2">
-        <label class="form-label">Tên chương trình</label>
-        <input
-          v-model="filters.description"
-          type="text"
-          class="form-control"
-          placeholder="Nhập tên..."
-        />
+
+      <!-- Từ khóa -->
+      <div class="col-md-5">
+        <label class="form-label">Từ khóa</label>
+        <div class="admin-search-box">
+          <input
+            type="text"
+            class="admin-search-text"
+            :placeholder="
+              filters.searchType === 'code'
+                ? 'Nhập mã khuyến mãi...'
+                : 'Nhập tên chương trình...'
+            "
+            v-model="filters.searchKeyword"
+            @input="applyFilters()"
+          />
+          <i class="bi bi-search admin-search-icon"></i>
+        </div>
       </div>
-      <div class="col-md-2">
-        <label class="form-label">Giảm giá từ (%)</label>
-        <input v-model="filters.discountMin" type="number" class="form-control" />
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">Đến (%)</label>
-        <input v-model="filters.discountMax" type="number" class="form-control" />
-      </div>
-      <div class="col-md-2">
+
+      <!-- Trạng thái -->
+      <div class="col-md-3">
         <label class="form-label">Trạng thái</label>
-        <select v-model="filters.status" class="form-select">
-          <option value="">Tất cả</option>
-          <option :value="true">Đang hoạt động</option>
-          <option :value="false">Ngừng hoạt động</option>
-        </select>
+        <div class="admin-search-box">
+          <select v-model="filters.status" class="admin-select" @change="applyFilters()">
+            <option value="">Tất cả</option>
+            <option :value="true">Đang hoạt động</option>
+            <option :value="false">Ngừng hoạt động</option>
+          </select>
+        </div>
       </div>
     </div>
 
+    <!-- Nút xóa bộ lọc -->
     <div class="mb-3">
-      <button class="btn btn-primary me-2" @click="applyFilters">🔍 Tìm</button>
-      <button class="btn btn-secondary" @click="clearFilters">Xóa bộ lọc</button>
+      <button class="btn btn-secondary" @click="clearFilters">Xóa tất cả bộ lọc</button>
     </div>
 
+    <!-- Bảng dữ liệu -->
     <div class="table-responsive">
       <table class="table table-hover align-middle text-light custom-table">
         <thead>
           <tr>
+            <th>STT</th>
             <th>Mã</th>
             <th>Tên chương trình</th>
             <th>Giảm %</th>
             <th>Thời gian</th>
-            <th>Trạng thái</th>
+            <th>Hiện hành</th>
             <th class="text-center">Hành động</th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="promotions.length === 0">
             <td colspan="6" class="text-center text-white fs-5 py-4">
-              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Không có
-              mã khuyến mãi nào được tìm thấy.
+              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+              Không có mã khuyến mãi nào được tìm thấy.
             </td>
           </tr>
           <tr v-for="promo in promotions" :key="promo.id">
+            <td>
+              {{ promo.id }}
+            </td>
             <td>{{ promo.code }}</td>
             <td>{{ promo.description }}</td>
             <td>{{ formatDiscount(promo.discountAmount) }}</td>
             <td>{{ formatDate(promo.startDate) }} - {{ formatDate(promo.endDate) }}</td>
-            <span
-              :class="[
-                'badge text-light',
-                isCurrentlyActive(promo) ? 'bg-success' : 'bg-danger',
-              ]"
-            >
-              {{ isCurrentlyActive(promo) ? "Đang hoạt động" : "Ngừng hoạt động" }}
-            </span>
+            <td>
+              <span
+                :class="[
+                  'badge text-light',
+                  isCurrentlyActive(promo) ? 'bg-success' : 'bg-danger',
+                ]"
+              >
+                {{ isCurrentlyActive(promo) ? "Đang hoạt động" : "Ngừng hoạt động" }}
+              </span>
+            </td>
             <td class="text-center">
               <button class="btn btn-sm btn-warning m-1" @click="openModal(promo.id)">
-                ✏️ Sửa
+                <i class="bi bi-pencil-square"></i> Sửa
               </button>
               <button
-                class="btn btn-sm btn-danger m-1"
+                class="btn btn-sm btn-danger text-dark m-1"
                 @click="deletePromotion(promo.id)"
               >
-                🗑️ Xoá
+                <i class="bi bi-trash"></i> Xoá
               </button>
               <button
                 class="btn btn-sm btn-info m-1"
                 @click="goToPromotionProducts(promo.id)"
               >
-                Sản phẩm khuyến mãi
+                <i class="bi bi-box-seam"></i> Sản phẩm khuyến mãi
               </button>
             </td>
           </tr>
         </tbody>
       </table>
-      <nav v-if="totalPages > 1" class="mt-3">
-        <ul class="pagination justify-content-center">
-          <li class="page-item" :class="{ disabled: currentPage === 0 }">
-            <button class="page-link" @click="changePage(currentPage - 1)">«</button>
-          </li>
-
-          <li
-            class="page-item"
-            v-for="page in totalPages"
-            :key="page"
-            :class="{ active: currentPage === page - 1 }"
-          >
-            <button class="page-link" @click="changePage(page - 1)">
-              {{ page }}
-            </button>
-          </li>
-
-          <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
-            <button class="page-link" @click="changePage(currentPage + 1)">»</button>
-          </li>
-        </ul>
-      </nav>
     </div>
 
-    <!-- Modal -->
-    <div
-      v-if="showModal"
-      class="modal fade show d-block"
-      style="background: rgba(0, 0, 0, 0.5)"
-    >
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <form @submit.prevent="savePromotion">
-            <div class="modal-header">
-              <h5 class="modal-title">{{ isEdit ? "Sửa" : "Thêm" }} khuyến mãi</h5>
-              <button type="button" class="btn-close" @click="closeModal()"></button>
+    <!-- Phân trang -->
+    <div v-if="totalPages > 1" class="admin-pagination">
+      <div
+        class="admin-button admin-prev"
+        :class="{ disabled: currentPage === 0 }"
+        @click="changePage(currentPage - 1)"
+      >
+        &lt; Trước
+      </div>
+      <div
+        v-for="page in displayedPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
+      >
+        {{ page }}
+      </div>
+      <div
+        class="admin-button admin-next"
+        :class="{ disabled: currentPage === totalPages - 1 }"
+        @click="changePage(currentPage + 1)"
+      >
+        Sau &gt;
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal thêm/sửa -->
+  <div
+    v-if="showModal"
+    class="modal fade show d-block"
+    style="background: rgba(0, 0, 0, 0.5)"
+  >
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form @submit.prevent="savePromotion">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ isEdit ? "Sửa" : "Thêm" }} khuyến mãi</h5>
+            <button type="button" class="btn-close" @click="closeModal()"></button>
+          </div>
+          <div class="modal-body row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Mã khuyến mãi</label>
+              <input
+                v-model="form.code"
+                @input="clearError('code')"
+                class="form-control"
+              />
+              <div class="text-danger" v-if="errors.code">{{ errors.code }}</div>
             </div>
-            <div class="modal-body row g-3">
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Mã khuyến mãi</label>
-                <input
-                  v-model="form.code"
-                  @input="clearError('code')"
-                  class="form-control"
-                />
-                <div class="text-danger" v-if="errors.code">{{ errors.code }}</div>
-              </div>
 
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Giảm %</label>
-                <input
-                  v-model="form.discountAmount"
-                  type="number"
-                  @input="clearError('discountAmount')"
-                  class="form-control"
-                />
-                <div class="text-danger" v-if="errors.discountAmount">
-                  {{ errors.discountAmount }}
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Ngày bắt đầu</label>
-                <input
-                  v-model="form.startDate"
-                  type="date"
-                  @input="clearError('startDate')"
-                  class="form-control"
-                />
-                <div class="text-danger" v-if="errors.startDate">
-                  {{ errors.startDate }}
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Ngày kết thúc</label>
-                <input
-                  v-model="form.endDate"
-                  type="date"
-                  @input="clearError('endDate')"
-                  class="form-control"
-                />
-                <div class="text-danger" v-if="errors.endDate">{{ errors.endDate }}</div>
-              </div>
-
-              <div class="col-12">
-                <label class="form-label fw-semibold">Mô tả</label>
-                <textarea
-                  v-model="form.description"
-                  class="form-control"
-                  rows="3"
-                ></textarea>
-                <div class="text-danger" v-if="errors.description">
-                  {{ errors.description }}
-                </div>
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-semibold">Trạng thái</label>
-                <select v-model="form.status" class="form-select">
-                  <option :value="true">Đang hoạt động</option>
-                  <option :value="false">Ngừng hoạt động</option>
-                </select>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Giảm %</label>
+              <input
+                v-model="form.discountAmount"
+                type="number"
+                @input="clearError('discountAmount')"
+                class="form-control"
+              />
+              <div class="text-danger" v-if="errors.discountAmount">
+                {{ errors.discountAmount }}
               </div>
             </div>
 
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" @click="closeModal()">
-                Đóng
-              </button>
-              <button type="submit" class="btn btn-success">
-                {{ isEdit ? "Cập nhật" : "Thêm mới" }}
-              </button>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Ngày bắt đầu</label>
+              <input
+                v-model="form.startDate"
+                type="date"
+                @input="clearError('startDate')"
+                class="form-control"
+              />
+              <div class="text-danger" v-if="errors.startDate">
+                {{ errors.startDate }}
+              </div>
             </div>
-          </form>
-        </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Ngày kết thúc</label>
+              <input
+                v-model="form.endDate"
+                type="date"
+                @input="clearError('endDate')"
+                class="form-control"
+              />
+              <div class="text-danger" v-if="errors.endDate">{{ errors.endDate }}</div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Mô tả</label>
+              <textarea
+                v-model="form.description"
+                class="form-control"
+                rows="3"
+              ></textarea>
+              <div class="text-danger" v-if="errors.description">
+                {{ errors.description }}
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Trạng thái</label>
+              <select v-model="form.status" class="form-select">
+                <option :value="true">Đang hoạt động</option>
+                <option :value="false">Ngừng hoạt động</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeModal()">
+              Đóng
+            </button>
+            <button type="submit" class="btn btn-success">
+              {{ isEdit ? "Cập nhật" : "Thêm mới" }}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios";
 import Swal from "sweetalert2";
 import iziToast from "izitoast";
@@ -236,8 +287,8 @@ const currentId = ref(null);
 const token = localStorage.getItem("token");
 
 const filters = ref({
-  code: "",
-  description: "",
+  searchType: "code",
+  searchKeyword: "",
   status: "",
   discountMin: "",
   discountMax: "",
@@ -261,14 +312,78 @@ const totalPages = ref(0);
 const fetchPromotions = async () => {
   const res = await axios.get(`http://localhost:8080/api/admin/promotions/paging`, {
     headers: { Authorization: `Bearer ${token}` },
-    params: {
-      page: currentPage.value,
-      size: pageSize.value,
-    },
+    params: { page: currentPage.value, size: pageSize.value },
   });
-
   promotions.value = res.data.content;
   totalPages.value = res.data.totalPages;
+};
+
+const resetFiltersExcept = (except) => {
+  if (except !== "search") {
+    filters.value.searchKeyword = "";
+    filters.value.searchType = "code";
+  }
+  if (except !== "status") filters.value.status = "";
+  if (except !== "discount") {
+    filters.value.discountMin = "";
+    filters.value.discountMax = "";
+  }
+  if (except !== "active") filters.value.isCurrentlyActive = false;
+};
+
+const resetAndFetch = () => {
+  applyFilters();
+};
+
+const applyFilters = async () => {
+  // Reset phân trang về trang đầu tiên
+  currentPage.value = 0;
+
+  // Lấy dữ liệu từ API
+  await fetchPromotions();
+
+  // Tiến hành lọc dữ liệu trên client
+  let filtered = [...promotions.value];
+  const today = new Date().toISOString().split("T")[0];
+
+  if (filters.value.searchKeyword) {
+    if (filters.value.searchType === "code") {
+      filtered = filtered.filter((p) =>
+        p.code.toLowerCase().includes(filters.value.searchKeyword.toLowerCase())
+      );
+    } else if (filters.value.searchType === "description") {
+      filtered = filtered.filter((p) =>
+        p.description.toLowerCase().includes(filters.value.searchKeyword.toLowerCase())
+      );
+    }
+  }
+
+  if (filters.value.status !== "")
+    filtered = filtered.filter((p) => p.status === JSON.parse(filters.value.status));
+
+  if (filters.value.discountMin)
+    filtered = filtered.filter((p) => p.discountAmount >= +filters.value.discountMin);
+
+  if (filters.value.discountMax)
+    filtered = filtered.filter((p) => p.discountAmount <= +filters.value.discountMax);
+
+  if (filters.value.isCurrentlyActive) {
+    filtered = filtered.filter((p) => p.startDate <= today && p.endDate >= today);
+  }
+
+  promotions.value = filtered;
+};
+
+const clearFilters = async () => {
+  filters.value = {
+    searchType: "code",
+    searchKeyword: "",
+    status: "",
+    discountMin: "",
+    discountMax: "",
+    isCurrentlyActive: false,
+  };
+  await fetchPromotions();
 };
 
 const changePage = (page) => {
@@ -282,7 +397,6 @@ const openModal = async (id = null) => {
   currentId.value = id;
   isEdit.value = !!id;
   errors.value = {};
-
   if (id) {
     const res = await axios.get(`http://localhost:8080/api/admin/promotions/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -303,7 +417,6 @@ const openModal = async (id = null) => {
       status: true,
     };
   }
-
   showModal.value = true;
 };
 
@@ -318,15 +431,10 @@ const savePromotion = async () => {
     errors.value.endDate = "Ngày kết thúc phải sau ngày bắt đầu.";
     return;
   }
-
   try {
     const config = {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     };
-
     if (isEdit.value) {
       await axios.put(
         `http://localhost:8080/api/admin/promotions/${currentId.value}`,
@@ -346,7 +454,6 @@ const savePromotion = async () => {
         position: "topRight",
       });
     }
-
     closeModal();
     await fetchPromotions();
   } catch (err) {
@@ -376,7 +483,6 @@ const deletePromotion = async (id) => {
     confirmButtonColor: "#d33",
     cancelButtonColor: "#3085d6",
   });
-
   if (result.isConfirmed) {
     try {
       await axios.delete(`http://localhost:8080/api/admin/promotions/${id}`, {
@@ -409,59 +515,52 @@ const formatDate = (d) =>
 
 const clearError = (field) => (errors.value[field] = null);
 
-const applyFilters = async () => {
-  await fetchPromotions(); // Tải dữ liệu gốc
-
-  let filtered = [...promotions.value];
-
-  const today = new Date().toISOString().split("T")[0];
-
-  if (filters.value.code)
-    filtered = filtered.filter((p) =>
-      p.code.toLowerCase().includes(filters.value.code.toLowerCase())
-    );
-
-  if (filters.value.description)
-    filtered = filtered.filter((p) =>
-      p.description.toLowerCase().includes(filters.value.description.toLowerCase())
-    );
-
-  if (filters.value.status !== "")
-    filtered = filtered.filter((p) => p.status === JSON.parse(filters.value.status));
-
-  if (filters.value.discountMin)
-    filtered = filtered.filter((p) => p.discountAmount >= +filters.value.discountMin);
-
-  if (filters.value.discountMax)
-    filtered = filtered.filter((p) => p.discountAmount <= +filters.value.discountMax);
-
-  if (filters.value.isCurrentlyActive) {
-    filtered = filtered.filter((p) => p.startDate <= today && p.endDate >= today);
-  }
-
-  promotions.value = filtered;
-};
-
-const clearFilters = async () => {
-  filters.value = {
-    code: "",
-    description: "",
-    status: "",
-    discountMin: "",
-    discountMax: "",
-    isCurrentlyActive: false,
-  };
-  await fetchPromotions();
-};
-
 const isCurrentlyActive = (promo) => {
   const today = new Date().toISOString().split("T")[0];
-  return (
-    promo.status === true &&
-    promo.startDate <= today &&
-    promo.endDate >= today
-  );
+  return promo.status === true && promo.startDate <= today && promo.endDate >= today;
 };
+
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i); // Tránh trùng lặp
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
+
+  return pages;
+});
 
 onMounted(fetchPromotions);
 </script>
@@ -482,8 +581,4 @@ onMounted(fetchPromotions);
   color: #fff;
   vertical-align: middle;
 }
-/* .badge {
-  font-size: 0.9rem;
-  padding: 0.5em 0.75em;
-} */
 </style>

@@ -44,7 +44,7 @@ function goLogout() {
           <router-link to="/admin/product">Sản phẩm</router-link>
         </li>
         <li>
-          <i class="fas fa-users fa-fw"></i>
+          <i class="fas fa-sliders-h fa-fw"></i>
           <a href="#" class="user-li">Thuộc tính</a>
           <ul class="side-nav-dropdown">
             <li><router-link to="/admin/attribute/colors">Màu sắc</router-link></li>

@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import HomeView from '../views/indexView.vue'
 import Dashboard from '@/views/DashboardView.vue'
 import Promotion from '@/views/PromotionView.vue'
 import Discount from '@/views/DiscountView.vue'
@@ -12,7 +12,6 @@ import UserAddress from '@/views/admin/UserAddressView.vue'
 import Product from '@/views/admin/ProductView.vue'
 import Color from '@/views/admin/ColorView.vue'
 import size from '@/views/admin/SizeView.vue'
-// import ProductFrom from '@/views/admin/ProductFormViews.vue'
 import ProductView from '../views/ProductView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -29,14 +28,13 @@ import ChangePasswordView from '../views/ChangePasswordView.vue'
 import ProductDetailView from '../views/ProductDetailView.vue'
 import AddressView from '../views/AddressView.vue'
 import ProductVariantList from '@/components/admin/product/ProductVariantMain.vue'
-import PromotionModal from '@/components/admin/promotions/PromotionModal.vue'
 import ProductPromotions from '@/components/admin/promotions/ProductPromotions.vue'
-import ProductPromotionForm from '@/components/admin/promotions/ProductPromotionForm.vue'
-import ProductPromotionForm2 from '@/components/admin/promotions/ProductPromotionForm2.vue'
 import ListAddressView from '@/views/ListAddressView.vue'
 import EditAddressView from '@/views/EditAddressView.vue'
 import FavoriteView from '@/views/FavoriteView.vue'
 import PaymentSuccess from '@/views/PaymentResult.vue'
+import userOrder from '@/views/admin/UserOrderView.vue'
+import ContactView from '@/views/ContactView.vue'
 import { getProductDetail } from '@/api/ProductClient'
 import ErrorView from '@/views/ErrorView.vue'
 const router = createRouter({
@@ -101,6 +99,11 @@ const router = createRouter({
       path: '/contact-us',
       name: 'contact-us',
       component: ContactUsView,
+    },
+    {
+      path: '/contact',
+      name: 'contact',
+      component: ContactView,
     },
     {
       path: '/user/profile',
@@ -179,8 +182,12 @@ const router = createRouter({
       beforeEnter: (to, from, next) => {
         localStorage.removeItem('token')
         localStorage.removeItem('role')
-        // Nếu bạn lưu thêm thông tin user, có thể xoá thêm:
-        localStorage.removeItem('user')
+        localStorage.removeItem('chatMessages')
+        localStorage.removeItem('editAddress')
+        localStorage.removeItem('pendingOrder')
+        localStorage.removeItem('orderNote')
+        localStorage.removeItem('tokenExpiresAt')
+        localStorage.removeItem('cartDetails')
 
         // Chuyển hướng đến trang login
         next('/login')
@@ -232,29 +239,9 @@ const router = createRouter({
           component: ProductVariantList,
         },
         {
-          path: 'promotion/form',
-          name: 'PromotionForm',
-          component: PromotionModal,
-        },
-        {
-          path: 'promotion/form/:id',
-          name: 'EditPromotion',
-          component: PromotionModal,
-        },
-        {
           path: 'ProductPromotions/:promotionId',
           name: 'ProductPromotions',
           component: ProductPromotions,
-        },
-        {
-          path: 'ProductPromotionForm/:promotionId',
-          name: 'ProductPromotionFormCreate',
-          component: ProductPromotionForm,
-        },
-        {
-          path: 'ProductPromotionForm/:promotionId/:id',
-          name: 'ProductPromotionFormUpdate',
-          component: ProductPromotionForm2,
         },
         {
           path: 'category',
@@ -275,6 +262,11 @@ const router = createRouter({
           path: 'user',
           name: 'User',
           component: User,
+        },
+        {
+          path: 'user/order/:userId',
+          name: 'userOrder',
+          component: userOrder,
         },
         {
           path: '/admin/users/:id/addresses',

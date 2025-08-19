@@ -71,11 +71,11 @@
                 </div>
               </div>
 
-              <label class="custom-checkbox">
+              <!-- <label class="custom-checkbox">
                 <input type="checkbox" checked />
                 <span class="checkmark"></span>
                 Sử dụng địa chỉ này làm địa chỉ thanh toán mặc định của tôi
-              </label>
+              </label> -->
             </div>
           </div>
         </div>

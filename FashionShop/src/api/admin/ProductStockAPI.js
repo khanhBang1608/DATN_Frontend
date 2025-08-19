@@ -19,6 +19,20 @@ export const getTotalStockByProductId = async (productId) => {
     }
 };
 
+// Lấy tổng stock và tổng biến thể của toàn hệ thống
+export const getSystemProductStats = async () => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/product/system-stats`, {
+            headers: { Authorization: `Bearer ${token}` },
+            withCredentials: true
+        });
+        return response.data;
+        // Ví dụ: { totalVariants: 120, totalStock: 4520 }
+    } catch (error) {
+        handleError(error);
+    }
+};
+
 // Hàm xử lý lỗi chung
 function handleError(error) {
     if (error.response) {

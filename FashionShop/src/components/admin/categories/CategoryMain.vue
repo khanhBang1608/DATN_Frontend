@@ -23,7 +23,12 @@ const searchQuery = ref("");
 const selectedStatus = ref("all");
 
 const currentPage = ref(1);
-const itemsPerPage = 10;
+const itemsPerPage = 8;
+
+const changePage = (page) => {
+  if (page < 1 || page > totalPages.value) return;
+  currentPage.value = page;
+};
 
 const showSystemError = (message) => {
   iziToast.error({
@@ -215,21 +220,28 @@ onMounted(fetchCategories);
         data-bs-toggle="modal"
         data-bs-target="#addCategoryModal"
       >
-        + Thêm danh mục
+        <i class="bi bi-plus-circle"></i> Thêm danh mục
       </button>
     </div>
 
     <div class="row mb-3">
       <div class="col-md-4">
-        <input
-          v-model="searchQuery"
-          class="form-control"
-          placeholder="🔍 Tìm theo tên danh mục..."
-        />
+        <label class="form-label">Tìm kiếm</label>
+        <div class="admin-search-box">
+          <input
+            type="text"
+            v-model="searchQuery"
+            class="admin-search-text"
+            placeholder="Nhập tên danh mục..."
+            @input="onSearchInput"
+          />
+          <i class="bi bi-search admin-search-icon"></i>
+        </div>
       </div>
       <div class="col-md-4">
-        <select v-model="selectedStatus" class="form-select">
-          <option value="all">-- Tất cả trạng thái --</option>
+        <label class="form-label">Trạng thái</label>
+        <select v-model="selectedStatus" class="admin-select">
+          <option value="all">Tất cả trạng thái</option>
           <option value="active">Đang bán</option>
           <option value="inactive">Ngừng bán</option>
         </select>
@@ -242,11 +254,9 @@ onMounted(fetchCategories);
           <tr>
             <th style="width: 50px">STT</th>
             <th style="width: 40px" class="text-center">#</th>
-            <!-- Icon expand -->
             <th style="width: auto">Tên danh mục</th>
             <th style="width: 160px" class="text-end">Loại</th>
-            <th style="width: 130px" class="text-end">Trạng thái</th>
-            <th style="width: 130px" class="text-end">Hành động</th>
+            <th style="width: 130px" class="text-end">Số sản phẩm</th>
           </tr>
         </thead>
 
@@ -254,7 +264,6 @@ onMounted(fetchCategories);
           <tr v-for="item in displayedCategories" :key="item.categoryId">
             <td class="align-middle">{{ item.index }}</td>
 
-            <!-- Icon Expand -->
             <td class="text-center align-middle">
               <span
                 v-if="item.children?.length"
@@ -265,14 +274,34 @@ onMounted(fetchCategories);
               </span>
             </td>
 
-            <!-- Tên danh mục (thụt lề theo cấp) -->
             <td class="align-middle">
-              <div :style="{ paddingLeft: `${item.level * 20}px` }">
-                {{ item.categoryName }}
+              <div
+                class="d-flex align-items-center"
+                :style="{ paddingLeft: `${item.level * 20}px` }"
+              >
+                <div>{{ item.categoryName }}</div>
+
+                <div class="ms-auto d-flex align-items-center gap-2">
+                  <span
+                    class="d-flex align-items-center"
+                    :class="['badge', item.status ? 'bg-success' : 'bg-danger']"
+                    style="height: fit-content"
+                  >
+                    {{ item.status ? "Đang bán" : "Ngừng bán" }}
+                  </span>
+
+                  <button
+                    class="btn btn-warning btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editCategoryModal"
+                    @click="editCategoryData(item)"
+                  >
+                    <i class="bi bi-pencil-square"></i> Sửa
+                  </button>
+                </div>
               </div>
             </td>
 
-            <!-- Loại -->
             <td class="text-end align-middle">
               <span v-if="item.parentId === null">Danh mục cha</span>
               <span v-else>
@@ -283,59 +312,43 @@ onMounted(fetchCategories);
               </span>
             </td>
 
-            <!-- Trạng thái -->
             <td class="text-end align-middle">
-              <span :class="['badge', item.status ? 'bg-success' : 'bg-danger']">
-                {{ item.status ? "Đang bán" : "Ngừng bán" }}
-              </span>
-            </td>
-
-            <!-- Hành động -->
-            <td class="text-end align-middle">
-              <button
-                class="btn btn-warning btn-sm"
-                data-bs-toggle="modal"
-                data-bs-target="#editCategoryModal"
-                @click="editCategoryData(item)"
-              >
-                ✏️ Sửa
-              </button>
+              {{ item.productCount }}
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <nav v-if="totalPages > 1">
-      <ul class="pagination justify-content-center mt-3">
-        <li
-          class="page-item"
-          :class="{ disabled: currentPage === 1 }"
-          @click="currentPage > 1 && currentPage--"
-        >
-          <a class="page-link">Trước</a>
-        </li>
-        <li
-          v-for="page in totalPages"
-          :key="page"
-          class="page-item"
-          :class="{ active: currentPage === page }"
-          @click="currentPage = page"
-        >
-          <a class="page-link">{{ page }}</a>
-        </li>
-        <li
-          class="page-item"
-          :class="{ disabled: currentPage === totalPages }"
-          @click="currentPage < totalPages && currentPage++"
-        >
-          <a class="page-link">Sau</a>
-        </li>
-      </ul>
-    </nav>
+    <div v-if="totalPages > 1" class="admin-pagination">
+      <div
+        class="admin-button admin-prev"
+        :class="{ disabled: currentPage === 1 }"
+        @click="changePage(currentPage - 1)"
+      >
+        &lt; prev
+      </div>
+
+      <div
+        v-for="page in totalPages"
+        :key="page"
+        class="admin-page"
+        :class="{ active: currentPage === page }"
+        @click="changePage(page)"
+      >
+        {{ page }}
+      </div>
+
+      <div
+        class="admin-button admin-next"
+        :class="{ disabled: currentPage === totalPages }"
+        @click="changePage(currentPage + 1)"
+      >
+        next &gt;
+      </div>
+    </div>
   </div>
 
-  <!-- Modal Thêm -->
   <div class="modal fade" id="addCategoryModal" tabindex="-1">
     <div class="modal-dialog">
       <form @submit.prevent="createCategory" class="modal-content">
@@ -349,7 +362,6 @@ onMounted(fetchCategories);
           ></button>
         </div>
         <div class="modal-body">
-          <!-- Label cho Tên danh mục -->
           <label for="categoryNameInput" class="form-label">Tên danh mục:</label>
           <input
             id="categoryNameInput"
@@ -361,7 +373,6 @@ onMounted(fetchCategories);
             {{ formErrors.name }}
           </div>
 
-          <!-- Label cho Danh mục cha -->
           <label for="parentCategorySelect" class="form-label">Loại:</label>
           <select
             id="parentCategorySelect"
@@ -378,7 +389,6 @@ onMounted(fetchCategories);
             </option>
           </select>
 
-          <!-- Label cho Trạng thái -->
           <label for="statusSelect" class="form-label">Trạng thái:</label>
           <select id="statusSelect" v-model="newCategory.status" class="form-select mb-2">
             <option value="1">Đang bán</option>
@@ -398,7 +408,6 @@ onMounted(fetchCategories);
     </div>
   </div>
 
-  <!-- Modal Sửa -->
   <div class="modal fade" id="editCategoryModal" tabindex="-1">
     <div class="modal-dialog">
       <form @submit.prevent="updateCategory" class="modal-content">
@@ -412,7 +421,6 @@ onMounted(fetchCategories);
           ></button>
         </div>
         <div class="modal-body">
-          <!-- Tên danh mục -->
           <label for="editCategoryName" class="form-label">Tên danh mục:</label>
           <input
             id="editCategoryName"
@@ -423,7 +431,6 @@ onMounted(fetchCategories);
             {{ formErrors.name }}
           </div>
 
-          <!-- Danh mục cha -->
           <label for="editParentCategory" class="form-label mt-2">Loại</label>
           <select
             id="editParentCategory"
@@ -440,7 +447,6 @@ onMounted(fetchCategories);
             </option>
           </select>
 
-          <!-- Trạng thái -->
           <label for="editStatus" class="form-label">Trạng thái:</label>
           <select id="editStatus" v-model="editCategory.status" class="form-select mb-1">
             <option value="1">Đang bán</option>
@@ -482,16 +488,16 @@ onMounted(fetchCategories);
   width: 5%;
 }
 .custom-table th:nth-child(2) {
-  width: 45%;
+  width: 5%;
 }
 .custom-table th:nth-child(3) {
-  width: 15%;
+  width: 35%;
 }
 .custom-table th:nth-child(4) {
   width: 15%;
 }
 .custom-table th:nth-child(5) {
-  width: 20%;
+  width: 15%;
 }
 
 .table-responsive {

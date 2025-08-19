@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getProductById } from "@/api/adminProductAPI";
 import axios from "axios";
@@ -21,7 +21,16 @@ const isEdit = ref(false);
 const currentVariantId = ref(null);
 const productName = ref("");
 const totalStock = ref(0);
+const filterColorId = ref("");
+const filterSizeId = ref("");
 
+const filteredVariants = computed(() => {
+  return variants.value.filter((v) => {
+    const matchColor = filterColorId.value ? v.colorId === filterColorId.value : true;
+    const matchSize = filterSizeId.value ? v.sizeId === filterSizeId.value : true;
+    return matchColor && matchSize;
+  });
+});
 
 const variant = ref({
   colorId: "",
@@ -52,7 +61,9 @@ const fetchVariants = async () => {
       }
     );
 
-    const sortedVariants = response.data.sort((a, b) => b.productVariantId - a.productVariantId);
+    const sortedVariants = response.data.sort(
+      (a, b) => b.productVariantId - a.productVariantId
+    );
     variants.value = sortedVariants;
 
     // 👉 Tính tổng tồn kho
@@ -67,7 +78,6 @@ const fetchVariants = async () => {
   }
 };
 
-
 const fetchProductInfo = async () => {
   try {
     const productData = await getProductById(productId);
@@ -81,7 +91,6 @@ const fetchProductInfo = async () => {
     });
   }
 };
-
 
 const fetchColorsAndSizes = async () => {
   try {
@@ -273,6 +282,11 @@ const deleteVariant = async (variantId) => {
   }
 };
 
+const clearFilters = () => {
+  filterColorId.value = "";
+  filterSizeId.value = "";
+};
+
 const handleBack = () => {
   router.push("/admin/product");
 };
@@ -282,7 +296,6 @@ onMounted(async () => {
   await fetchColorsAndSizes();
   await fetchVariants();
 });
-
 </script>
 
 <template>
@@ -290,18 +303,60 @@ onMounted(async () => {
     <div class="card p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-white fw-bold fs-4 mb-3">
-          📦 Biến thể của sản phẩm <span class="text-info">{{ productName }}</span> (ID: {{ productId }})
+          📦 Biến thể của sản phẩm <span class="text-danger">{{ productName }}</span> (ID:
+          {{ productId }})
         </h2>
         <div class="d-flex align-items-center flex-wrap gap-3">
-          <span class="badge bg-gradient fs-6 shadow-sm p-3">
-            🧮 <strong>Tổng tồn kho: {{ totalStock }}</strong>
-          </span>
-          <button class="btn btn-success" @click="openAddModal">+ Thêm biến thể</button>
+          <button class="btn btn-primary" @click="openAddModal">
+            <i class="bi bi-plus-circle"></i>Thêm biến thể
+          </button>
         </div>
-
       </div>
 
       <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-3">
+          <label class="form-label">Sắp xếp màu</label>
+          <div class="admin-search-box">
+            <select class="admin-select" v-model="filterColorId">
+              <option value="">Tất cả màu</option>
+              <option v-for="color in colors" :key="color.colorId" :value="color.colorId">
+                {{ color.colorName }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Sắp xếp kích thước</label>
+          <div class="admin-search-box">
+            <select class="admin-select" v-model="filterSizeId">
+              <option value="">Tất cả kích thước</option>
+              <option v-for="size in sizes" :key="size.sizeId" :value="size.sizeId">
+                {{ size.sizeName }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- <div class="row mb-3">
+        <div class="col-12 d-flex gap-2">
+          <button class="btn btn-secondary" @click="clearFilters">
+            Xóa tất cả bộ lọc
+          </button>
+        </div>
+      </div> -->
+      <!-- Thống kê -->
+      <div class="mb-3 d-flex flex-wrap gap-2">
+        <span
+          class="badge fs-6 shadow-sm d-flex align-items-center gap-2 text-white"
+          style="background: linear-gradient(135deg, #17a2b8, #0d6efd)"
+        >
+          <i class="bi bi-calculator-fill fs-5"></i>
+          <strong
+            >Tổng tồn kho: <strong class="text-danger">{{ totalStock }}</strong></strong
+          >
+        </span>
+      </div>
 
       <div class="table-responsive">
         <table class="table table-hover align-middle text-light custom-table">
@@ -317,21 +372,34 @@ onMounted(async () => {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(variant, index) in variants" :key="variant.productVariantId">
+            <tr
+              v-for="(variant, index) in filteredVariants"
+              :key="variant.productVariantId"
+            >
               <td>{{ index + 1 }}</td>
               <td>
-                <img v-if="variant.imageName" :src="`http://localhost:8080/images/${variant.imageName}`" width="80" />
+                <img
+                  v-if="variant.imageName"
+                  :src="`http://localhost:8080/images/${variant.imageName}`"
+                  width="80"
+                />
               </td>
               <td>{{ variant.colorName }}</td>
               <td>{{ variant.sizeName || "Không có" }}</td>
               <td>{{ variant.price.toLocaleString() }}đ</td>
               <td>{{ variant.stock }}</td>
               <td>
-                <button class="btn btn-sm btn-warning me-1" @click="openEditModal(variant.productVariantId)">
-                  ✏️ Sửa
+                <button
+                  class="btn btn-sm btn-warning me-1"
+                  @click="openEditModal(variant.productVariantId)"
+                >
+                  <i class="bi bi-pencil-square"></i> Sửa
                 </button>
-                <button class="btn btn-sm btn-danger" @click="deleteVariant(variant.productVariantId)">
-                  🗑️ Xoá
+                <button
+                  class="btn btn-sm btn-danger text-dark"
+                  @click="deleteVariant(variant.productVariantId)"
+                >
+                  <i class="bi bi-trash"></i> Xoá
                 </button>
               </td>
             </tr>
@@ -351,7 +419,12 @@ onMounted(async () => {
     </div>
 
     <!-- Modal Form -->
-    <div v-if="showModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
+    <div
+      v-if="showModal"
+      class="modal fade show d-block"
+      tabindex="-1"
+      style="background: rgba(0, 0, 0, 0.5)"
+    >
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
@@ -364,9 +437,17 @@ onMounted(async () => {
             <form @submit.prevent="handleSubmit" class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Màu sắc</label>
-                <select class="form-select" v-model="variant.colorId" @change="clearFieldError('colorId')">
+                <select
+                  class="form-select"
+                  v-model="variant.colorId"
+                  @change="clearFieldError('colorId')"
+                >
                   <option value="">-- Chọn màu --</option>
-                  <option v-for="color in colors" :key="color.colorId" :value="color.colorId">
+                  <option
+                    v-for="color in colors"
+                    :key="color.colorId"
+                    :value="color.colorId"
+                  >
                     {{ color.colorName }}
                   </option>
                 </select>
@@ -375,7 +456,11 @@ onMounted(async () => {
 
               <div class="col-md-6">
                 <label class="form-label">Size</label>
-                <select class="form-select" v-model="variant.sizeId" @change="clearFieldError('sizeId')">
+                <select
+                  class="form-select"
+                  v-model="variant.sizeId"
+                  @change="clearFieldError('sizeId')"
+                >
                   <option value="">-- Không có --</option>
                   <option v-for="size in sizes" :key="size.sizeId" :value="size.sizeId">
                     {{ size.sizeName }}
@@ -386,26 +471,40 @@ onMounted(async () => {
 
               <div class="col-md-6">
                 <label class="form-label">Giá</label>
-                <input type="number" class="form-control" v-model="variant.price" @input="clearFieldError('price')" />
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="variant.price"
+                  @input="clearFieldError('price')"
+                />
 
                 <div class="text-danger small">{{ fieldErrors.price }}</div>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label">Tồn kho</label>
-                <input type="number" class="form-control" v-model="variant.stock" @input="clearFieldError('stock')" />
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="variant.stock"
+                  @input="clearFieldError('stock')"
+                />
 
                 <div class="text-danger small">{{ fieldErrors.stock }}</div>
               </div>
 
               <div class="col-md-12">
                 <label class="form-label">Ảnh</label>
-                <input type="file" class="form-control" @change="
-                  (e) => {
-                    handleImageChange(e);
-                    clearFieldError('image');
-                  }
-                " />
+                <input
+                  type="file"
+                  class="form-control"
+                  @change="
+                    (e) => {
+                      handleImageChange(e);
+                      clearFieldError('image');
+                    }
+                  "
+                />
 
                 <div class="text-danger small">{{ fieldErrors.image }}</div>
 
@@ -416,7 +515,10 @@ onMounted(async () => {
 
                 <div v-else-if="isEdit && variant.imageName" class="mt-2">
                   <p>Ảnh hiện tại:</p>
-                  <img :src="`http://localhost:8080/images/${variant.imageName}`" width="100" />
+                  <img
+                    :src="`http://localhost:8080/images/${variant.imageName}`"
+                    width="100"
+                  />
                 </div>
               </div>
 
@@ -441,15 +543,5 @@ table th,
 table td {
   vertical-align: middle;
   text-align: center;
-}
-
-.btn-link.text-white {
-  margin-right: 40px;
-}
-
-.btn-link.text-white:hover {
-  text-decoration: none;
-  color: #fff;
-  /* Đảm bảo màu trắng khi hover */
 }
 </style>

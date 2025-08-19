@@ -12,10 +12,27 @@ export default function initHeader() {
         });
     });
 
-    sidebar.addEventListener('hidden.bs.offcanvas', () => {
-        const items = sidebar.querySelectorAll('.nav-item');
-        items.forEach(item => item.classList.remove('custom-slide-up'));
+    sidebar.addEventListener("hidden.bs.offcanvas", () => {
+        // Reset lại tất cả submenu
+        document.querySelectorAll(".custom-submenu").forEach((submenu) => {
+            submenu.classList.remove("custom-show");
+            submenu.querySelectorAll("li").forEach((item) =>
+                item.classList.remove("custom-slide-up")
+            );
+        });
+
+        // Hiện lại toàn bộ menu chính
+        document.querySelectorAll(".custom-main-menu > .nav-item").forEach((li) => {
+            li.style.display = "block";
+            const toggleLink = li.querySelector(".custom-submenu-toggle");
+            if (toggleLink) toggleLink.style.display = "block";
+        });
+
+        // Hiện lại footer phía dưới
+        const bottom = document.querySelector(".custom-bottom-section");
+        if (bottom) bottom.style.display = "block";
     });
+
 
     document.querySelectorAll('.custom-submenu-toggle').forEach(btn => {
         btn.addEventListener('click', e => {
