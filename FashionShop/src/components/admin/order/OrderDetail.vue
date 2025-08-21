@@ -276,7 +276,7 @@ import {
   approveOrderAPI
 } from '@/api/admin/orderAPI'
 import { useToast } from 'vue-toastification'
-import Swal from 'sweetalert2' // Import SweetAlert2
+import Swal from 'sweetalert2'
 
 const BASE_IMAGE_URL = 'http://localhost:8080'
 
@@ -546,10 +546,8 @@ async function exportToPDF() {
 }
 
 async function printGhnLabel() {
-  // Assuming printGhnLabel doesn't require confirmation, but if it does, you can add Swal here
   try {
     loading.value = true
-    // Implement printGhnLabel logic (not provided in the original code)
     toast.success('In nhãn vận chuyển thành công')
   } catch (err) {
     toast.error(err.response?.data?.message || 'Không thể in nhãn vận chuyển.')
