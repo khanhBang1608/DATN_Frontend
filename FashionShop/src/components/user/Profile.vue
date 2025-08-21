@@ -3,9 +3,7 @@
     <nav class="custom-breadcrumb container">
       <a href="/" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="/user/account" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Tổng quan tài khoản</a
-      >
+      <a href="/user/account" class="custom-breadcrumb-link">Tổng quan tài khoản</a>
       <span class="custom-breadcrumb-separator">/</span>
       <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
         >Thông tin của tôi</a
@@ -22,10 +20,14 @@
         <a href="/user/listaddress">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
-        <a href="#">Danh sách yêu thích</a>
+        <a href="/user/favorite">Danh sách yêu thích</a>
       </div>
       <div class="profile-container col-md-10">
-        <h3 class="text-center profile-title">Thông Tin Của Tôi</h3>
+        <div class="text-center mb-3">
+          <h3 class="text-center profile-title fw-bold">Thông Tin Của Tôi</h3>
+          <p class="text-muted">Quản lý và chỉnh sửa thông tin cá nhân của bạn</p>
+        </div>
+
         <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
         <div class="profile-avatar-wrapper">
           <img :src="avatarPreview" alt="Avatar" class="profile-avatar" />
