@@ -3,7 +3,10 @@
     <nav class="custom-breadcrumb container">
       <router-link to="/" class="custom-breadcrumb-link">Trang chủ</router-link>
       <span class="custom-breadcrumb-separator">/</span>
-      <router-link to="/order-history" class="custom-breadcrumb-link custom-breadcrumb-current">
+      <router-link
+        to="/order-history"
+        class="custom-breadcrumb-link custom-breadcrumb-current"
+      >
         Quản lý đơn hàng
       </router-link>
     </nav>
@@ -196,24 +199,24 @@
 </template>
 
 <script>
-import { getUserOrders, cancelOrder, requestReturn } from '@/api/user/orderAPI'
-import { createReview, checkReviewsForOrderDetails } from '@/api/user/reviewAPI'
-import { useToast } from 'vue-toastification'
-import axios from 'axios'
+import { getUserOrders, cancelOrder, requestReturn } from "@/api/user/orderAPI";
+import { createReview, checkReviewsForOrderDetails } from "@/api/user/reviewAPI";
+import { useToast } from "vue-toastification";
+import axios from "axios";
 
 const toast = useToast()
 
 export async function getProductIdByVariantId(variantId) {
-  const res = await axios.get(`/api/public/variants/${variantId}/product-id`)
-  return res.data.productId
+  const res = await axios.get(`/api/public/variants/${variantId}/product-id`);
+  return res.data.productId;
 }
 
 export default {
   data() {
     return {
-      selectedDate: '',
+      selectedDate: "",
       orders: [],
-      selectedStatus: '',
+      selectedStatus: "",
       selectedOrder: null,
       loading: false,
       activeReviewCollapse: null,
@@ -226,7 +229,7 @@ export default {
       returnFiles: [], // Hỗ trợ nhiều file
       returnFilePreviews: [], // Hỗ trợ preview nhiều file
       returnOrderId: null,
-    }
+    };
   },
   computed: {
     filteredOrders() {
@@ -239,54 +242,122 @@ export default {
         cancelled: 5,
         refund: 6,
         rejected: 7,
-      }
+      };
 
       let result = this.orders.filter((order) => {
-        const status = Number(order.status)
-        let matchesStatus = true
+        const status = Number(order.status);
+        let matchesStatus = true;
 
         if (this.selectedStatus) {
-          matchesStatus = status === statusMap[this.selectedStatus]
+          matchesStatus = status === statusMap[this.selectedStatus];
         } else {
-          matchesStatus = status >= 0 && status <= 7
+          matchesStatus = status >= 0 && status <= 7;
         }
 
         const matchesDate =
           !this.selectedDate ||
-          new Date(order.orderDate).toISOString().slice(0, 10) === this.selectedDate
+          new Date(order.orderDate).toISOString().slice(0, 10) === this.selectedDate;
 
-        return matchesStatus && matchesDate
-      })
+        return matchesStatus && matchesDate;
+      });
 
-      return result.sort((a, b) => a.status - b.status)
+      // 👉 Sắp xếp theo trạng thái tăng dần
+      return result.sort((a, b) => a.status - b.status);
     },
   },
   methods: {
+    openReturnModal(orderId) {
+      this.returnOrderId = orderId;
+      this.returnReason = "";
+      this.returnFile = null;
+      this.returnFilePreview = null;
+
+      const modalEl = document.getElementById("returnModal");
+      const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+      modal.show();
+    },
+
+    handleReturnFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const maxSize = 20 * 1024 * 1024;
+      if (file.size > maxSize) {
+        toast.error("File quá lớn! Vui lòng chọn file dưới 20MB.");
+        return;
+      }
+
+      this.returnFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.returnFilePreview = reader.result;
+      };
+      reader.readAsDataURL(file);
+    },
+
+    async submitReturn() {
+      if (!this.returnReason.trim()) return toast.error("Vui lòng nhập lý do trả hàng.");
+
+      const form = new FormData();
+      form.append("reason", this.returnReason);
+      if (this.returnFile) {
+        const fileType = this.returnFile.type.startsWith("video")
+          ? "videoUrls"
+          : "imageUrls";
+        form.append(fileType, this.returnFile);
+      }
+
+      try {
+        await requestReturn(this.returnOrderId, form);
+        this.orders = this.orders.map((order) =>
+          order.orderId === this.returnOrderId ? { ...order, status: 4 } : order
+        );
+        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${this.returnOrderId}`);
+
+        const modalEl = document.getElementById("returnModal");
+        const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.hide();
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Gửi yêu cầu trả hàng thất bại.");
+      }
+    },
+    async requestReturn(orderId) {
+      try {
+        await requestReturn(orderId);
+        this.orders = this.orders.map((order) =>
+          order.orderId === orderId ? { ...order, status: 4 } : order
+        );
+        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${orderId}`);
+      } catch (error) {
+        toast.error(error.message || "Gửi yêu cầu trả hàng thất bại.");
+      }
+    },
+
     formatPrice(price) {
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-      }).format(price)
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(price);
     },
     formatDate(date) {
-      return new Date(date).toLocaleDateString('vi-VN', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
+      return new Date(date).toLocaleDateString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
     },
     getStatusText(status) {
       const statusMap = {
-        0: 'Chờ xác nhận',
-        1: 'Chờ lấy hàng',
-        2: 'Chờ giao hàng',
-        3: 'Đã giao',
-        4: 'Yêu cầu trả hàng',
-        5: 'Đã hủy',
-        6: 'Trả hàng',
-        7: 'Đã từ chối',
-      }
-      return statusMap[status] || 'Không xác định'
+        0: "Chờ xác nhận",
+        1: "Chờ lấy hàng",
+        2: "Chờ giao hàng",
+        3: "Đã giao",
+        4: "Yêu cầu trả hàng",
+        5: "Đã hủy",
+        6: "Trả hàng",
+        7: "Đã từ chối",
+      };
+      return statusMap[status] || "Không xác định";
     },
     getStatusClass(status) {
       return {
@@ -400,106 +471,126 @@ export default {
       }
     },
     async fetchOrders() {
-      this.loading = true
+      this.loading = true;
       try {
-        this.orders = await getUserOrders()
-        console.log('Đơn hàng từ API:', this.orders)
+        this.orders = await getUserOrders();
+        console.log("Đơn hàng từ API:", this.orders);
         const orderDetailIds = this.orders
           .filter((order) => order.status === 3)
-          .flatMap((order) => order.orderDetails.map((item) => item.orderDetailId))
+          .flatMap((order) => order.orderDetails.map((item) => item.orderDetailId));
         if (orderDetailIds.length > 0) {
           try {
-            const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds)
-            console.log('Trạng thái đánh giá:', reviewStatus)
+            const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
+            console.log("Trạng thái đánh giá:", reviewStatus);
             this.orders = this.orders.map((order) => ({
               ...order,
               orderDetails: order.orderDetails.map((item) => ({
                 ...item,
                 reviewed: reviewStatus[item.orderDetailId] || false,
               })),
-            }))
+            }));
           } catch (error) {
-            console.error('Lỗi khi kiểm tra trạng thái đánh giá:', error)
-            toast.error('Không thể kiểm tra trạng thái đánh giá.')
+            console.error("Lỗi khi kiểm tra trạng thái đánh giá:", error);
+            toast.error("Không thể kiểm tra trạng thái đánh giá.");
           }
         }
-        toast.success('Tải danh sách đơn hàng thành công!')
+        toast.success("Tải danh sách đơn hàng thành công!");
       } catch (error) {
-        console.error('Lỗi khi tải đơn hàng:', error)
-        toast.error(error.message || 'Không thể tải danh sách đơn hàng.')
+        console.error("Lỗi khi tải đơn hàng:", error);
+        toast.error(error.message || "Không thể tải danh sách đơn hàng.");
       } finally {
-        this.loading = false
+        this.loading = false;
+      }
+    },
+    async cancelOrder(orderId) {
+      try {
+        await cancelOrder(orderId);
+        this.orders = this.orders.map((o) =>
+          o.orderId === orderId ? { ...o, status: 5 } : o
+        );
+        toast.success(`Đã hủy đơn hàng #${orderId}`);
+      } catch (error) {
+        toast.error(error.message || "Hủy đơn hàng thất bại.");
       }
     },
     toggleReviewCollapse(orderDetailId) {
-      this.activeReviewCollapse = this.activeReviewCollapse === orderDetailId ? null : orderDetailId
+      this.activeReviewCollapse =
+        this.activeReviewCollapse === orderDetailId ? null : orderDetailId;
       if (this.activeReviewCollapse) {
-        this.reviewRatings[orderDetailId] = 0
-        this.reviewComments[orderDetailId] = ''
-        this.reviewTypes[orderDetailId] = 'text'
-        this.filePreviews[orderDetailId] = null
-        this.mediaFiles[orderDetailId] = null
+        this.reviewRatings[orderDetailId] = 0;
+        this.reviewComments[orderDetailId] = "";
+        this.reviewTypes[orderDetailId] = "text";
+        this.filePreviews[orderDetailId] = null;
+        this.mediaFiles[orderDetailId] = null;
       }
     },
     setReviewRating(orderDetailId, rating) {
-      this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: rating }
+      this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: rating };
     },
     handleFileUpload(event, orderDetailId) {
-      const file = event.target.files[0]
-      if (!file) return
+      const file = event.target.files[0];
+      if (!file) return;
 
-      const maxSize = 5 * 1024 * 1024 // 5MB
-      const imageTypes = ['image/jpeg', 'image/png', 'image/gif']
-      const videoTypes = ['video/mp4', 'video/webm', 'video/ogg']
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      const imageTypes = ["image/jpeg", "image/png", "image/gif"];
+      const videoTypes = ["video/mp4", "video/webm", "video/ogg"];
 
       if (file.size > maxSize) {
-        toast.error('File quá lớn! Vui lòng chọn file dưới 5MB.')
-        return
+        toast.error("File quá lớn! Vui lòng chọn file dưới 5MB.");
+        return;
       }
 
-      if (this.reviewTypes[orderDetailId] === 'image' && !imageTypes.includes(file.type)) {
-        toast.error('Vui lòng chọn file hình ảnh (jpg, png, gif)!')
-        return
+      if (
+        this.reviewTypes[orderDetailId] === "image" &&
+        !imageTypes.includes(file.type)
+      ) {
+        toast.error("Vui lòng chọn file hình ảnh (jpg, png, gif)!");
+        return;
       }
 
-      if (this.reviewTypes[orderDetailId] === 'video' && !videoTypes.includes(file.type)) {
-        toast.error('Vui lòng chọn file video (mp4, webm, ogg)!')
-        return
+      if (
+        this.reviewTypes[orderDetailId] === "video" &&
+        !videoTypes.includes(file.type)
+      ) {
+        toast.error("Vui lòng chọn file video (mp4, webm, ogg)!");
+        return;
       }
 
       this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: file }
       const reader = new FileReader()
       reader.onload = () => {
-        this.filePreviews = { ...this.filePreviews, [orderDetailId]: reader.result }
-      }
-      reader.readAsDataURL(file)
+        this.filePreviews = { ...this.filePreviews, [orderDetailId]: reader.result };
+      };
+      reader.readAsDataURL(file);
     },
     async submitReview(orderDetailId, productName) {
       if (!this.reviewRatings[orderDetailId]) {
-        toast.error('Vui lòng chọn số sao đánh giá')
-        return
+        toast.error("Vui lòng chọn số sao đánh giá");
+        return;
       }
       if (!this.reviewComments[orderDetailId]?.trim()) {
-        toast.error('Vui lòng nhập bình luận')
-        return
+        toast.error("Vui lòng nhập bình luận");
+        return;
       }
-      if (this.reviewTypes[orderDetailId] !== 'text' && !this.mediaFiles[orderDetailId]) {
+      if (this.reviewTypes[orderDetailId] !== "text" && !this.mediaFiles[orderDetailId]) {
         toast.error(
-          `Vui lòng tải lên ${this.reviewTypes[orderDetailId] === 'image' ? 'hình ảnh' : 'video'}`,
-        )
-        return
+          `Vui lòng tải lên ${
+            this.reviewTypes[orderDetailId] === "image" ? "hình ảnh" : "video"
+          }`
+        );
+        return;
       }
 
       try {
-        const formData = new FormData()
-        formData.append('rating', this.reviewRatings[orderDetailId])
-        formData.append('comment', this.reviewComments[orderDetailId])
-        formData.append('orderDetailId', orderDetailId)
-        if (this.reviewTypes[orderDetailId] !== 'text') {
-          formData.append('media', this.mediaFiles[orderDetailId])
-          formData.append('reviewType', this.reviewTypes[orderDetailId])
+        const formData = new FormData();
+        formData.append("rating", this.reviewRatings[orderDetailId]);
+        formData.append("comment", this.reviewComments[orderDetailId]);
+        formData.append("orderDetailId", orderDetailId);
+        if (this.reviewTypes[orderDetailId] !== "text") {
+          formData.append("media", this.mediaFiles[orderDetailId]);
+          formData.append("reviewType", this.reviewTypes[orderDetailId]);
         } else {
-          formData.append('reviewType', 'text')
+          formData.append("reviewType", "text");
         }
 
         await createReview(formData)
@@ -508,7 +599,9 @@ export default {
             ? {
                 ...o,
                 orderDetails: o.orderDetails.map((item) =>
-                  item.orderDetailId === orderDetailId ? { ...item, reviewed: true } : item,
+                  item.orderDetailId === orderDetailId
+                    ? { ...item, reviewed: true }
+                    : item
                 ),
               }
             : o,
@@ -525,7 +618,8 @@ export default {
         const orderDetailIds =
           this.selectedOrder?.orderDetails.map((item) => item.orderDetailId) || []
         if (orderDetailIds.length > 0) {
-          const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds)
+          const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
+          console.log("Trạng thái đánh giá sau khi gửi:", reviewStatus);
           this.orders = this.orders.map((o) =>
             o.orderId === this.selectedOrder?.orderId
               ? {
@@ -555,24 +649,24 @@ export default {
         this.filePreviews = { ...this.filePreviews, [orderDetailId]: null }
         this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: null }
 
-        toast.success(`Đã gửi đánh giá cho sản phẩm ${productName}`)
+        toast.success(`Đã gửi đánh giá cho sản phẩm ${productName}`);
       } catch (error) {
-        toast.error(error.message || 'Gửi đánh giá thất bại.')
+        toast.error(error.message || "Gửi đánh giá thất bại.");
       }
     },
     handleImageError(event) {
-      event.target.src = 'https://via.placeholder.com/50?text=No+Image'
+      event.target.src = "https://via.placeholder.com/50?text=No+Image";
     },
   },
   mounted() {
-    if (!localStorage.getItem('token')) {
-      toast.error('Vui lòng đăng nhập để xem đơn hàng.')
-      this.$router.push('/login')
+    if (!localStorage.getItem("token")) {
+      toast.error("Vui lòng đăng nhập để xem đơn hàng.");
+      this.$router.push("/login");
     } else {
-      this.fetchOrders()
+      this.fetchOrders();
     }
   },
-}
+};
 </script>
 
 <style src="@/assets/css/order-management.css"></style>

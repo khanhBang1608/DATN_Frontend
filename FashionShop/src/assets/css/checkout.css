@@ -11,6 +11,16 @@
     font-size: 15px;
 } */
 
+.choose-address {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.choose-address:hover {
+  text-decoration: none;
+}
+
+
 .checkout-form .form-select:focus,
 .checkout-form .form-control:focus {
     box-shadow: none;

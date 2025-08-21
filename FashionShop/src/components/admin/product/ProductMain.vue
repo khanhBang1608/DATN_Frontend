@@ -191,8 +191,8 @@ const handleSubmit = async () => {
     if (!product.value.categoryId) errors.value.categoryId = "Vui lòng chọn danh mục";
     if (!product.value.description?.trim())
       errors.value.description = "Mô tả không được để trống";
-    else if (product.value.description.length > 300)
-      errors.value.description = "Mô tả không được vượt quá 300 ký tự";
+    else if (product.value.description.length > 850)
+      errors.value.description = "Mô tả không được vượt quá 850 ký tự";
 
     if (Object.keys(errors.value).length > 0) return;
 
