@@ -50,7 +50,7 @@ export default {
 
   computed: {
     defaultAddress() {
-      return this.addressList.find((a) => a.isDefault) || this.addressList[0];
+      return this.addressList.find((a) => a.isDefault) || this.addressList[0]
     },
     subtotal() {
       return this.cartDetails.reduce((total, item) => total + item.price * item.quantity, 0)
@@ -103,18 +103,18 @@ export default {
   methods: {
     goToNewAddress() {
       // Đóng modal trước
-      const modal = bootstrap.Modal.getInstance(document.getElementById("addressModal"));
-      if (modal) modal.hide();
+      const modal = bootstrap.Modal.getInstance(document.getElementById('addressModal'))
+      if (modal) modal.hide()
 
       // Điều hướng sang trang thêm địa chỉ
-      this.$router.push("/user/address");
+      this.$router.push('/user/address')
     },
     openAddressModal() {
-      const modal = new bootstrap.Modal(document.getElementById("addressModal"));
-      modal.show();
+      const modal = new bootstrap.Modal(document.getElementById('addressModal'))
+      modal.show()
     },
     confirmAddress() {
-      this.onSelectAddress();
+      this.onSelectAddress()
     },
     formatPrice(price) {
       return new Intl.NumberFormat('vi-VN', {
@@ -491,11 +491,7 @@ export default {
                 class="alert alert-warning py-2 d-flex justify-content-between align-items-center"
               >
                 <span>Bạn chưa chọn địa chỉ giao hàng.</span>
-                <span
-                  class="text-primary choose-address"
-                  role="button"
-                  @click="openAddressModal"
-                >
+                <span class="text-primary choose-address" role="button" @click="openAddressModal">
                   Chọn ngay
                 </span>
               </div>
@@ -513,7 +509,7 @@ export default {
                       {{
                         [form.address, form.ward, form.district, form.province]
                           .filter(Boolean)
-                          .join(", ")
+                          .join(', ')
                       }}
                     </div>
                   </div>
@@ -541,16 +537,14 @@ export default {
                   <div class="modal-content border-0 shadow">
                     <!-- Header -->
                     <div class="modal-header border-bottom">
-                      <h5
-                        class="modal-title fw-semibold text-dark"
-                        id="addressModalLabel"
-                      >
+                      <h5 class="modal-title fw-semibold text-dark" id="addressModalLabel">
                         Địa Chỉ Của Tôi
                       </h5>
                       <button
                         type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
+                        @click="closeAddressModal"
                       ></button>
                     </div>
 
@@ -570,10 +564,9 @@ export default {
                               :value="address.addressId"
                               v-model="selectedAddressId"
                               class="form-check-input me-2"
+                              @change="onSelectAddress(address)"
                             />
-                            <strong class="me-2 text-dark">{{
-                              address.customerName
-                            }}</strong>
+                            <strong class="me-2 text-dark">{{ address.customerName }}</strong>
                             <span class="text-muted">{{ address.phone }}</span>
                           </div>
                           <div class="text-secondary small">
@@ -584,22 +577,26 @@ export default {
 
                       <!-- Thêm địa chỉ mới -->
                       <div class="mt-3 d-flex justify-content-start">
-                        <button class="btn btn-outline-secondary" @click="goToNewAddress">
-                          Thêm Địa Chỉ Mới
-                        </button>
+                        <router-link
+                          to="/user/address"
+                          class="btn btn-outline-primary btn-sm"
+                          @click="closeAddressModal"
+                        >
+                          ➕ Thêm Địa Chỉ Mới
+                        </router-link>
                       </div>
                     </div>
 
                     <!-- Footer -->
                     <div class="modal-footer border-top">
-                      <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                      <button type="button" class="btn btn-light" @click="closeAddressModal">
                         Hủy
                       </button>
                       <button
                         type="button"
                         class="btn btn-dark"
                         @click="confirmAddress"
-                        data-bs-dismiss="modal"
+                        :disabled="!selectedAddressId"
                       >
                         Xác nhận
                       </button>
