@@ -1,9 +1,10 @@
+```vue
 <template>
   <div>
     <!-- Sản phẩm mới -->
     <div class="product-content-wrapper">
       <div class="container mt-5">
-        <h3 class="text-center mb-4 fw-bold">TOP 10 SẢN PHẨM MỚI NHẤT</h3>
+        <h3 class="text-center mb-4 fw-bold">TOP 8 SẢN PHẨM MỚI NHẤT</h3>
         <div class="row g-3">
           <template v-for="product in topNewestProducts" :key="product.productId">
             <div
@@ -71,33 +72,6 @@
               </a>
             </div>
           </template>
-          <nav aria-label="Pagination sản phẩm mới nhất">
-            <ul class="pagination mt-3">
-              <li
-                class="pagination-item pagination-arrow"
-                :class="{ 'pagination-disabled': newestPage === 0 }"
-                @click="fetchTopNewestProducts(newestPage - 1)"
-              >
-                &lt;
-              </li>
-              <li
-                v-for="page in newestTotalPages"
-                :key="page"
-                class="pagination-item"
-                :class="{ 'pagination-active': page - 1 === newestPage }"
-                @click="fetchTopNewestProducts(page - 1)"
-              >
-                {{ page }}
-              </li>
-              <li
-                class="pagination-item pagination-arrow"
-                :class="{ 'pagination-disabled': newestPage === newestTotalPages - 1 }"
-                @click="fetchTopNewestProducts(newestPage + 1)"
-              >
-                &gt;
-              </li>
-            </ul>
-          </nav>
         </div>
       </div>
     </div>
@@ -127,30 +101,6 @@
         </div>
       </div>
     </section>
-
-    <!-- <section class="dreams-section">
-      <div class="row align-items-center">
-        <div class="col-12 col-md-6 dreams-image">
-          <a href="#">
-            <img
-              src="https://placehold.co/700x500?text=New+Collection+L'hex"
-              alt="Bộ sưu tập thời trang mới của L'hex"
-            />
-          </a>
-        </div>
-        <div class="col-12 col-md-6 dreams-text">
-          <a href="#" style="text-decoration: none; color: inherit">
-            <h2>BỘ SƯU TẬP MỚI</h2>
-            <p>
-              Khám phá những thiết kế mới nhất từ L'hex – nơi hội tụ sự sáng tạo và xu
-              hướng thời trang quốc tế. Mỗi chi tiết đều được chăm chút tỉ mỉ để mang đến
-              cho bạn trải nghiệm mặc hoàn hảo, giúp bạn tỏa sáng trong mọi khoảnh khắc.
-            </p>
-          </a>
-          <a href="#" class="dreams-btn">XEM THÊM</a>
-        </div>
-      </div>
-    </section> -->
 
     <!-- Top sản phẩm bán chạy có phân trang -->
     <div class="product-content-wrapper">
@@ -255,7 +205,7 @@
     </div>
 
     <!-- Đã xem gần đây -->
-    <div class="product-content-wrapper">
+    <div class="product-content-wrapper" v-if="recentViewedProducts.length > 0">
       <div class="container mt-5">
         <h3 class="text-center mb-4 fw-bold">ĐÃ XEM GẦN ĐÂY</h3>
         <div class="row g-3">
@@ -303,12 +253,10 @@
                     {{ product.originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
-
                 <div class="view-count text-muted" style="font-size: 14px">
                   <i class="bi bi-eye me-1"></i>{{ product.viewCount || 0 }}
                   <i class="bi bi-bag-check me-1 ms-3"></i>{{ product.soldCount || 0 }}
                 </div>
-
                 <div class="product-rating">
                   <span v-for="i in 5" :key="i">
                     <i
@@ -470,29 +418,17 @@ const processProducts = async (products) => {
   }
 };
 
-const newestPage = ref(0);
-const newestTotalPages = ref(0);
-const newestPageSize = ref(8);
-
-const fetchTopNewestProducts = async (page = 0) => {
+// Fetch top 8 newest products (no pagination)
+const fetchTopNewestProducts = async () => {
   try {
-    const response = await axios.get("/api/public/products/top10", {
-      params: {
-        page,
-        size: newestPageSize.value,
-      },
-    });
-
-    const filtered = response.data.content.filter(
+    const response = await axios.get("/api/public/products/top8");
+    const filtered = response.data.filter(
       (product) =>
         product.variants &&
         product.variants.length > 0 &&
         product.variants[0]?.price !== undefined
     );
-
     topNewestProducts.value = await processProducts(filtered);
-    newestPage.value = response.data.number;
-    newestTotalPages.value = response.data.totalPages;
   } catch (error) {
     console.error("Lỗi khi lấy sản phẩm mới nhất:", error);
   }
@@ -599,3 +535,4 @@ onMounted(async () => {
 </script>
 
 <style src="./src/assets/css/product.css"></style>
+  ```

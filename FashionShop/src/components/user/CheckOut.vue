@@ -65,17 +65,15 @@ export default {
       return this.isMobileOrderVisible ? "bi-chevron-up" : "bi-chevron-down";
     },
     validDiscounts() {
-      return this.discountList.filter(
-        (d) => d.quantityLimit !== 0 && this.subtotal >= (d.minOrderAmount || 0)
-      );
+      return this.discountList
+        .filter(
+          (d) => d.quantityLimit !== 0 && this.subtotal >= (d.minOrderAmount || 0)
+        )
+        .sort((a, b) => (b.maxDiscountAmount || 0) - (a.maxDiscountAmount || 0)); // Sắp xếp theo maxDiscountAmount từ cao đến thấp
     },
   },
 
   watch: {
-    confirmAddress() {
-      this.onSelectAddress();
-    },
-
     "form.province"(provinceName) {
       const selectedProvince = this.provinces.find((p) => p.name === provinceName);
       if (selectedProvince) {
@@ -117,6 +115,8 @@ export default {
     },
     confirmAddress() {
       this.onSelectAddress();
+      const modal = bootstrap.Modal.getInstance(document.getElementById("addressModal"));
+      if (modal) modal.hide();
     },
     formatPrice(price) {
       return new Intl.NumberFormat("vi-VN", {
@@ -129,12 +129,12 @@ export default {
       this.isMobileOrderVisible = !this.isMobileOrderVisible;
     },
 
-    applyDiscount() {
+    applyDiscount(discount) {
       this.discountAmount = 0;
       this.discountCode = "";
       this.discountError = "";
+      this.selectedDiscount = discount;
 
-      const discount = this.selectedDiscount;
       if (!discount) return;
 
       // Kiểm tra số tiền tối thiểu, nếu không đủ thì ẩn mã giảm giá
@@ -342,8 +342,6 @@ export default {
         this.discountError = "Không thể tải mã giảm giá.";
       });
 
-    this.fetchAddresses();
-
     if (!localStorage.getItem("token")) {
       toast.error("Vui lòng đăng nhập để tiếp tục.");
       this.$router.push("/login");
@@ -357,6 +355,17 @@ export default {
         this.$router.push("/user/cart");
       }
     }
+
+    this.fetchAddresses().then(() => {
+      if (this.addressList.length === 1) {
+        // Nếu chỉ có 1 địa chỉ, tự động chọn
+        this.selectedAddressId = this.addressList[0].addressId;
+        this.onSelectAddress();
+      } else if (this.addressList.length > 1) {
+        // Nếu nhiều địa chỉ, mở modal để chọn ngay
+        this.openAddressModal();
+      }
+    });
   },
 };
 </script>
@@ -378,34 +387,25 @@ export default {
             </button>
           </div>
 
-          <!-- Mã giảm giá -->
-          <!-- <div class="checkout-discount mb-3">
-            <div class="input-group">
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Mã giảm giá"
-                v-model="discountCode"
-              />
-              <button class="btn btn-secondary" @click="applyDiscount">Sử dụng</button>
-            </div>
-            <div v-if="discountError" class="text-danger mt-2">{{ discountError }}</div>
-          </div> -->
+          <!-- Mã giảm giá - Thiết kế mới như ảnh: các badge clickable -->
           <div class="mb-3">
             <label class="form-label fw-bold">Mã giảm giá:</label>
-            <select
-              class="form-select small-text"
-              v-model="selectedDiscount"
-              @change="applyDiscount"
-            >
-              <option v-for="d in validDiscounts" :key="d.discountId" :value="d">
-                {{ d.discountCode }} | {{ d.discountPercent }}% tối đa
-                {{ formatPrice(d.maxDiscountAmount || 0) }} | đơn từ
-                {{ formatPrice(d.minOrderAmount) }} | còn {{ d.quantityLimit }}
-              </option>
-            </select>
-
-            <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
+            <div class="d-flex flex-wrap gap-2">
+              <span
+                v-for="d in validDiscounts"
+                :key="d.discountId"
+                class="badge rounded-pill px-3 py-2 cursor-pointer"
+                :class="{
+                  'bg-primary text-white': selectedDiscount && selectedDiscount.discountId === d.discountId,
+                  'bg-light text-dark border': !(selectedDiscount && selectedDiscount.discountId === d.discountId),
+                }"
+                @click="applyDiscount(d)"
+                style="transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+              >
+                {{ d.discountCode }} - {{ d.discountPercent }}% (tối đa {{ formatPrice(d.maxDiscountAmount || 0) }})
+              </span>
+            </div>
+            <div v-if="discountError" class="text-danger mt-2">{{ discountError }}</div>
           </div>
 
           <!-- Collapse đơn hàng -->
@@ -737,20 +737,24 @@ export default {
               </div>
             </div>
 
+            <!-- Mã giảm giá - Thiết kế mới cho desktop -->
             <div class="mb-3">
               <label class="form-label fw-bold">Mã giảm giá:</label>
-              <select
-                class="form-select small-text"
-                v-model="selectedDiscount"
-                @change="applyDiscount"
-              >
-                <option v-for="d in validDiscounts" :key="d.discountId" :value="d">
-                  {{ d.discountCode }} | {{ d.discountPercent }}% tối đa
-                  {{ formatPrice(d.maxDiscountAmount || 0) }} | đơn từ
-                  {{ formatPrice(d.minOrderAmount) }} | còn {{ d.quantityLimit }}
-                </option>
-              </select>
-
+              <div class="d-flex flex-wrap gap-2">
+                <span
+                  v-for="d in validDiscounts"
+                  :key="d.discountId"
+                  class="badge rounded-pill px-3 py-2 cursor-pointer"
+                  :class="{
+                    'bg-primary text-white': selectedDiscount && selectedDiscount.discountId === d.discountId,
+                    'bg-light text-dark border': !(selectedDiscount && selectedDiscount.discountId === d.discountId),
+                  }"
+                  @click="applyDiscount(d)"
+                  style="transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);"
+                >
+                  {{ d.discountCode }} - {{ d.discountPercent }}% (tối đa {{ formatPrice(d.maxDiscountAmount || 0) }})
+                </span>
+              </div>
               <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
             </div>
 
@@ -793,3 +797,12 @@ export default {
 </template>
 
 <style src="@/assets/css/checkout.css"></style>
+<style>
+.cursor-pointer {
+  cursor: pointer;
+}
+.badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+</style>
