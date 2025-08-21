@@ -3,7 +3,7 @@
     <!-- Sản phẩm mới -->
     <div class="product-content-wrapper">
       <div class="container mt-5">
-        <h3 class="text-center mb-4 fw-bold">TOP 10 SẢN PHẨM MỚI NHẤT</h3>
+        <h3 class="text-center mb-4 fw-bold">TOP SẢN PHẨM MỚI NHẤT</h3>
         <div class="row g-3">
           <template v-for="product in topNewestProducts" :key="product.productId">
             <div
@@ -79,30 +79,6 @@
               </a>
             </div>
           </template>
-          <nav aria-label="Pagination sản phẩm mới nhất">
-            <ul class="pagination justify-content-center mt-3">
-              <li class="page-item" :class="{ disabled: newestPage === 0 }">
-                <button class="page-link" @click="fetchTopNewestProducts(newestPage - 1)">
-                  &laquo; Trước
-                </button>
-              </li>
-
-              <li class="page-item disabled">
-                <span class="page-link">
-                  Trang {{ newestPage + 1 }} / {{ newestTotalPages }}
-                </span>
-              </li>
-
-              <li
-                class="page-item"
-                :class="{ disabled: newestPage + 1 >= newestTotalPages }"
-              >
-                <button class="page-link" @click="fetchTopNewestProducts(newestPage + 1)">
-                  Sau &raquo;
-                </button>
-              </li>
-            </ul>
-          </nav>
         </div>
       </div>
     </div>
@@ -311,12 +287,10 @@
                     {{ product.originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
-
                 <div class="view-count text-muted" style="font-size: 14px">
                   <i class="bi bi-eye me-1"></i>{{ product.viewCount || 0 }}
                   <i class="bi bi-bag-check me-1 ms-3"></i>{{ product.soldCount || 0 }}
                 </div>
-
                 <div class="product-rating">
                   <span v-for="i in 5" :key="i">
                     <i
@@ -347,7 +321,6 @@
                   Previous
                 </a>
               </li>
-
               <li
                 v-for="page in recentTotalPages"
                 :key="page"
@@ -358,7 +331,6 @@
                   {{ page }}
                 </a>
               </li>
-
               <li
                 class="page-item"
                 :class="{ disabled: recentPage === recentTotalPages - 1 }"
@@ -386,12 +358,12 @@ import { useRouter } from "vue-router";
 import { fetchAverageRating } from "@/api/ProductClient";
 import promotionApi from "@/api/PromotionClien";
 
-// Khởi tạo các ref
+// Initialize refs
 const topNewestProducts = ref([]);
 const recentViewedProducts = ref([]);
 const topBestSellingProducts = ref([]);
 
-// Hàm xử lý khi click vào sản phẩm
+// Handle product click
 const router = useRouter();
 const handleProductClick = async (productId) => {
   try {
@@ -405,12 +377,12 @@ const handleProductClick = async (productId) => {
     }
     router.push(`/product-detail/${productId}`);
   } catch (error) {
-    console.error("Lỗi khi ghi nhận lượt xem:", error);
+    console.error("Error recording product view:", error);
     router.push(`/product-detail/${productId}`);
   }
 };
 
-// Hàm xử lý khuyến mãi, đánh giá và số lượng bán
+// Process products for promotions, ratings, and sold count
 const processProducts = async (products) => {
   try {
     const activePromotions = await promotionApi.getActivePromotions();
@@ -443,7 +415,6 @@ const processProducts = async (products) => {
         const rating = await fetchAverageRating(product.productId);
         product.averageRating = rating.data;
 
-        // Gọi API mới để lấy số lượng đã bán
         const soldResponse = await axios.get(
           `/api/public/products/${product.productId}/sold-count`
         );
@@ -457,43 +428,31 @@ const processProducts = async (products) => {
       })
     );
   } catch (err) {
-    console.error("Lỗi khi xử lý sản phẩm:", err);
+    console.error("Error processing products:", err);
     return products;
   }
 };
 
-const newestPage = ref(0);
-const newestTotalPages = ref(0);
-const newestPageSize = ref(4);
-
-const fetchTopNewestProducts = async (page = 0) => {
+// Fetch top 8 newest products (no pagination)
+const fetchTopNewestProducts = async () => {
   try {
-    const response = await axios.get("/api/public/products/top10", {
-      params: {
-        page,
-        size: newestPageSize.value,
-      },
-    });
-
-    const filtered = response.data.content.filter(
+    const response = await axios.get("/api/public/products/top8");
+    const filtered = response.data.filter(
       (product) =>
         product.variants &&
         product.variants.length > 0 &&
         product.variants[0]?.price !== undefined
     );
-
     topNewestProducts.value = await processProducts(filtered);
-    newestPage.value = response.data.number;
-    newestTotalPages.value = response.data.totalPages;
   } catch (error) {
-    console.error("Lỗi khi lấy sản phẩm mới nhất:", error);
+    console.error("Error fetching newest products:", error);
   }
 };
 
-// Hàm lấy sản phẩm đã xem gần đây
+// Fetch recently viewed products
 const recentPage = ref(0);
 const recentTotalPages = ref(0);
-const recentPageSize = ref(4); // số sản phẩm/ trang
+const recentPageSize = ref(4);
 
 const fetchRecentViews = async (page = 0) => {
   try {
@@ -534,7 +493,7 @@ const fetchRecentViews = async (page = 0) => {
     recentPage.value = response.data.number;
     recentTotalPages.value = response.data.totalPages;
   } catch (error) {
-    console.error("Lỗi khi lấy sản phẩm đã xem gần đây:", error);
+    console.error("Error fetching recently viewed products:", error);
   }
 };
 
@@ -544,6 +503,7 @@ const goToRecentPage = async (page) => {
   }
 };
 
+// Fetch top best-selling products
 const currentPage = ref(0);
 const totalPages = ref(0);
 const pageSize = ref(4);
@@ -567,7 +527,7 @@ const fetchTopBestSellingProducts = async (page = 0) => {
     currentPage.value = response.data.number;
     totalPages.value = response.data.totalPages;
   } catch (error) {
-    console.error("Lỗi khi lấy sản phẩm bán chạy:", error);
+    console.error("Error fetching best-selling products:", error);
   }
 };
 
@@ -588,7 +548,6 @@ onMounted(async () => {
   await fetchTopBestSellingProducts();
   await nextTick();
 });
-
 </script>
 
 <style src="./src/assets/css/product.css"></style>
