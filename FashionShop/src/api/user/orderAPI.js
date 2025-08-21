@@ -10,11 +10,6 @@ const getAuthHeaders = () => {
   };
 };
 
-export const createOrder = async (orderData) => {
-  const res = await axios.post(BASE_URL, orderData, { headers: getAuthHeaders() });
-  return res.data;
-};
-
 export const getUserOrders = async () => {
   const res = await axios.get(BASE_URL, { headers: getAuthHeaders() });
   return res.data;
@@ -40,3 +35,24 @@ export const requestReturn = async (orderId, formData) => {
   return res.data;
 };
 
+export const createOrder = async (orderData) => {
+  try {
+    const res = await axios.post(BASE_URL, orderData, {
+      headers: { ...getAuthHeaders(), 'Content-Type': 'application/json' },
+    });
+    return res.data;
+  } catch (err) {
+    throw new Error(err.response?.data?.message || 'Không thể tạo đơn hàng.');
+  }
+};
+
+export const syncGhnStatus = async (orderId) => {
+  try {
+    const res = await axios.post(`${BASE_URL}/${orderId}/sync-ghn-status`, null, {
+      headers: getAuthHeaders(),
+    });
+    return res.data;
+  } catch (err) {
+    throw new Error(err.response?.data?.message || 'Không thể đồng bộ trạng thái GHN.');
+  }
+};

@@ -13,7 +13,7 @@
             disabled
           />
         </div>
-          <div class="col-md-6">
+        <div class="col-md-6">
           <label class="form-label fw-bold">Người nhận</label>
           <input type="text" class="form-control" :value="extractedFullName" disabled />
         </div>
@@ -65,8 +65,8 @@
               order.paymentStatus === 0
                 ? 'Chưa thanh toán'
                 : order.paymentStatus === 1
-                ? 'Đã thanh toán'
-                : 'Đã hoàn tiền'
+                  ? 'Đã thanh toán'
+                  : 'Đã hoàn tiền'
             "
             disabled
           />
@@ -76,7 +76,11 @@
           <input
             type="text"
             class="form-control"
-            :value="statusOptions[order.status]"
+            :value="
+              order.ghnOrderCode
+                ? ghnStatusMap[order.ghnOrderStatus] || order.ghnOrderStatus
+                : 'Chưa gửi GHN'
+            "
             disabled
           />
         </div>
@@ -118,7 +122,9 @@
               <td class="align-middle">Size: {{ detail.size }}, Màu: {{ detail.color }}</td>
               <td class="align-middle text-center">{{ detail.quantity }}</td>
               <td class="align-middle text-end">{{ formatPrice(detail.price) }}</td>
-              <td class="align-middle text-end">{{ formatPrice(detail.price * detail.quantity) }}</td>
+              <td class="align-middle text-end">
+                {{ formatPrice(detail.price * detail.quantity) }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -162,6 +168,21 @@
           {{ loading ? 'Đang tải...' : 'Xuất hóa đơn PDF' }}
         </button>
         <button
+          v-if="order.status === 0"
+          class="btn btn-success"
+          @click="approveOrder(order.orderId)"
+        >
+          Duyệt
+        </button>
+        <button
+          v-if="order.ghnOrderCode"
+          class="btn btn-info"
+          :disabled="loading"
+          @click="printGhnLabel"
+        >
+          <i class="bi bi-printer me-2"></i>In nhãn vận chuyển
+        </button>
+        <button
           v-if="order.status === 4"
           class="btn btn-success"
           :disabled="loading"
@@ -178,12 +199,12 @@
           Từ chối trả hàng
         </button>
         <button
-          v-if="[0, 1, 2].includes(order.status)"
-          class="btn btn-primary"
+          v-if="order.ghnOrderCode"
+          class="btn btn-warning"
           :disabled="loading"
-          @click="updateStatusFlow"
+          @click="syncGhnStatus"
         >
-          Cập nhật trạng thái
+          <i class="bi bi-arrow-repeat me-2"></i>Đồng bộ trạng thái GHN
         </button>
         <button
           v-if="order.status === 0"
@@ -242,8 +263,8 @@
 </style>
 
 <script setup>
-import { onMounted, ref, watch, computed } from 'vue';
-import { useRoute} from 'vue-router';
+import { onMounted, ref, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import {
   getOrderById,
   updateOrder,
@@ -251,18 +272,20 @@ import {
   approveReturnRequest,
   rejectReturnRequest,
   getReturnRequestByOrder,
-} from '@/api/admin/orderAPI';
-import { useToast } from 'vue-toastification';
+  syncGhnStatusAPI,
+  approveOrderAPI
+} from '@/api/admin/orderAPI'
+import { useToast } from 'vue-toastification'
 
-const BASE_IMAGE_URL = 'http://localhost:8080';
+const BASE_IMAGE_URL = 'http://localhost:8080'
 
-const toast = useToast();
-const route = useRoute();
-const orderId = computed(() => parseInt(route.params.orderId));
-const order = ref(null);
-const error = ref(null);
-const returnRequest = ref(null);
-const loading = ref(false);
+const toast = useToast()
+const route = useRoute()
+const orderId = computed(() => parseInt(route.params.orderId))
+const order = ref(null)
+const error = ref(null)
+const returnRequest = ref(null)
+const loading = ref(false)
 const statusOptions = [
   'Chờ xác nhận',
   'Chờ lấy hàng',
@@ -272,169 +295,201 @@ const statusOptions = [
   'Đã hủy',
   'Trả hàng đã duyệt',
   'Từ chối trả hàng',
-];
+]
+const ghnStatusMap = {
+  ready_to_pick: 'Chờ GHN lấy hàng',
+  picking: 'Nhân viên đang lấy hàng',
+  storing: 'Đang lưu kho GHN',
+  transporting: 'Đang luân chuyển',
+  delivering: 'Đang giao hàng',
+  delivered: 'Đã giao thành công',
+  return: 'Đang hoàn trả',
+  returning: 'Đang chuyển hoàn',
+  returned: 'Đã hoàn trả',
+  cancel: 'Đơn bị hủy',
+}
 
 const extractedFullName = computed(() => {
-  if (!order.value?.address) return 'Không xác định';
-  const parts = order.value.address.split(' - ');
-  return parts.length > 0 ? parts[0] : 'Không xác định';
-});
+  if (!order.value?.address) return 'Không xác định'
+  const parts = order.value.address.split(' - ')
+  return parts.length > 0 ? parts[0] : 'Không xác định'
+})
 
 const extractedPhone = computed(() => {
-  if (!order.value?.address) return 'Không xác định';
-  const parts = order.value.address.split(' - ');
-  return parts.length > 1 ? parts[1] : 'Không xác định';
-});
+  if (!order.value?.address) return 'Không xác định'
+  const parts = order.value.address.split(' - ')
+  return parts.length > 1 ? parts[1] : 'Không xác định'
+})
 
 const extractedAddress = computed(() => {
-  if (!order.value?.address) return 'Không xác định';
-  const parts = order.value.address.split(' - ');
-  return parts.length > 1 ? parts[2] : order.value.address;
-});
+  if (!order.value?.address) return 'Không xác định'
+  const parts = order.value.address.split(' - ')
+  return parts.length > 1 ? parts[2] : order.value.address
+})
 
 const extractedCustomerName = computed(() => {
-  if (!order.value?.address) return 'Không xác định';
-  const parts = order.value.address.split(' - ');
-  return parts.length > 2 ? parts[2] : 'Không xác định';
-});
-
+  if (!order.value?.address) return 'Không xác định'
+  const parts = order.value.address.split(' - ')
+  return parts.length > 2 ? parts[2] : 'Không xác định'
+})
 
 const resolveFileUrl = (url) => {
-  if (!url) return '';
-  return url.startsWith('http') ? url : `${BASE_IMAGE_URL}${url}`;
-};
+  if (!url) return ''
+  return url.startsWith('http') ? url : `${BASE_IMAGE_URL}${url}`
+}
 
 const formatPrice = (price) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price)
 
 async function fetchOrderData() {
   try {
-    loading.value = true;
-    const response = await getOrderById(orderId.value);
-    order.value = response;
+    loading.value = true
+    const response = await getOrderById(orderId.value)
+    order.value = response
 
     if ([4, 6, 7].includes(order.value.status)) {
-      returnRequest.value = await getReturnRequestByOrder(orderId.value);
+      returnRequest.value = await getReturnRequestByOrder(orderId.value)
     } else {
-      returnRequest.value = null;
+      returnRequest.value = null
     }
   } catch (err) {
-    console.error('Fetch error:', err);
-    error.value = err.response?.data?.message || 'Không thể tải chi tiết đơn hàng.';
-    toast.error(error.value);
+    console.error('Fetch error:', err)
+    error.value = err.response?.data?.message || 'Không thể tải chi tiết đơn hàng.'
+    toast.error(error.value)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
+async function approveOrder(orderId) {
+      try {
+        await approveOrderAPI(orderId);
+        fetchOrderData();
+        toast.success(`Đã duyệt đơn hàng #${orderId}`);
+      } catch (error) {
+        toast.error(error.message || 'Duyệt đơn hàng thất bại.');
+      }
+    }
+
 async function updateStatusFlow() {
-  const flow = { 0: 1, 1: 2, 2: 3 };
-  const current = order.value.status;
-  const next = flow[current];
+  const flow = { 0: 1, 1: 2, 2: 3 }
+  const current = order.value.status
+  const next = flow[current]
 
   if (next === undefined) {
-    toast.error('Không thể cập nhật trạng thái ở bước hiện tại.');
-    return;
+    toast.error('Không thể cập nhật trạng thái ở bước hiện tại.')
+    return
   }
 
-  const confirmMsg = `Bạn có muốn cập nhật trạng thái đơn hàng từ "${statusOptions[current]}" lên "${statusOptions[next]}"?`;
-  if (!window.confirm(confirmMsg)) return;
+  const confirmMsg = `Bạn có muốn cập nhật trạng thái đơn hàng từ "${statusOptions[current]}" lên "${statusOptions[next]}"?`
+  if (!window.confirm(confirmMsg)) return
 
   try {
-    loading.value = true;
-    order.value.status = next;
-    await updateOrder(orderId.value, order.value);
-    toast.success('Cập nhật trạng thái thành công');
+    loading.value = true
+    order.value.status = next
+    await updateOrder(orderId.value, order.value)
+    toast.success('Cập nhật trạng thái thành công')
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.');
+    toast.error(err.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 async function cancelOrder() {
   if (order.value.status !== 0) {
-    toast.error('Chỉ có thể hủy đơn hàng khi trạng thái là "Chờ xác nhận".');
-    return;
+    toast.error('Chỉ có thể hủy đơn hàng khi trạng thái là "Chờ xác nhận".')
+    return
   }
 
-  if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return;
+  if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return
 
   try {
-    loading.value = true;
-    order.value.status = 5;
-    await updateOrder(orderId.value, order.value);
-    toast.success('Đơn hàng đã được hủy');
+    loading.value = true
+    order.value.status = 5
+    await updateOrder(orderId.value, order.value)
+    toast.success('Đơn hàng đã được hủy')
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Không thể hủy đơn hàng.');
+    toast.error(err.response?.data?.message || 'Không thể hủy đơn hàng.')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 async function approveReturn() {
-  if (!window.confirm('Bạn có chắc chắn muốn duyệt yêu cầu trả hàng này?')) return;
+  if (!window.confirm('Bạn có chắc chắn muốn duyệt yêu cầu trả hàng này?')) return
 
   try {
-    loading.value = true;
-    await approveReturnRequest(orderId.value);
-    order.value.status = 6;
-    toast.success('Đã duyệt yêu cầu trả hàng');
+    loading.value = true
+    await approveReturnRequest(orderId.value)
+    order.value.status = 6
+    toast.success('Đã duyệt yêu cầu trả hàng')
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Không thể duyệt yêu cầu trả hàng.');
+    toast.error(err.response?.data?.message || 'Không thể duyệt yêu cầu trả hàng.')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 
 async function rejectReturn() {
-  if (!window.confirm('Bạn có chắc chắn muốn từ chối yêu cầu trả hàng này?')) return;
+  if (!window.confirm('Bạn có chắc chắn muốn từ chối yêu cầu trả hàng này?')) return
 
   try {
-    loading.value = true;
-    await rejectReturnRequest(orderId.value);
-    order.value.status = 7;
-    toast.info('Đã từ chối yêu cầu trả hàng');
+    loading.value = true
+    await rejectReturnRequest(orderId.value)
+    order.value.status = 7
+    toast.info('Đã từ chối yêu cầu trả hàng')
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Không thể từ chối yêu cầu trả hàng.');
+    toast.error(err.response?.data?.message || 'Không thể từ chối yêu cầu trả hàng.')
   } finally {
-    loading.value = false;
+    loading.value = false
+  }
+}
+async function syncGhnStatus() {
+  try {
+    loading.value = true
+    await syncGhnStatusAPI(orderId.value)
+    toast.success('Đồng bộ trạng thái GHN thành công')
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Không thể đồng bộ trạng thái GHN.')
+  } finally {
+    loading.value = false
   }
 }
 async function exportToPDF() {
   try {
-    await downloadInvoicePDF(orderId.value);
-    toast.success('Tải hóa đơn PDF thành công');
+    await downloadInvoicePDF(orderId.value)
+    toast.success('Tải hóa đơn PDF thành công')
   } catch (err) {
-    let errorMessage = 'Không thể xuất hóa đơn PDF.';
+    let errorMessage = 'Không thể xuất hóa đơn PDF.'
     if (err.response) {
       try {
-        const text = await err.response.data.text();
-        errorMessage = text || errorMessage;
+        const text = await err.response.data.text()
+        errorMessage = text || errorMessage
       } catch {
-        errorMessage = err.message || errorMessage;
+        errorMessage = err.message || errorMessage
       }
     } else {
-      errorMessage = err.message || errorMessage;
+      errorMessage = err.message || errorMessage
     }
     console.error('Export PDF Error:', {
       message: err.message,
       code: err.code,
       response: err.response,
-    });
-    toast.error(errorMessage);
+    })
+    toast.error(errorMessage)
   } finally {
-    loading.value = false;
+    loading.value = false
   }
 }
 onMounted(() => {
-  if (!isNaN(orderId.value)) fetchOrderData();
-});
+  if (!isNaN(orderId.value)) fetchOrderData()
+})
 
 watch(
   () => orderId.value,
   (newVal) => {
-    if (!isNaN(newVal)) fetchOrderData();
+    if (!isNaN(newVal)) fetchOrderData()
   },
-);
+)
 </script>

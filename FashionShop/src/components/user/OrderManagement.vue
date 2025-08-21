@@ -39,7 +39,6 @@
           >
             Chờ lấy hàng
           </div>
-
           <div
             class="order-management-tab"
             :class="{ active: selectedStatus === 'processing' }"
@@ -61,7 +60,6 @@
           >
             Yêu cầu trả hàng
           </div>
-
           <div
             class="order-management-tab"
             :class="{ active: selectedStatus === 'refund' }"
@@ -76,7 +74,6 @@
           >
             Đã hủy
           </div>
-
           <div
             class="order-management-tab"
             :class="{ active: selectedStatus === 'rejected' }"
@@ -86,7 +83,6 @@
           </div>
         </div>
       </div>
-
       <div class="col-md-3">
         <label for="dateFilter">Ngày đặt hàng:</label>
         <input id="dateFilter" type="date" class="form-control" v-model="selectedDate" />
@@ -106,7 +102,6 @@
         Bắt đầu mua sắm
       </router-link>
     </div>
-
     <div v-else class="order-management-table-wrapper">
       <table class="order-management-table">
         <thead>
@@ -135,7 +130,6 @@
               >
                 <i class="bi bi-eye me-1"></i> Xem
               </router-link>
-
               <button
                 v-if="order.status === 3"
                 class="order-management-action-btn return"
@@ -143,7 +137,6 @@
               >
                 <i class="bi bi-box-arrow-left me-1"></i> Yêu cầu trả hàng
               </button>
-
               <button
                 v-if="order.status === 0"
                 class="order-management-action-btn cancel"
@@ -167,22 +160,30 @@
         <div class="modal-body">
           <label>Lý do</label>
           <textarea v-model="returnReason" class="form-control mb-3"></textarea>
-
           <label>Upload ảnh hoặc video (tùy chọn)</label>
           <input
             type="file"
             class="form-control"
             accept="image/*,video/*"
+            multiple
             @change="handleReturnFileUpload"
           />
-
-          <div v-if="returnFilePreview" class="file-preview mt-2">
-            <img
-              v-if="returnFile?.type.startsWith('image')"
-              :src="returnFilePreview"
-              class="img-fluid"
-            />
-            <video v-else :src="returnFilePreview" controls class="img-fluid"></video>
+          <div v-if="returnFilePreviews.length" class="file-preview mt-2">
+            <div v-for="(preview, index) in returnFilePreviews" :key="index">
+              <img
+                v-if="returnFiles[index]?.type.startsWith('image')"
+                :src="preview"
+                class="img-fluid"
+                style="max-width: 100px; margin-right: 10px"
+              />
+              <video
+                v-else
+                :src="preview"
+                controls
+                class="img-fluid"
+                style="max-width: 100px; margin-right: 10px"
+              ></video>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -201,10 +202,12 @@ import { useToast } from 'vue-toastification'
 import axios from 'axios'
 
 const toast = useToast()
+
 export async function getProductIdByVariantId(variantId) {
   const res = await axios.get(`/api/public/variants/${variantId}/product-id`)
   return res.data.productId
 }
+
 export default {
   data() {
     return {
@@ -213,15 +216,15 @@ export default {
       selectedStatus: '',
       selectedOrder: null,
       loading: false,
-      activeReviewCollapse: null, // Theo dõi collapse đang mở
-      reviewRatings: {}, // Lưu rating cho từng orderDetailId
-      reviewComments: {}, // Lưu comment cho từng orderDetailId
-      reviewTypes: {}, // Lưu loại đánh giá cho từng orderDetailId
-      filePreviews: {}, // Lưu preview URL cho từng orderDetailId
-      mediaFiles: {}, // Lưu file gốc cho từng orderDetailId
+      activeReviewCollapse: null,
+      reviewRatings: {},
+      reviewComments: {},
+      reviewTypes: {},
+      filePreviews: {},
+      mediaFiles: {},
       returnReason: '',
-      returnFile: null,
-      returnFilePreview: null,
+      returnFiles: [], // Hỗ trợ nhiều file
+      returnFilePreviews: [], // Hỗ trợ preview nhiều file
       returnOrderId: null,
     }
   },
@@ -255,77 +258,10 @@ export default {
         return matchesStatus && matchesDate
       })
 
-      // 👉 Sắp xếp theo trạng thái tăng dần
       return result.sort((a, b) => a.status - b.status)
     },
   },
-
   methods: {
-    openReturnModal(orderId) {
-      this.returnOrderId = orderId
-      this.returnReason = ''
-      this.returnFile = null
-      this.returnFilePreview = null
-
-      const modalEl = document.getElementById('returnModal')
-      const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl)
-      modal.show()
-    },
-
-    handleReturnFileUpload(event) {
-      const file = event.target.files[0]
-      if (!file) return
-
-      const maxSize = 20 * 1024 * 1024
-      if (file.size > maxSize) {
-        toast.error('File quá lớn! Vui lòng chọn file dưới 20MB.')
-        return
-      }
-
-      this.returnFile = file
-      const reader = new FileReader()
-      reader.onload = () => {
-        this.returnFilePreview = reader.result
-      }
-      reader.readAsDataURL(file)
-    },
-
-    async submitReturn() {
-      if (!this.returnReason.trim()) return toast.error('Vui lòng nhập lý do trả hàng.')
-
-      const form = new FormData()
-      form.append('reason', this.returnReason)
-      if (this.returnFile) {
-        const fileType = this.returnFile.type.startsWith('video') ? 'videoUrls' : 'imageUrls'
-        form.append(fileType, this.returnFile)
-      }
-
-      try {
-        await requestReturn(this.returnOrderId, form)
-        this.orders = this.orders.map((order) =>
-          order.orderId === this.returnOrderId ? { ...order, status: 4 } : order,
-        )
-        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${this.returnOrderId}`)
-
-        const modalEl = document.getElementById('returnModal')
-        const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl)
-        modal.hide()
-      } catch (err) {
-        toast.error(err.response?.data?.message || 'Gửi yêu cầu trả hàng thất bại.')
-      }
-    },
-    async requestReturn(orderId) {
-      try {
-        await requestReturn(orderId)
-        this.orders = this.orders.map((order) =>
-          order.orderId === orderId ? { ...order, status: 4 } : order,
-        )
-        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${orderId}`)
-      } catch (error) {
-        toast.error(error.message || 'Gửi yêu cầu trả hàng thất bại.')
-      }
-    },
-
     formatPrice(price) {
       return new Intl.NumberFormat('vi-VN', {
         style: 'currency',
@@ -354,7 +290,7 @@ export default {
     },
     getStatusClass(status) {
       return {
-        'status status-pending': status === 0,
+        'status status-pending': status === 0 ,
         'status status-taking': status === 1,
         'status status-processing': status === 2,
         'status status-delivered': status === 3,
@@ -364,7 +300,105 @@ export default {
         'status status-rejected': status === 7,
       }
     },
+    getGhnStatusText(status) {
+      const statusMap = {
+        ready_to_pick: 'Sẵn sàng lấy hàng',
+        picking: 'Đang lấy hàng',
+        picked: 'Đã lấy xong',
+        storing: 'Đang lưu kho',
+        transporting: 'Đang trung chuyển',
+        sorting: 'Đang phân loại',
+        delivering: 'Đang giao hàng',
+        delivered: 'Đã giao',
+        delivery_fail: 'Giao thất bại',
+        waiting_to_return: 'Chờ trả hàng',
+        return_transporting: 'Đang trả hàng (vận chuyển)',
+        return_sorting: 'Đang trả hàng (phân loại)',
+        returning: 'Đang trả hàng',
+        return: 'Đã trả hàng',
+        returned: 'Trả hàng thành công',
+        cancel: 'Đã hủy',
+      }
+      return statusMap[status] || (status ? 'Không xác định' : 'Chưa gửi qua GHN')
+    },
+    getGhnStatusClass(status) {
+      return {
+        'status status-pending': status === 'ready_to_pick',
+        'status status-taking': status === 'picking',
+        'status status-processing': status === 'delivering',
+        'status status-delivered': status === 'delivered',
+        'status status-cancelled': status === 'cancel',
+        'status status-refunded': status === 'return',
+        'status status-return-requested': status === 'waiting_to_return',
+        'status status-rejected': status === 'delivery_fail',
+        'status status-ghn-unknown': !status,
+      }
+    },
+    openReturnModal(orderId) {
+      this.returnOrderId = orderId
+      this.returnReason = ''
+      this.returnFiles = []
+      this.returnFilePreviews = []
+      const modalEl = document.getElementById('returnModal')
+      const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl)
+      modal.show()
+    },
+    handleReturnFileUpload(event) {
+      const files = Array.from(event.target.files)
+      if (!files.length) return
 
+      const maxSize = 20 * 1024 * 1024 // 20MB
+      const validFiles = files.filter((file) => file.size <= maxSize)
+      if (validFiles.length !== files.length) {
+        toast.error('Một hoặc nhiều file quá lớn! Vui lòng chọn file dưới 20MB.')
+      }
+
+      this.returnFiles = validFiles
+      this.returnFilePreviews = []
+
+      validFiles.forEach((file) => {
+        const reader = new FileReader()
+        reader.onload = () => {
+          this.returnFilePreviews.push(reader.result)
+        }
+        reader.readAsDataURL(file)
+      })
+    },
+    async submitReturn() {
+      if (!this.returnReason.trim()) {
+        toast.error('Vui lòng nhập lý do trả hàng.')
+        return
+      }
+
+      const form = new FormData()
+      form.append('reason', this.returnReason)
+      this.returnFiles.forEach((file) => {
+        const fileType = file.type.startsWith('video') ? 'videoUrls' : 'imageUrls'
+        form.append(fileType, file)
+      })
+
+      try {
+        await requestReturn(this.returnOrderId, form)
+        this.orders = this.orders.map((order) =>
+          order.orderId === this.returnOrderId ? { ...order, status: 4 } : order,
+        )
+        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${this.returnOrderId}`)
+        const modalEl = document.getElementById('returnModal')
+        const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl)
+        modal.hide()
+      } catch (err) {
+        toast.error(err.response?.data?.message || 'Gửi yêu cầu trả hàng thất bại.')
+      }
+    },
+    async cancelOrder(orderId) {
+      try {
+        await cancelOrder(orderId)
+        this.orders = this.orders.map((o) => (o.orderId === orderId ? { ...o, status: 5 } : o))
+        toast.success(`Đã hủy đơn hàng #${orderId}`)
+      } catch (error) {
+        toast.error(error.message || 'Hủy đơn hàng thất bại.')
+      }
+    },
     async fetchOrders() {
       this.loading = true
       try {
@@ -395,15 +429,6 @@ export default {
         toast.error(error.message || 'Không thể tải danh sách đơn hàng.')
       } finally {
         this.loading = false
-      }
-    },
-    async cancelOrder(orderId) {
-      try {
-        await cancelOrder(orderId)
-        this.orders = this.orders.map((o) => (o.orderId === orderId ? { ...o, status: 5 } : o))
-        toast.success(`Đã hủy đơn hàng #${orderId}`)
-      } catch (error) {
-        toast.error(error.message || 'Hủy đơn hàng thất bại.')
       }
     },
     toggleReviewCollapse(orderDetailId) {
@@ -442,10 +467,7 @@ export default {
         return
       }
 
-      // Lưu file gốc để gửi FormData
       this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: file }
-
-      // Tạo preview
       const reader = new FileReader()
       reader.onload = () => {
         this.filePreviews = { ...this.filePreviews, [orderDetailId]: reader.result }
@@ -481,10 +503,8 @@ export default {
         }
 
         await createReview(formData)
-
-        // Cập nhật trạng thái reviewed trong orders và selectedOrder
         this.orders = this.orders.map((o) =>
-          o.orderId === this.selectedOrder.orderId
+          o.orderId === this.selectedOrder?.orderId
             ? {
                 ...o,
                 orderDetails: o.orderDetails.map((item) =>
@@ -493,20 +513,21 @@ export default {
               }
             : o,
         )
-        this.selectedOrder = {
-          ...this.selectedOrder,
-          orderDetails: this.selectedOrder.orderDetails.map((item) =>
-            item.orderDetailId === orderDetailId ? { ...item, reviewed: true } : item,
-          ),
+        if (this.selectedOrder) {
+          this.selectedOrder = {
+            ...this.selectedOrder,
+            orderDetails: this.selectedOrder.orderDetails.map((item) =>
+              item.orderDetailId === orderDetailId ? { ...item, reviewed: true } : item,
+            ),
+          }
         }
 
-        // Gọi lại checkReviewsForOrderDetails để đồng bộ với backend
-        const orderDetailIds = this.selectedOrder.orderDetails.map((item) => item.orderDetailId)
+        const orderDetailIds =
+          this.selectedOrder?.orderDetails.map((item) => item.orderDetailId) || []
         if (orderDetailIds.length > 0) {
           const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds)
-          console.log('Trạng thái đánh giá sau khi gửi:', reviewStatus)
           this.orders = this.orders.map((o) =>
-            o.orderId === this.selectedOrder.orderId
+            o.orderId === this.selectedOrder?.orderId
               ? {
                   ...o,
                   orderDetails: o.orderDetails.map((item) => ({
@@ -516,16 +537,17 @@ export default {
                 }
               : o,
           )
-          this.selectedOrder = {
-            ...this.selectedOrder,
-            orderDetails: this.selectedOrder.orderDetails.map((item) => ({
-              ...item,
-              reviewed: reviewStatus[item.orderDetailId] || false,
-            })),
+          if (this.selectedOrder) {
+            this.selectedOrder = {
+              ...this.selectedOrder,
+              orderDetails: this.selectedOrder.orderDetails.map((item) => ({
+                ...item,
+                reviewed: reviewStatus[item.orderDetailId] || false,
+              })),
+            }
           }
         }
 
-        // Reset collapse và dữ liệu form
         this.activeReviewCollapse = null
         this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: 0 }
         this.reviewComments = { ...this.reviewComments, [orderDetailId]: '' }
@@ -554,3 +576,20 @@ export default {
 </script>
 
 <style src="@/assets/css/order-management.css"></style>
+<style scoped>
+.status-ghn-ready,
+.status-ghn-picking,
+.status-ghn-delivering {
+  color: #007bff;
+}
+.status-ghn-delivered {
+  color: #28a745;
+}
+.status-ghn-cancelled,
+.status-ghn-returned {
+  color: #dc3545;
+}
+.status-ghn-unknown {
+  color: #6c757d;
+}
+</style>
