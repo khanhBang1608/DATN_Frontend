@@ -15,7 +15,7 @@
         </div>
         <div class="col-md-6">
           <label class="form-label fw-bold">Địa chỉ</label>
-          <input type="text" class="form-control" :value="extractedAddress" disabled />
+          <textarea  class="form-control" :value="extractedAddress" disabled></textarea>
         </div>
         <div class="col-md-6">
           <label class="form-label fw-bold">Số điện thoại</label>
