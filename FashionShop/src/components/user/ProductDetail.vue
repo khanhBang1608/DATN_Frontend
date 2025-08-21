@@ -655,7 +655,6 @@ const fetchRelatedProducts = async () => {
             <div class="tab-pane fade show active" id="desc" role="tabpanel">
               <h5 class="fw-bold mb-2">Mô tả</h5>
               <div v-html="product.description"></div>
-
             </div>
             <div class="tab-pane fade" id="size" role="tabpanel">
               <div class="text-center">
@@ -743,54 +742,37 @@ const fetchRelatedProducts = async () => {
           </div>
         </RouterLink>
       </div>
-      <div class="d-flex justify-content-center mt-3" v-if="relatedTotalPages > 1">
-        <!-- Trang đầu -->
-        <button
-          class="btn btn-outline-primary me-1"
-          :disabled="relatedPage === 0"
-          @click="goToPage(0)"
-        >
-          «
-        </button>
-
+      <!-- Phân trang cho sản phẩm liên quan -->
+      <ul class="pagination mt-3" v-if="relatedTotalPages > 1">
         <!-- Trang trước -->
-        <button
-          class="btn btn-outline-primary me-2"
-          :disabled="relatedPage === 0"
+        <li
+          class="pagination-item pagination-arrow"
+          :class="{ 'pagination-disabled': relatedPage === 0 }"
           @click="goToPage(relatedPage - 1)"
         >
-          <
-        </button>
+          &lt;
+        </li>
 
         <!-- Danh sách số trang -->
-        <button
+        <li
           v-for="page in relatedTotalPages"
           :key="page"
-          class="btn me-1"
-          :class="relatedPage === page - 1 ? 'btn-primary' : 'btn-outline-primary'"
+          class="pagination-item"
+          :class="{ 'pagination-active': relatedPage === page - 1 }"
           @click="goToPage(page - 1)"
         >
           {{ page }}
-        </button>
+        </li>
 
         <!-- Trang sau -->
-        <button
-          class="btn btn-outline-primary me-1"
-          :disabled="relatedPage >= relatedTotalPages - 1"
+        <li
+          class="pagination-item pagination-arrow"
+          :class="{ 'pagination-disabled': relatedPage === relatedTotalPages - 1 }"
           @click="goToPage(relatedPage + 1)"
         >
-          >
-        </button>
-
-        <!-- Trang cuối -->
-        <button
-          class="btn btn-outline-primary"
-          :disabled="relatedPage >= relatedTotalPages - 1"
-          @click="goToPage(relatedTotalPages - 1)"
-        >
-          »
-        </button>
-      </div>
+          &gt;
+        </li>
+      </ul>
     </div>
   </div>
 
