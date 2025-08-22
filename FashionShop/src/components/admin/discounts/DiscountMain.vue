@@ -244,7 +244,7 @@
               <label class="form-label fw-semibold">Ngày bắt đầu</label>
               <input
                 v-model="form.startDate"
-                type="date"
+                type="datetime-local"
                 @input="clearError('startDate')"
                 class="form-control"
               />
@@ -257,7 +257,7 @@
               <label class="form-label fw-semibold">Ngày kết thúc</label>
               <input
                 v-model="form.endDate"
-                type="date"
+                type="datetime-local"
                 @input="clearError('endDate')"
                 class="form-control"
               />
