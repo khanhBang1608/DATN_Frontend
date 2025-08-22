@@ -36,4 +36,13 @@ export const dashboardAPI = {
       throw new Error(error.response?.data?.message || 'loi user');
     }
   },
+  async getMonthlyRevenue() {
+    try {
+      const response = await apiClient.get('/dashboard/stats/monthly-revenue');
+      return response.data; // JSON [{ month: 1, revenue: 0.0 }, ...]
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Lỗi lấy doanh thu tháng');
+    }
+  },
 };
+

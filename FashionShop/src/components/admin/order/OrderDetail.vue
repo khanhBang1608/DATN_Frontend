@@ -240,6 +240,10 @@
 <script setup>
 import { onMounted, ref, watch, computed } from 'vue';
 import { useRoute} from 'vue-router';
+import Swal from "sweetalert2";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
+
 import {
   getOrderById,
   updateOrder,
@@ -248,11 +252,9 @@ import {
   rejectReturnRequest,
   getReturnRequestByOrder,
 } from '@/api/admin/orderAPI';
-import { useToast } from 'vue-toastification';
 
 const BASE_IMAGE_URL = 'http://localhost:8080';
 
-const toast = useToast();
 const route = useRoute();
 const orderId = computed(() => parseInt(route.params.orderId));
 const order = ref(null);
@@ -310,7 +312,7 @@ async function fetchOrderData() {
   } catch (err) {
     console.error('Fetch error:', err);
     error.value = err.response?.data?.message || 'Không thể tải chi tiết đơn hàng.';
-    toast.error(error.value);
+    iziToast.error({ title: "Lỗi", message: error.value });
   } finally {
     loading.value = false;
   }
@@ -322,20 +324,28 @@ async function updateStatusFlow() {
   const next = flow[current];
 
   if (next === undefined) {
-    toast.error('Không thể cập nhật trạng thái ở bước hiện tại.');
+    iziToast.error({ title: "Lỗi", message: 'Không thể cập nhật trạng thái ở bước hiện tại.' });
     return;
   }
 
-  const confirmMsg = `Bạn có muốn cập nhật trạng thái đơn hàng từ "${statusOptions[current]}" lên "${statusOptions[next]}"?`;
-  if (!window.confirm(confirmMsg)) return;
+  const confirmResult = await Swal.fire({
+    title: "Xác nhận",
+    text: `Bạn có muốn cập nhật trạng thái đơn hàng từ "${statusOptions[current]}" lên "${statusOptions[next]}"?`,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Có",
+    cancelButtonText: "Không"
+  });
+
+  if (!confirmResult.isConfirmed) return;
 
   try {
     loading.value = true;
     order.value.status = next;
     await updateOrder(orderId.value, order.value);
-    toast.success('Cập nhật trạng thái thành công');
+    iziToast.success({ title: "Thành công", message: "Cập nhật trạng thái thành công" });
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.');
+    iziToast.error({ title: "Lỗi", message: err.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.' });
   } finally {
     loading.value = false;
   }
@@ -343,57 +353,85 @@ async function updateStatusFlow() {
 
 async function cancelOrder() {
   if (order.value.status !== 0) {
-    toast.error('Chỉ có thể hủy đơn hàng khi trạng thái là "Chờ xác nhận".');
+    iziToast.error({ title: "Lỗi", message: 'Chỉ có thể hủy đơn hàng khi trạng thái là "Chờ xác nhận".' });
     return;
   }
 
-  if (!window.confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) return;
+  const confirmResult = await Swal.fire({
+    title: "Xác nhận",
+    text: "Bạn có chắc chắn muốn hủy đơn hàng này?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Có",
+    cancelButtonText: "Không"
+  });
+
+  if (!confirmResult.isConfirmed) return;
 
   try {
     loading.value = true;
     order.value.status = 5;
     await updateOrder(orderId.value, order.value);
-    toast.success('Đơn hàng đã được hủy');
+    iziToast.success({ title: "Thành công", message: "Đơn hàng đã được hủy" });
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Không thể hủy đơn hàng.');
+    iziToast.error({ title: "Lỗi", message: err.response?.data?.message || 'Không thể hủy đơn hàng.' });
   } finally {
     loading.value = false;
   }
 }
 
 async function approveReturn() {
-  if (!window.confirm('Bạn có chắc chắn muốn duyệt yêu cầu trả hàng này?')) return;
+  const confirmResult = await Swal.fire({
+    title: "Xác nhận",
+    text: "Bạn có chắc chắn muốn duyệt yêu cầu trả hàng này?",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: "Có",
+    cancelButtonText: "Không"
+  });
+
+  if (!confirmResult.isConfirmed) return;
 
   try {
     loading.value = true;
     await approveReturnRequest(orderId.value);
     order.value.status = 6;
-    toast.success('Đã duyệt yêu cầu trả hàng');
+    iziToast.success({ title: "Thành công", message: "Đã duyệt yêu cầu trả hàng" });
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Không thể duyệt yêu cầu trả hàng.');
+    iziToast.error({ title: "Lỗi", message: err.response?.data?.message || 'Không thể duyệt yêu cầu trả hàng.' });
   } finally {
     loading.value = false;
   }
 }
 
 async function rejectReturn() {
-  if (!window.confirm('Bạn có chắc chắn muốn từ chối yêu cầu trả hàng này?')) return;
+  const confirmResult = await Swal.fire({
+    title: "Xác nhận",
+    text: "Bạn có chắc chắn muốn từ chối yêu cầu trả hàng này?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Có",
+    cancelButtonText: "Không"
+  });
+
+  if (!confirmResult.isConfirmed) return;
 
   try {
     loading.value = true;
     await rejectReturnRequest(orderId.value);
     order.value.status = 7;
-    toast.info('Đã từ chối yêu cầu trả hàng');
+    iziToast.info({ title: "Thông báo", message: "Đã từ chối yêu cầu trả hàng" });
   } catch (err) {
-    toast.error(err.response?.data?.message || 'Không thể từ chối yêu cầu trả hàng.');
+    iziToast.error({ title: "Lỗi", message: err.response?.data?.message || 'Không thể từ chối yêu cầu trả hàng.' });
   } finally {
     loading.value = false;
   }
 }
+
 async function exportToPDF() {
   try {
     await downloadInvoicePDF(orderId.value);
-    toast.success('Tải hóa đơn PDF thành công');
+    iziToast.success({ title: "Thành công", message: "Tải hóa đơn PDF thành công" });
   } catch (err) {
     let errorMessage = 'Không thể xuất hóa đơn PDF.';
     if (err.response) {
@@ -406,16 +444,13 @@ async function exportToPDF() {
     } else {
       errorMessage = err.message || errorMessage;
     }
-    console.error('Export PDF Error:', {
-      message: err.message,
-      code: err.code,
-      response: err.response,
-    });
-    toast.error(errorMessage);
+    console.error('Export PDF Error:', err);
+    iziToast.error({ title: "Lỗi", message: errorMessage });
   } finally {
     loading.value = false;
   }
 }
+
 onMounted(() => {
   if (!isNaN(orderId.value)) fetchOrderData();
 });
@@ -427,3 +462,4 @@ watch(
   },
 );
 </script>
+

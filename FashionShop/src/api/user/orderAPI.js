@@ -40,3 +40,9 @@ export const requestReturn = async (orderId, formData) => {
   return res.data;
 };
 
+export const checkReturnStatus = async (orderId) => {
+  const res = await axios.get(`${BASE_URL}/${orderId}/return-status`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};
