@@ -56,29 +56,28 @@ const processProducts = async (products) => {
           console.log(`Sản phẩm ${product.productId} không có biến thể`);
           return {
             ...product,
-            variants: [{ imageName: "fallback-image.jpg", price: 0 }],
+            variants: [
+              { imageName: "fallback-image-default.jpg" },
+              { imageName: "fallback-image-hover.jpg" },
+            ],
           };
         }
 
         // Chọn minVariant ưu tiên có imageName
-        let minVariant = product.variants.reduce((min, v) => {
-          if (!v.imageName && min.imageName) return min; // Ưu tiên biến thể có imageName
-          if (v.imageName && !min.imageName) return v;
-          return v.price < min.price ? v : min;
-        }, product.variants.find((v) => v.imageName) || product.variants[0]);
+        let minVariant = product.variants.find((v) => v.imageName) || product.variants[0];
+        // Chọn hoverVariant khác với minVariant
+        let hoverVariant =
+          product.variants.find(
+            (v) => v.imageName && v.imageName !== minVariant.imageName
+          ) || minVariant;
 
-        // Nếu minVariant vẫn không có imageName, lấy từ variant khác
-        if (!minVariant.imageName && product.variants.length > 1) {
-          const fallbackVariant = product.variants.find((v) => v.imageName);
-          minVariant.imageName = fallbackVariant
-            ? fallbackVariant.imageName
-            : "fallback-image.jpg";
+        // Nếu hoverVariant không có imageName hoặc giống minVariant, sử dụng fallback
+        if (!hoverVariant.imageName || hoverVariant.imageName === minVariant.imageName) {
+          hoverVariant = {
+            ...minVariant,
+            imageName: "fallback-image-hover.jpg",
+          };
         }
-
-        console.log(
-          `minVariant imageName cho sản phẩm ${product.productId}:`,
-          minVariant.imageName
-        );
 
         const promo = promotionMap.get(minVariant.productVariantId);
         if (promo) {
@@ -86,8 +85,19 @@ const processProducts = async (products) => {
           const originalPrice = minVariant.price;
           const discountedPrice = originalPrice * (1 - discountPercent / 100);
           product.originalPrice = originalPrice;
-          minVariant = { ...minVariant, price: Math.round(discountedPrice) };
-          product.discount = discountPercent;
+          minVariant = {
+            ...minVariant,
+            originalPrice: originalPrice,
+            discountedPrice: Math.round(discountedPrice),
+            discountPercent: discountPercent,
+          };
+        } else {
+          minVariant = {
+            ...minVariant,
+            originalPrice: minVariant.price,
+            discountedPrice: minVariant.price,
+            discountPercent: 0,
+          };
         }
 
         const soldResponse = await axios.get(
@@ -105,10 +115,9 @@ const processProducts = async (products) => {
           0
         );
 
-        product.variants = [
-          minVariant,
-          ...product.variants.filter((v) => v !== minVariant),
-        ];
+        // Chỉ giữ hai biến thể: minVariant (default) và hoverVariant (hover)
+        product.variants = [minVariant, hoverVariant];
+
         return product;
       })
     );
@@ -120,7 +129,7 @@ const processProducts = async (products) => {
 
 const currentPage = ref(0);
 const totalPages = ref(0);
-const pageSize = ref(9);
+const pageSize = ref(8);
 
 const fetchProducts = async (page = 0, size = pageSize.value) => {
   try {
@@ -666,7 +675,7 @@ const fetchColorsAndSizes = async () => {
           </div>
         </div>
       </div>
-<!--
+      <!--
       <p
         class="ps-5 product-count-text d-none d-md-block mt-2"
         style="font-style: italic; color: #999; font-size: 14px"
@@ -705,7 +714,7 @@ const fetchColorsAndSizes = async () => {
       </div>
     </div>
 
-    <div class="product-content-wrapper">
+    <div class="product-content-wrapper mb-3">
       <div class="container mt-5">
         <div class="row g-3">
           <template v-for="product in products" :key="product.productId">
@@ -719,20 +728,27 @@ const fetchColorsAndSizes = async () => {
                 @click.prevent="handleProductClick(product.productId)"
               >
                 <div class="product-item">
-                  <span class="discount-badge" v-if="product.discount">
-                    -{{ product.discount }}%
+                  <span
+                    class="discount-badge"
+                    v-if="product.variants[0]?.discountPercent > 0"
+                  >
+                    -{{ product.variants[0].discountPercent }}%
                   </span>
-                  <!-- Thêm console.log để debug -->
-                  {{ console.log("ImageName Default:", product.variants[0]?.imageName) }}
                   <img
-                    :src="getImageUrl(product.variants[0]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[0]?.imageName || 'fallback-image-default.jpg'
+                      )
+                    "
                     class="img-fluid img-default"
                     :alt="`${product.name} Default`"
                   />
-                  <!-- Thêm console.log để debug -->
-                  {{ console.log("ImageName Hover:", product.variants[1]?.imageName) }}
                   <img
-                    :src="getImageUrl(product.variants[1]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[1]?.imageName || 'fallback-image-hover.jpg'
+                      )
+                    "
                     class="img-fluid img-hover"
                     :alt="`${product.name} Hover`"
                   />
@@ -741,19 +757,20 @@ const fetchColorsAndSizes = async () => {
                 <div>
                   <span class="discounted-price">
                     {{
-                      product.variants[0]?.price
-                        ? product.variants[0].price.toLocaleString()
+                      product.variants[0]?.discountedPrice
+                        ? product.variants[0].discountedPrice.toLocaleString()
                         : "0"
                     }}₫
                   </span>
                   <span
                     class="original-price"
                     v-if="
-                      product.originalPrice &&
-                      product.originalPrice > product.variants[0]?.price
+                      product.variants[0]?.originalPrice &&
+                      product.variants[0]?.originalPrice >
+                        product.variants[0]?.discountedPrice
                     "
                   >
-                    {{ product.originalPrice.toLocaleString() }}₫
+                    {{ product.variants[0].originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
                 <div class="product-rating">
@@ -789,7 +806,7 @@ const fetchColorsAndSizes = async () => {
             <p class="text-muted fs-5 mb-4">Không có sản phẩm nào tìm thấy.</p>
           </div>
         </div>
-        <ul class="pagination mt-3">
+        <ul class="pagination mt-3" v-if="totalPages > 1">
           <li
             class="pagination-item pagination-arrow"
             :class="{ 'pagination-disabled': currentPage === 0 }"

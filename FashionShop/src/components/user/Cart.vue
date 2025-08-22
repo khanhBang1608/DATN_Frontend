@@ -167,7 +167,7 @@
         </div>
       </div>
     </div>
-    <div class="container mt-3 mb-3">
+    <!-- <div class="container mt-3 mb-3">
       <h4 class="text-center mt-4 fw-bold">SẢN PHẨM LIÊN QUAN</h4>
       <div v-if="loadingRelated" class="text-center">
         <p>Đang tải sản phẩm liên quan...</p>
@@ -212,7 +212,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 
