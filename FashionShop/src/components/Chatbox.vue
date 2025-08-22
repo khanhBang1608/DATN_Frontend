@@ -177,9 +177,6 @@ onMounted(() => {
             </div>
             <div>
               <h6 class="chatbox-title">TƯ VẤN SẢN PHẨM</h6>
-              <small class="chatbox-subtitle">
-                We're currently away. Please leave us a message!
-              </small>
             </div>
           </div>
           <button class="chatbox-close" @click="toggleChat">×</button>
@@ -211,7 +208,7 @@ onMounted(() => {
           <input
             v-model="userInput"
             @keyup.enter="sendMessage"
-            placeholder="Reply here..."
+            placeholder="Nhập tin nhắn..."
             :disabled="isLoading"
           />
           <button @click="sendMessage" :disabled="isLoading">

@@ -237,7 +237,7 @@
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-semibold">Mô tả</label>
+              <label class="form-label fw-semibold">Tên chương trình</label>
               <textarea
                 v-model="form.description"
                 class="form-control"
