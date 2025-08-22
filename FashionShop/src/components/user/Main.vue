@@ -20,20 +20,12 @@
                     -{{ product.discount }}%
                   </span>
                   <img
-                    :src="
-                      product.variants[0]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[0].imageName}`
-                        : '/default.jpg'
-                    "
+                    :src="getImageUrl(product.variants[0]?.imageName)"
                     class="img-fluid img-default"
-                    :alt="`${product.name} Hover`"
+                    :alt="`${product.name} Default`"
                   />
                   <img
-                    :src="
-                      product.variants[1]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[1].imageName}`
-                        : '/default.jpg'
-                    "
+                    :src="getImageUrl(product.variants[1]?.imageName)"
                     class="img-fluid img-hover"
                     :alt="`${product.name} Hover`"
                   />
@@ -80,26 +72,29 @@
             </div>
           </template>
           <nav aria-label="Pagination sản phẩm mới nhất">
-            <ul class="pagination justify-content-center mt-3">
-              <li class="page-item" :class="{ disabled: newestPage === 0 }">
-                <button class="page-link" @click="fetchTopNewestProducts(newestPage - 1)">
-                  &laquo; Trước
-                </button>
-              </li>
-
-              <li class="page-item disabled">
-                <span class="page-link">
-                  Trang {{ newestPage + 1 }} / {{ newestTotalPages }}
-                </span>
-              </li>
-
+            <ul class="pagination mt-3">
               <li
-                class="page-item"
-                :class="{ disabled: newestPage + 1 >= newestTotalPages }"
+                class="pagination-item pagination-arrow"
+                :class="{ 'pagination-disabled': newestPage === 0 }"
+                @click="fetchTopNewestProducts(newestPage - 1)"
               >
-                <button class="page-link" @click="fetchTopNewestProducts(newestPage + 1)">
-                  Sau &raquo;
-                </button>
+                &lt;
+              </li>
+              <li
+                v-for="page in newestTotalPages"
+                :key="page"
+                class="pagination-item"
+                :class="{ 'pagination-active': page - 1 === newestPage }"
+                @click="fetchTopNewestProducts(page - 1)"
+              >
+                {{ page }}
+              </li>
+              <li
+                class="pagination-item pagination-arrow"
+                :class="{ 'pagination-disabled': newestPage === newestTotalPages - 1 }"
+                @click="fetchTopNewestProducts(newestPage + 1)"
+              >
+                &gt;
               </li>
             </ul>
           </nav>
@@ -107,31 +102,55 @@
       </div>
     </div>
 
-    <!-- Bộ sưu tập -->
     <section class="dreams-section">
       <div class="row align-items-center">
         <div class="col-12 col-md-6 dreams-image">
           <a href="#">
             <img
-              src="https://placehold.co/700x500?text=City+Crosswalk+View"
-              alt="Aerial view of a busy pedestrian crosswalk"
+              src="https://placehold.co/700x500?text=Fashion+Store+L'hex"
+              alt="Cửa hàng thời trang L'hex"
             />
           </a>
         </div>
         <div class="col-12 col-md-6 dreams-text">
           <a href="#" style="text-decoration: none; color: inherit">
-            <h2>GIẤC MƠ NGỌT NGÀO</h2>
+            <h2>CHÀO MỪNG ĐẾN VỚI L'HEX</h2>
             <p>
-              Bộ sưu tập này là sự giao thoa giữa tinh thần bay bổng của L'hex và vẻ dễ
-              thương vượt thời gian của Hello Kitty. Từng thiết kế là một lời nhắc dịu
-              dàng rằng: yêu thương, tình bạn và trí tưởng tượng chính là những gam màu
-              đẹp nhất của cuộc sống.
+              L'hex là thương hiệu thời trang mang phong cách hiện đại, trẻ trung và tinh
+              tế. Chúng tôi mang đến cho bạn những bộ sưu tập độc đáo, kết hợp giữa thiết
+              kế sáng tạo và chất lượng cao cấp. Mỗi sản phẩm của L'hex không chỉ là trang
+              phục, mà còn là một phần của phong cách sống – tự tin, năng động và khác
+              biệt.
+            </p>
+          </a>
+          <a href="#" class="dreams-btn">KHÁM PHÁ NGAY</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- <section class="dreams-section">
+      <div class="row align-items-center">
+        <div class="col-12 col-md-6 dreams-image">
+          <a href="#">
+            <img
+              src="https://placehold.co/700x500?text=New+Collection+L'hex"
+              alt="Bộ sưu tập thời trang mới của L'hex"
+            />
+          </a>
+        </div>
+        <div class="col-12 col-md-6 dreams-text">
+          <a href="#" style="text-decoration: none; color: inherit">
+            <h2>BỘ SƯU TẬP MỚI</h2>
+            <p>
+              Khám phá những thiết kế mới nhất từ L'hex – nơi hội tụ sự sáng tạo và xu
+              hướng thời trang quốc tế. Mỗi chi tiết đều được chăm chút tỉ mỉ để mang đến
+              cho bạn trải nghiệm mặc hoàn hảo, giúp bạn tỏa sáng trong mọi khoảnh khắc.
             </p>
           </a>
           <a href="#" class="dreams-btn">XEM THÊM</a>
         </div>
       </div>
-    </section>
+    </section> -->
 
     <!-- Top sản phẩm bán chạy có phân trang -->
     <div class="product-content-wrapper">
@@ -153,20 +172,12 @@
                     -{{ product.discount }}%
                   </span>
                   <img
-                    :src="
-                      product.variants[0]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[0].imageName}`
-                        : '/default.jpg'
-                    "
+                    :src="getImageUrl(product.variants[0]?.imageName)"
                     class="img-fluid img-default"
-                    :alt="`${product.name} Hover`"
+                    :alt="`${product.name} Default`"
                   />
                   <img
-                    :src="
-                      product.variants[1]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[1].imageName}`
-                        : '/default.jpg'
-                    "
+                    :src="getImageUrl(product.variants[1]?.imageName)"
                     class="img-fluid img-hover"
                     :alt="`${product.name} Hover`"
                   />
@@ -213,44 +224,33 @@
             </div>
           </template>
         </div>
-        <div class="d-flex justify-content-center mt-4" v-if="totalPages > 1">
-          <nav>
-            <ul class="pagination">
-              <li class="page-item" :class="{ disabled: currentPage === 0 }">
-                <a
-                  class="page-link"
-                  href="#"
-                  @click.prevent="fetchTopBestSellingProducts(currentPage - 1)"
-                >
-                  &laquo;
-                </a>
-              </li>
-              <li
-                class="page-item"
-                v-for="page in totalPages"
-                :key="page"
-                :class="{ active: currentPage === page - 1 }"
-              >
-                <a
-                  class="page-link"
-                  href="#"
-                  @click.prevent="fetchTopBestSellingProducts(page - 1)"
-                >
-                  {{ page }}
-                </a>
-              </li>
-              <li class="page-item" :class="{ disabled: currentPage === totalPages - 1 }">
-                <a
-                  class="page-link"
-                  href="#"
-                  @click.prevent="fetchTopBestSellingProducts(currentPage + 1)"
-                >
-                  &raquo;
-                </a>
-              </li>
-            </ul>
-          </nav>
-        </div>
+        <nav class="mt-4 d-flex justify-content-center" v-if="totalPages > 1">
+          <ul class="pagination mt-3">
+            <li
+              class="pagination-item pagination-arrow"
+              :class="{ 'pagination-disabled': currentPage === 0 }"
+              @click="fetchTopBestSellingProducts(currentPage - 1)"
+            >
+              &lt;
+            </li>
+            <li
+              v-for="page in totalPages"
+              :key="page"
+              class="pagination-item"
+              :class="{ 'pagination-active': page - 1 === currentPage }"
+              @click="fetchTopBestSellingProducts(page - 1)"
+            >
+              {{ page }}
+            </li>
+            <li
+              class="pagination-item pagination-arrow"
+              :class="{ 'pagination-disabled': currentPage === totalPages - 1 }"
+              @click="fetchTopBestSellingProducts(currentPage + 1)"
+            >
+              &gt;
+            </li>
+          </ul>
+        </nav>
       </div>
     </div>
 
@@ -274,20 +274,12 @@
                     -{{ product.discount }}%
                   </span>
                   <img
-                    :src="
-                      product.variants[0]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[0].imageName}`
-                        : '/default.jpg'
-                    "
+                    :src="getImageUrl(product.variants[0]?.imageName)"
                     class="img-fluid img-default"
-                    :alt="`${product.name} Hover`"
+                    :alt="`${product.name} Default`"
                   />
                   <img
-                    :src="
-                      product.variants[1]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[1].imageName}`
-                        : '/default.jpg'
-                    "
+                    :src="getImageUrl(product.variants[1]?.imageName)"
                     class="img-fluid img-hover"
                     :alt="`${product.name} Hover`"
                   />
@@ -335,41 +327,30 @@
               </a>
             </div>
           </template>
-          <!-- Pagination for Recent Viewed Products -->
           <nav class="mt-4 d-flex justify-content-center" v-if="recentTotalPages > 1">
-            <ul class="pagination mb-0">
-              <li class="page-item" :class="{ disabled: recentPage === 0 }">
-                <a
-                  class="page-link"
-                  href="#"
-                  @click.prevent="goToRecentPage(recentPage - 1)"
-                >
-                  Previous
-                </a>
+            <ul class="pagination mt-3">
+              <li
+                class="pagination-item pagination-arrow"
+                :class="{ 'pagination-disabled': recentPage === 0 }"
+                @click="goToRecentPage(recentPage - 1)"
+              >
+                &lt;
               </li>
-
               <li
                 v-for="page in recentTotalPages"
                 :key="page"
-                class="page-item"
-                :class="{ active: recentPage === page - 1 }"
+                class="pagination-item"
+                :class="{ 'pagination-active': page - 1 === recentPage }"
+                @click="goToRecentPage(page - 1)"
               >
-                <a class="page-link" href="#" @click.prevent="goToRecentPage(page - 1)">
-                  {{ page }}
-                </a>
+                {{ page }}
               </li>
-
               <li
-                class="page-item"
-                :class="{ disabled: recentPage === recentTotalPages - 1 }"
+                class="pagination-item pagination-arrow"
+                :class="{ 'pagination-disabled': recentPage === recentTotalPages - 1 }"
+                @click="goToRecentPage(recentPage + 1)"
               >
-                <a
-                  class="page-link"
-                  href="#"
-                  @click.prevent="goToRecentPage(recentPage + 1)"
-                >
-                  Next
-                </a>
+                &gt;
               </li>
             </ul>
           </nav>
@@ -390,6 +371,13 @@ import promotionApi from "@/api/PromotionClien";
 const topNewestProducts = ref([]);
 const recentViewedProducts = ref([]);
 const topBestSellingProducts = ref([]);
+
+// Hàm getImageUrl
+const getImageUrl = (imageName) => {
+  return imageName && imageName.trim()
+    ? `http://localhost:8080/images/${imageName.trim()}`
+    : "/images/fallback-image.jpg";
+};
 
 // Hàm xử lý khi click vào sản phẩm
 const router = useRouter();
@@ -423,11 +411,32 @@ const processProducts = async (products) => {
 
     return await Promise.all(
       products.map(async (product) => {
-        if (!product.variants || product.variants.length === 0) return product;
+        if (!product.variants || product.variants.length === 0) {
+          console.log(`Sản phẩm ${product.productId} không có biến thể`);
+          return {
+            ...product,
+            variants: [{ imageName: "fallback-image.jpg", price: 0 }],
+          };
+        }
 
-        let minVariant = product.variants.reduce(
-          (min, v) => (v.price < min.price ? v : min),
-          product.variants[0]
+        // Chọn minVariant ưu tiên có imageName
+        let minVariant = product.variants.reduce((min, v) => {
+          if (!v.imageName && min.imageName) return min;
+          if (v.imageName && !min.imageName) return v;
+          return v.price < min.price ? v : min;
+        }, product.variants.find((v) => v.imageName) || product.variants[0]);
+
+        // Nếu minVariant không có imageName, lấy từ variant khác
+        if (!minVariant.imageName && product.variants.length > 1) {
+          const fallbackVariant = product.variants.find((v) => v.imageName);
+          minVariant.imageName = fallbackVariant
+            ? fallbackVariant.imageName
+            : "fallback-image.jpg";
+        }
+
+        console.log(
+          `minVariant imageName cho sản phẩm ${product.productId}:`,
+          minVariant.imageName
         );
 
         const promo = promotionMap.get(minVariant.productVariantId);
@@ -443,7 +452,6 @@ const processProducts = async (products) => {
         const rating = await fetchAverageRating(product.productId);
         product.averageRating = rating.data;
 
-        // Gọi API mới để lấy số lượng đã bán
         const soldResponse = await axios.get(
           `/api/public/products/${product.productId}/sold-count`
         );
@@ -464,7 +472,7 @@ const processProducts = async (products) => {
 
 const newestPage = ref(0);
 const newestTotalPages = ref(0);
-const newestPageSize = ref(4);
+const newestPageSize = ref(8);
 
 const fetchTopNewestProducts = async (page = 0) => {
   try {
@@ -493,7 +501,7 @@ const fetchTopNewestProducts = async (page = 0) => {
 // Hàm lấy sản phẩm đã xem gần đây
 const recentPage = ref(0);
 const recentTotalPages = ref(0);
-const recentPageSize = ref(4); // số sản phẩm/ trang
+const recentPageSize = ref(8); // số sản phẩm/ trang
 
 const fetchRecentViews = async (page = 0) => {
   try {
@@ -546,7 +554,7 @@ const goToRecentPage = async (page) => {
 
 const currentPage = ref(0);
 const totalPages = ref(0);
-const pageSize = ref(4);
+const pageSize = ref(8);
 
 const fetchTopBestSellingProducts = async (page = 0) => {
   try {
@@ -588,7 +596,6 @@ onMounted(async () => {
   await fetchTopBestSellingProducts();
   await nextTick();
 });
-
 </script>
 
 <style src="./src/assets/css/product.css"></style>

@@ -20,6 +20,10 @@ const isSidebarOpen = ref(false);
 const sortOption = ref("Mới nhất");
 const showNoProductsMessage = ref(false); // Thêm biến để kiểm soát thông báo
 
+const getImageUrl = (imageName) => {
+  return imageName ? `http://localhost:8080/images/${imageName}` : "/default.jpg";
+};
+
 const handleProductClick = async (productId) => {
   try {
     const token = localStorage.getItem("token");
@@ -48,11 +52,32 @@ const processProducts = async (products) => {
 
     return await Promise.all(
       products.map(async (product) => {
-        if (!product.variants || product.variants.length === 0) return product;
+        if (!product.variants || product.variants.length === 0) {
+          console.log(`Sản phẩm ${product.productId} không có biến thể`);
+          return {
+            ...product,
+            variants: [{ imageName: "fallback-image.jpg", price: 0 }],
+          };
+        }
 
-        let minVariant = product.variants.reduce(
-          (min, v) => (v.price < min.price ? v : min),
-          product.variants[0]
+        // Chọn minVariant ưu tiên có imageName
+        let minVariant = product.variants.reduce((min, v) => {
+          if (!v.imageName && min.imageName) return min; // Ưu tiên biến thể có imageName
+          if (v.imageName && !min.imageName) return v;
+          return v.price < min.price ? v : min;
+        }, product.variants.find((v) => v.imageName) || product.variants[0]);
+
+        // Nếu minVariant vẫn không có imageName, lấy từ variant khác
+        if (!minVariant.imageName && product.variants.length > 1) {
+          const fallbackVariant = product.variants.find((v) => v.imageName);
+          minVariant.imageName = fallbackVariant
+            ? fallbackVariant.imageName
+            : "fallback-image.jpg";
+        }
+
+        console.log(
+          `minVariant imageName cho sản phẩm ${product.productId}:`,
+          minVariant.imageName
         );
 
         const promo = promotionMap.get(minVariant.productVariantId);
@@ -75,7 +100,6 @@ const processProducts = async (products) => {
         );
         product.averageRating = ratingResponse.data || 0;
 
-        // Tính tổng stock của tất cả các biến thể
         product.totalStock = product.variants.reduce(
           (sum, variant) => sum + (variant.stock || 0),
           0
@@ -698,21 +722,17 @@ const fetchColorsAndSizes = async () => {
                   <span class="discount-badge" v-if="product.discount">
                     -{{ product.discount }}%
                   </span>
+                  <!-- Thêm console.log để debug -->
+                  {{ console.log("ImageName Default:", product.variants[0]?.imageName) }}
                   <img
-                    :src="
-                      product.variants[0]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[0].imageName}`
-                        : '/default.jpg'
-                    "
+                    :src="getImageUrl(product.variants[0]?.imageName)"
                     class="img-fluid img-default"
-                    :alt="`${product.name} Hover`"
+                    :alt="`${product.name} Default`"
                   />
+                  <!-- Thêm console.log để debug -->
+                  {{ console.log("ImageName Hover:", product.variants[1]?.imageName) }}
                   <img
-                    :src="
-                      product.variants[1]?.imageName
-                        ? `http://localhost:8080/images/${product.variants[1].imageName}`
-                        : '/default.jpg'
-                    "
+                    :src="getImageUrl(product.variants[1]?.imageName)"
                     class="img-fluid img-hover"
                     :alt="`${product.name} Hover`"
                   />

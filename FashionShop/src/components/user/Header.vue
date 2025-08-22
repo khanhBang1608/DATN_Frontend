@@ -142,7 +142,7 @@ function handleSearch() {
 
 <template>
   <header>
-    <div class="header" style="background-color: #ccffcc">
+    <div class="header" style="background-color: #f1f1f1">
       <div
         class="container d-flex flex-column flex-md-row justify-content-between align-items-center py-2"
       >
@@ -166,10 +166,10 @@ function handleSearch() {
           <a href="/contact" class="text-dark text-decoration-none me-3">Chính sách</a>
           <a
             href="/user/profile"
-            class="text-dark text-decoration-none me-3 fw-bold"
+            class="text-dark text-decoration-none me-3 small"
             v-if="userInfo"
           >
-            <i class="bi bi-emoji-smile me-1"></i> {{ userInfo.name }}
+            xin chào, <span class="fw-bold">{{ userInfo.name }}</span>
           </a>
         </div>
       </div>
