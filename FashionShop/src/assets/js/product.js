@@ -125,7 +125,7 @@ export function setupFilterSidebar() {
     });
   }
 
-  
+
 
   // Ẩn sidebar khi scroll xuống
   window.addEventListener("scroll", () => {

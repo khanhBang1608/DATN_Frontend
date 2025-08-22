@@ -350,7 +350,14 @@ async function submitForm() {
 
     // ⏳ Giữ loading và chuyển trang sau 500ms
     setTimeout(() => {
-      window.location.href = "/user/listaddress";
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get("redirect");
+
+      if (redirect === "checkout") {
+        window.location.href = "/user/checkout";
+      } else {
+        window.location.href = "/user/listaddress";
+      }
     }, 1000);
   } catch (err) {
     iziToast.error({

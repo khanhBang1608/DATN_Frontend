@@ -229,6 +229,7 @@ import {
 import promotionApi from "@/api/PromotionClien";
 import { useToast } from "vue-toastification";
 import Swal from "sweetalert2";
+import iziToast from "izitoast";
 
 const toast = useToast();
 
@@ -269,7 +270,7 @@ export default {
     },
     async fetchCart() {
       this.error = null;
-      const toastId = toast.info("Đang tải giỏ hàng...", { timeout: false });
+      // const toastId = toast.info("Đang tải giỏ hàng...", { timeout: false });
       try {
         const cartData = await getCart();
         const promos = await promotionApi.getActivePromotions();
@@ -304,10 +305,10 @@ export default {
           }),
         };
         await this.fetchCartItemCount();
-        toast.success("Tải giỏ hàng thành công!");
+        // toast.success("Tải giỏ hàng thành công!");
       } catch (error) {
         console.error("Error fetching cart:", error.message);
-        toast.error("Không thể tải giỏ hàng. Vui lòng đăng nhập lại.");
+        // toast.error("Không thể tải giỏ hàng. Vui lòng đăng nhập lại.");
         this.$router.push("/login");
       } finally {
         toast.dismiss(toastId);
@@ -389,10 +390,10 @@ export default {
           }),
         };
         await this.fetchCartItemCount();
-        toast.success("Thêm sản phẩm vào giỏ thành công!");
+        // toast.success("Thêm sản phẩm vào giỏ thành công!");
       } catch (error) {
         console.error("Error adding to cart:", error.message);
-        toast.error("Thêm sản phẩm vào giỏ hàng thất bại.");
+        // toast.error("Thêm sản phẩm vào giỏ hàng thất bại.");
         this.error = "Thêm sản phẩm vào giỏ hàng thất bại.";
       } finally {
         this.loading = false;
@@ -436,10 +437,10 @@ export default {
           }),
         };
         await this.fetchCartItemCount();
-        toast.success("Cập nhật số lượng thành công!");
+        // toast.success("Cập nhật số lượng thành công!");
       } catch (error) {
         console.error("Error updating quantity:", error.message);
-        toast.error("Cập nhật số lượng thất bại.");
+        // toast.error("Cập nhật số lượng thất bại.");
         this.error = "Cập nhật số lượng thất bại.";
       } finally {
         this.loading = false;
@@ -482,10 +483,10 @@ export default {
           }),
         };
         await this.fetchCartItemCount();
-        toast.success("Xóa sản phẩm thành công!");
+        // toast.success("Xóa sản phẩm thành công!");
       } catch (error) {
         console.error("Error removing item:", error.message);
-        toast.error("Xóa sản phẩm thất bại.");
+        // toast.error("Xóa sản phẩm thất bại.");
         this.error = "Xóa sản phẩm thất bại.";
       } finally {
         this.loading = false;
@@ -514,10 +515,10 @@ export default {
         };
         this.selectedItems = [];
         await this.fetchCartItemCount();
-        toast.success("Xóa giỏ hàng thành công!");
+        // toast.success("Xóa giỏ hàng thành công!");
       } catch (error) {
         console.error("Error clearing cart:", error.message);
-        toast.error("Xóa giỏ hàng thất bại.");
+        // toast.error("Xóa giỏ hàng thất bại.");
         this.error = "Xóa giỏ hàng thất bại.";
       } finally {
         this.loading = false;
@@ -543,21 +544,33 @@ export default {
         }));
 
       if (selectedDetails.length === 0) {
-        toast.error("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.");
+        iziToast.error({
+          title: "Lỗi",
+          message: "Vui lòng chọn ít nhất 1 sản phẩm để thanh toán.",
+          position: "topRight",
+        });
         return;
       }
+
       for (const item of selectedDetails) {
         if (item.quantity < 1) {
-          toast.error(`Sản phẩm "${item.productName}" phải có số lượng lớn hơn 0.`);
+          iziToast.error({
+            title: "Lỗi",
+            message: `Sản phẩm "${item.productName}" phải có số lượng lớn hơn 0.`,
+            position: "topRight",
+          });
           return;
         }
         if (item.quantity > item.stock) {
-          toast.error(
-            `Sản phẩm "${item.productName}" chỉ còn ${item.stock} sản phẩm trong kho.`
-          );
+          iziToast.error({
+            title: "Lỗi",
+            message: `Sản phẩm "${item.productName}" chỉ còn ${item.stock} sản phẩm trong kho.`,
+            position: "topRight",
+          });
           return;
         }
       }
+
       localStorage.setItem("orderNote", this.orderNote);
       localStorage.setItem("cartDetails", JSON.stringify(selectedDetails));
       this.$router.push("/user/checkout");
