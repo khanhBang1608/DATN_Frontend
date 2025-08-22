@@ -276,8 +276,11 @@ const router = createRouter({
       ],
     },
   ],
+  scrollBehavior(to, from, savedPosition) {
+    return { top: 0, behavior: 'smooth' };
+  }
 })
-//  Hàm lấy thông tin user từ localStorage
+  
 // Hàm lấy role người dùng
 function getUserRole() {
   try {

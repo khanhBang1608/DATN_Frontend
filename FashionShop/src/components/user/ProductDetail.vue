@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
   getProductDetail,
@@ -52,7 +52,7 @@ const goToPage = (page) => {
 };
 
 const handleToggleFavorite = async () => {
-  const token = localStorage.getItem("token"); // Kiểm tra token
+  const token = localStorage.getItem("token");
   if (!token) {
     iziToast.warning({
       title: "Cảnh báo",
@@ -61,17 +61,14 @@ const handleToggleFavorite = async () => {
     });
     router.push({
       path: "/login",
-      query: { redirect: route.fullPath }, // Lưu lại trang hiện tại để redirect sau khi login
+      query: { redirect: route.fullPath },
     });
-    return; // Dừng xử lý nếu chưa đăng nhập
+    return;
   }
 
   try {
-    // Thực hiện toggle favorite
     await toggleFavorite(product.value.productId);
     isFavorite.value = !isFavorite.value;
-
-    // Cập nhật lại số lượt yêu thích
     const countRes = await getFavoriteCount(product.value.productId);
     favoriteCount.value = countRes.data.favoriteCount;
   } catch (err) {
@@ -132,7 +129,7 @@ const handleAddToCart = async () => {
     });
     router.push({
       path: "/login",
-      query: { redirect: route.fullPath }, // Lưu đường dẫn hiện tại
+      query: { redirect: route.fullPath },
     });
     return;
   }
@@ -232,20 +229,22 @@ function getImageUrl(imageName) {
   return imageName ? `http://localhost:8080/images/${imageName}` : "/default.jpg";
 }
 
-onMounted(async () => {
+// Hàm tải dữ liệu sản phẩm
+const loadProductData = async (productId) => {
   try {
-    const id = route.params.id;
-    const res = await getProductDetail(id);
+    const res = await getProductDetail(productId);
     const data = res.data;
+
+    if (!data || Object.keys(data).length === 0) {
+      router.push({ name: "NotFound" });
+      return;
+    }
 
     product.value = { ...data, variants: data.variants || [] };
     if (product.value.variants.length > 0) {
-      const firstColorId = product.value.variants[0].colorId;
-      selectedColorId.value = firstColorId;
+      selectedColorId.value = product.value.variants[0].colorId;
+      selectedSizeId.value = null; // Reset size khi sản phẩm thay đổi
     }
-
-    console.log("Dữ liệu sản phẩm:", product.value);
-    console.log("imageSources sau khi tải:", imageSources.value);
 
     const promos = await promotionApi.getActivePromotions();
     const promotionMap = new Map();
@@ -278,94 +277,30 @@ onMounted(async () => {
     });
 
     updateImageSources();
-    console.log("imageSources sau khi cập nhật lại:", imageSources.value);
 
-    const soldResponse = await axios.get(`/api/public/products/${id}/sold-count`);
-    data.soldCount = soldResponse.data.soldCount || 0;
-
-    product.value = data;
+    const soldResponse = await axios.get(`/api/public/products/${productId}/sold-count`);
+    product.value.soldCount = soldResponse.data.soldCount || 0;
 
     const token = localStorage.getItem("token");
     if (token) {
       try {
-        const checkRes = await checkFavorite(product.value.productId);
+        const checkRes = await checkFavorite(productId);
         isFavorite.value = checkRes === true;
       } catch (err) {
         console.error("Lỗi khi kiểm tra yêu thích:", err);
       }
     }
 
-    try {
-      const countRes = await getFavoriteCount(id);
-      favoriteCount.value = countRes.data.favoriteCount;
+    const countRes = await getFavoriteCount(productId);
+    favoriteCount.value = countRes.data.favoriteCount;
 
-      const related = fetchRelatedProducts();
-
-      relatedProducts.value = await Promise.all(
-        related.map(async (prod) => {
-          let minVariant = prod.variants.reduce(
-            (min, v) =>
-              (v.discountedPrice ?? v.price) < (min.discountedPrice ?? min.price)
-                ? v
-                : min,
-            prod.variants[0]
-          );
-
-          const promo = promotionMap.get(minVariant.productVariantId);
-          if (promo) {
-            const discountPercent = promo.discountAmount || 0;
-            const originalPrice = minVariant.price;
-            const discountedPrice = originalPrice * (1 - discountPercent / 100);
-            prod.originalPrice = originalPrice;
-            minVariant = {
-              ...minVariant,
-              originalPrice: originalPrice,
-              discountedPrice: Math.round(discountedPrice),
-              discountPercent: discountPercent,
-            };
-          } else {
-            minVariant = {
-              ...minVariant,
-              originalPrice: minVariant.price,
-              discountedPrice: minVariant.price,
-              discountPercent: 0,
-            };
-          }
-
-          const rating = await fetchAverageRating(prod.productId);
-          prod.averageRating = rating.data;
-
-          const soldResponse = await axios.get(
-            `/api/public/products/${prod.productId}/sold-count`
-          );
-          prod.soldCount = soldResponse.data.soldCount || 0;
-
-          prod.viewCount = 0;
-          if (token) {
-            try {
-              const viewResponse = await axios.get("/api/user/product-views/recent", {
-                headers: { Authorization: `Bearer ${token}` },
-              });
-              const viewItem = viewResponse.data.find(
-                (view) => view.product?.[0]?.productId === prod.productId
-              );
-              prod.viewCount = viewItem ? viewItem.product[0].viewCount || 0 : 0;
-            } catch (error) {
-              console.error("Lỗi khi lấy lượt xem:", error);
-            }
-          }
-
-          prod.variants = [minVariant, ...prod.variants.filter((v) => v !== minVariant)];
-          return prod;
-        })
-      );
-    } catch (err) {
-      console.error("Lỗi khi tải sản phẩm liên quan:", err);
-    }
+    await fetchRelatedProducts();
   } catch (error) {
     console.error("Lỗi khi tải sản phẩm:", error);
+    router.push({ name: "NotFound" });
   }
-});
+};
+
 const fetchRelatedProducts = async () => {
   try {
     const resRelated = await getRelatedProducts(
@@ -378,29 +313,46 @@ const fetchRelatedProducts = async () => {
     const related = resRelated.data.content || [];
     relatedTotalPages.value = resRelated.data.totalPages || 1;
 
-    const promos = await promotionApi.getActivePromotions();
+    const activePromotions = await promotionApi.getActivePromotions();
     const promotionMap = new Map();
-    promos.forEach((promo) => {
+    activePromotions.forEach((promo) => {
       promo.productPromotions.forEach((pp) => {
         promotionMap.set(pp.productVariantId, promo);
       });
     });
 
-    const token = localStorage.getItem("token");
-
     relatedProducts.value = await Promise.all(
-      related.map(async (prod) => {
-        let minVariant = prod.variants.reduce(
-          (min, v) =>
-            (v.discountedPrice ?? v.price) < (min.discountedPrice ?? min.price) ? v : min,
-          prod.variants[0]
-        );
+      related.map(async (product) => {
+        if (!product.variants || product.variants.length === 0) {
+          console.log(`Sản phẩm ${product.productId} không có biến thể`);
+          return {
+            ...product,
+            variants: [
+              { imageName: "fallback-image-default.jpg" },
+              { imageName: "fallback-image-hover.jpg" },
+            ],
+          };
+        }
+
+        let minVariant = product.variants.find((v) => v.imageName) || product.variants[0];
+        let hoverVariant =
+          product.variants.find(
+            (v) => v.imageName && v.imageName !== minVariant.imageName
+          ) || minVariant;
+
+        if (!hoverVariant.imageName || hoverVariant.imageName === minVariant.imageName) {
+          hoverVariant = {
+            ...minVariant,
+            imageName: "fallback-image-hover.jpg",
+          };
+        }
 
         const promo = promotionMap.get(minVariant.productVariantId);
         if (promo) {
           const discountPercent = promo.discountAmount || 0;
           const originalPrice = minVariant.price;
           const discountedPrice = originalPrice * (1 - discountPercent / 100);
+          product.originalPrice = originalPrice;
           minVariant = {
             ...minVariant,
             originalPrice: originalPrice,
@@ -416,37 +368,43 @@ const fetchRelatedProducts = async () => {
           };
         }
 
-        const rating = await fetchAverageRating(prod.productId);
-        prod.averageRating = rating.data;
+        product.variants = [minVariant, hoverVariant];
 
         const soldResponse = await axios.get(
-          `/api/public/products/${prod.productId}/sold-count`
+          `/api/public/products/${product.productId}/sold-count`
         );
-        prod.soldCount = soldResponse.data.soldCount || 0;
+        product.soldCount = soldResponse.data.soldCount || 0;
 
-        prod.viewCount = 0;
-        if (token) {
-          try {
-            const viewResponse = await axios.get("/api/user/product-views/recent", {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            const viewItem = viewResponse.data.find(
-              (view) => view.product?.[0]?.productId === prod.productId
-            );
-            prod.viewCount = viewItem ? viewItem.product[0].viewCount || 0 : 0;
-          } catch (error) {
-            console.error("Lỗi khi lấy lượt xem:", error);
-          }
-        }
+        const rating = await fetchAverageRating(product.productId);
+        product.averageRating = rating.data;
 
-        prod.variants = [minVariant, ...prod.variants.filter((v) => v !== minVariant)];
-        return prod;
+        return product;
       })
     );
   } catch (err) {
     console.error("Lỗi khi tải sản phẩm liên quan:", err);
+    relatedProducts.value = [];
   }
 };
+
+const handleProductClick = (productId) => {
+  router.push(`/product-detail/${productId}`);
+};
+
+// Tải dữ liệu ban đầu
+onMounted(() => {
+  loadProductData(route.params.id);
+});
+
+// Theo dõi thay đổi route.params.id
+watch(
+  () => route.params.id,
+  (newId) => {
+    if (newId) {
+      loadProductData(newId);
+    }
+  }
+);
 </script>
 
 <template>
@@ -619,7 +577,7 @@ const fetchRelatedProducts = async () => {
             ></i>
             <span class="ms-1"> Đã thích ({{ favoriteCount }})</span>
           </div>
-          <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div>
+          <!-- <div><i class="bi bi-geo-alt me-1"></i> Tìm trong cửa hàng</div> -->
         </div>
         <hr class="product-detail-divider" />
 
@@ -692,17 +650,18 @@ const fetchRelatedProducts = async () => {
               -{{ item.variants[0].discountPercent }}%
             </span>
             <img
-              :src="getImageUrl(item.variants?.[0]?.imageName)"
+              :src="
+                getImageUrl(item.variants?.[0]?.imageName || 'fallback-image-default.jpg')
+              "
               class="img-fluid img-default"
-              :alt="item.name"
+              :alt="`${item.name} Default`"
             />
             <img
               :src="
-                getImageUrl(item.variants?.[1]?.imageName) ||
-                getImageUrl(item.variants?.[0]?.imageName)
+                getImageUrl(item.variants?.[1]?.imageName || 'fallback-image-hover.jpg')
               "
               class="img-fluid img-hover"
-              :alt="item.name"
+              :alt="`${item.name} Hover`"
             />
           </div>
           <div class="product-name mt-2 text-truncate">{{ item.name }}</div>
