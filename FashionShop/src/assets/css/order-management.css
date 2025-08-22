@@ -27,17 +27,6 @@
   color: #aaa;
 }
 
-.order-management {
-  padding: 24px;
-  margin-bottom: 24px;
-}
-
-.order-management-nav {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
 .order-management-back-link,
 .order-management-nav-link {
   display: inline-flex;
@@ -58,12 +47,6 @@
   transform: translateY(-1px);
 }
 
-.order-management-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #111827;
-  margin-bottom: 24px;
-}
 
 /* Tabs */
 .order-management-tabs {

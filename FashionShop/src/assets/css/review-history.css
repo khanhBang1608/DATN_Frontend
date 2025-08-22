@@ -31,11 +31,6 @@
     padding: 0 8px;
 }
 
-/* Phần chính lịch sử đánh giá */
-.review-history {
-    padding: 24px;
-    margin-bottom: 24px;
-}
 
 /* Điều hướng */
 .review-nav-links {
@@ -66,12 +61,6 @@
     transform: translateY(-1px);
 }
 
-.review-history-title {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #111827;
-    margin-bottom: 24px;
-}
 
 /* Bảng đánh giá */
 .review-table-wrapper {

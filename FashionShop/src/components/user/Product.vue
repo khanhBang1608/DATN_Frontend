@@ -15,10 +15,36 @@ const route = useRoute();
 const router = useRouter();
 const searchKeyword = ref(route.query.keyword || "");
 const products = ref([]);
+const filteredProducts = ref([]); // Store filtered products
 const similarProducts = ref([]);
 const isSidebarOpen = ref(false);
 const sortOption = ref("Mới nhất");
-const showNoProductsMessage = ref(false); // Thêm biến để kiểm soát thông báo
+const showNoProductsMessage = ref(false);
+
+// Filter states
+const colors = ref([]);
+const sizes = ref([]);
+const selectedColors = ref([]);
+const selectedSizes = ref([]);
+const priceMin = ref(0);
+const priceMax = ref(10000000);
+
+// Show more states
+const showMoreColors = ref(false);
+const showMoreSizes = ref(false);
+
+// Fetch colors and sizes
+const fetchColorsAndSizes = async () => {
+  try {
+    const colorRes = await getAllColors();
+    colors.value = colorRes.data;
+
+    const sizeRes = await getAllSizes();
+    sizes.value = sizeRes.data;
+  } catch (error) {
+    console.error("Lỗi khi tải màu & size:", error);
+  }
+};
 
 const getImageUrl = (imageName) => {
   return imageName ? `http://localhost:8080/images/${imageName}` : "/default.jpg";
@@ -56,29 +82,25 @@ const processProducts = async (products) => {
           console.log(`Sản phẩm ${product.productId} không có biến thể`);
           return {
             ...product,
-            variants: [{ imageName: "fallback-image.jpg", price: 0 }],
+            variants: [
+              { imageName: "fallback-image-default.jpg" },
+              { imageName: "fallback-image-hover.jpg" },
+            ],
           };
         }
 
-        // Chọn minVariant ưu tiên có imageName
-        let minVariant = product.variants.reduce((min, v) => {
-          if (!v.imageName && min.imageName) return min; // Ưu tiên biến thể có imageName
-          if (v.imageName && !min.imageName) return v;
-          return v.price < min.price ? v : min;
-        }, product.variants.find((v) => v.imageName) || product.variants[0]);
+        let minVariant = product.variants.find((v) => v.imageName) || product.variants[0];
+        let hoverVariant =
+          product.variants.find(
+            (v) => v.imageName && v.imageName !== minVariant.imageName
+          ) || minVariant;
 
-        // Nếu minVariant vẫn không có imageName, lấy từ variant khác
-        if (!minVariant.imageName && product.variants.length > 1) {
-          const fallbackVariant = product.variants.find((v) => v.imageName);
-          minVariant.imageName = fallbackVariant
-            ? fallbackVariant.imageName
-            : "fallback-image.jpg";
+        if (!hoverVariant.imageName || hoverVariant.imageName === minVariant.imageName) {
+          hoverVariant = {
+            ...minVariant,
+            imageName: "fallback-image-hover.jpg",
+          };
         }
-
-        console.log(
-          `minVariant imageName cho sản phẩm ${product.productId}:`,
-          minVariant.imageName
-        );
 
         const promo = promotionMap.get(minVariant.productVariantId);
         if (promo) {
@@ -86,8 +108,19 @@ const processProducts = async (products) => {
           const originalPrice = minVariant.price;
           const discountedPrice = originalPrice * (1 - discountPercent / 100);
           product.originalPrice = originalPrice;
-          minVariant = { ...minVariant, price: Math.round(discountedPrice) };
-          product.discount = discountPercent;
+          minVariant = {
+            ...minVariant,
+            originalPrice: originalPrice,
+            discountedPrice: Math.round(discountedPrice),
+            discountPercent: discountPercent,
+          };
+        } else {
+          minVariant = {
+            ...minVariant,
+            originalPrice: minVariant.price,
+            discountedPrice: minVariant.price,
+            discountPercent: 0,
+          };
         }
 
         const soldResponse = await axios.get(
@@ -105,10 +138,7 @@ const processProducts = async (products) => {
           0
         );
 
-        product.variants = [
-          minVariant,
-          ...product.variants.filter((v) => v !== minVariant),
-        ];
+        product.variants = [minVariant, hoverVariant];
         return product;
       })
     );
@@ -120,7 +150,7 @@ const processProducts = async (products) => {
 
 const currentPage = ref(0);
 const totalPages = ref(0);
-const pageSize = ref(9);
+const pageSize = ref(8);
 
 const fetchProducts = async (page = 0, size = pageSize.value) => {
   try {
@@ -129,17 +159,16 @@ const fetchProducts = async (page = 0, size = pageSize.value) => {
 
     const processed = await processProducts(data.content || []);
     products.value = processed;
-
+    filteredProducts.value = processed; // Initialize filtered products
     totalPages.value = data.totalPages;
     currentPage.value = data.number;
 
-    // Kiểm tra nếu không có sản phẩm
     showNoProductsMessage.value = processed.length === 0;
-
     handleSort(sortOption.value);
+    applyFilters(); // Apply filters after fetching
   } catch (err) {
     console.error("Lỗi khi tải sản phẩm:", err);
-    showNoProductsMessage.value = true; // Hiển thị thông báo nếu có lỗi
+    showNoProductsMessage.value = true;
   }
 };
 
@@ -150,21 +179,16 @@ const handleSearch = async (page = 0, size = pageSize.value) => {
 
     const processed = await processProducts(data.content || []);
     products.value = processed;
-
+    filteredProducts.value = processed;
     totalPages.value = data.totalPages;
     currentPage.value = data.number;
 
-    // Kiểm tra nếu không có sản phẩm
     showNoProductsMessage.value = processed.length === 0;
-
-    if (!data.content || data.content.length === 0) {
-      console.log("Không tìm thấy sản phẩm phù hợp.");
-    }
-
     handleSort(sortOption.value);
+    applyFilters();
   } catch (error) {
     console.error("Lỗi khi tìm kiếm sản phẩm:", error);
-    showNoProductsMessage.value = true; // Hiển thị thông báo nếu có lỗi
+    showNoProductsMessage.value = true;
   }
 };
 
@@ -184,19 +208,55 @@ const fetchSimilarProducts = async () => {
   }
 };
 
+// Filter logic
+const applyFilters = () => {
+  let filtered = products.value;
+
+  // Filter by color
+  if (selectedColors.value.length > 0) {
+    filtered = filtered.filter((product) =>
+      product.variants.some((variant) =>
+        selectedColors.value.includes(variant.colorId)
+      )
+    );
+  }
+
+  // Filter by size
+  if (selectedSizes.value.length > 0) {
+    filtered = filtered.filter((product) =>
+      product.variants.some((variant) =>
+        selectedSizes.value.includes(variant.sizeId)
+      )
+    );
+  }
+
+  // Filter by price
+  filtered = filtered.filter((product) =>
+    product.variants.some(
+      (variant) =>
+        variant.discountedPrice >= priceMin.value &&
+        variant.discountedPrice <= priceMax.value
+    )
+  );
+
+  filteredProducts.value = filtered;
+  showNoProductsMessage.value = filtered.length === 0;
+  handleSort(sortOption.value); // Reapply sorting after filtering
+};
+
 const handleSort = (option) => {
   sortOption.value = option;
-  let sortedProducts = [...products.value];
+  let sortedProducts = [...filteredProducts.value];
 
   switch (option) {
     case "Giá: Tăng dần":
       sortedProducts.sort(
-        (a, b) => (a.variants[0]?.price || 0) - (b.variants[0]?.price || 0)
+        (a, b) => (a.variants[0]?.discountedPrice || 0) - (b.variants[0]?.discountedPrice || 0)
       );
       break;
     case "Giá: Giảm dần":
       sortedProducts.sort(
-        (a, b) => (b.variants[0]?.price || 0) - (a.variants[0]?.price || 0)
+        (a, b) => (b.variants[0]?.discountedPrice || 0) - (a.variants[0]?.discountedPrice || 0)
       );
       break;
     case "Tên: A-Z":
@@ -212,7 +272,7 @@ const handleSort = (option) => {
       break;
   }
 
-  products.value = sortedProducts;
+  filteredProducts.value = sortedProducts;
 };
 
 const goToPage = async (page) => {
@@ -225,17 +285,20 @@ const goToPage = async (page) => {
   }
 };
 
+// Watch for filter changes
+watch([selectedColors, selectedSizes, priceMin, priceMax], () => {
+  applyFilters();
+});
+
 onMounted(async () => {
   if (searchKeyword.value) {
     await handleSearch();
   } else {
-    await fetchProducts(currentPage.value);
+    await fetchProducts();
   }
   await fetchSimilarProducts();
+  await fetchColorsAndSizes();
   await nextTick();
-  await fetchColorsAndSizes(); // phải await
-  console.log("Màu:", colors.value);
-  console.log("Size:", sizes.value);
   setupFilterSidebar();
 });
 
@@ -251,24 +314,6 @@ watch(
     await fetchSimilarProducts();
   }
 );
-// 🔹 thêm state cho Màu và Size
-const colors = ref([]);
-const sizes = ref([]);
-const selectedColors = ref([]);
-const selectedSizes = ref([]);
-
-// 👉 gọi API màu & size
-const fetchColorsAndSizes = async () => {
-  try {
-    const colorRes = await getAllColors();
-    colors.value = colorRes.data;
-
-    const sizeRes = await getAllSizes();
-    sizes.value = sizeRes.data;
-  } catch (error) {
-    console.error("Lỗi khi tải màu & size:", error);
-  }
-};
 </script>
 
 <template>
@@ -331,56 +376,40 @@ const fetchColorsAndSizes = async () => {
                   >
                     <div class="accordion-body">
                       <ul class="list-unstyled mb-2">
-                        <li class="d-flex align-items-center mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
+                        <li
+                          v-for="color in showMoreColors ? colors : colors.slice(0, 5)"
+                          :key="color.colorId"
+                          class="d-flex align-items-center mb-2"
+                        >
+                          <input
+                            type="checkbox"
+                            class="form-check-input me-2"
+                            v-model="selectedColors"
+                            :value="color.colorId"
+                          />
                           <span
                             class="color-dot me-2"
-                            style="background-color: black"
+                            :style="{ backgroundColor: color.hexCode || '#ccc' }"
                           ></span>
-                          <span>Đen <span class="text-muted">(52)</span></span>
-                        </li>
-                        <li class="d-flex align-items-center mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: white; border: 1px solid #ccc"
-                          ></span>
-                          <span>Trắng <span class="text-muted">(33)</span></span>
-                        </li>
-                        <li class="d-flex align-items-center mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: #8b4513"
-                          ></span>
-                          <span>Nâu <span class="text-muted">(9)</span></span>
-                        </li>
-                        <li class="d-flex align-items-center mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: #f5f5f5"
-                          ></span>
-                          <span>Trắng Xám <span class="text-muted">(9)</span></span>
-                        </li>
-                        <li class="d-flex align-items-center mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: silver"
-                          ></span>
-                          <span>Bạc <span class="text-muted">(5)</span></span>
-                        </li>
-                        <li class="d-flex align-items-center mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
-                          <span
-                            class="color-dot me-2"
-                            style="background-color: #6a5acd"
-                          ></span>
-                          <span>Xanh Dương <span class="text-muted">(4)</span></span>
+                          <span>
+                            {{ color.colorName }}
+                          </span>
                         </li>
                       </ul>
-                      <a href="#" class="text-decoration-underline small">Xem Thêm</a>
+                      <a
+                        v-if="colors.length > 5 && !showMoreColors"
+                        href="#"
+                        class="text-decoration-underline small"
+                        @click.prevent="showMoreColors = true"
+                        >Xem Thêm</a
+                      >
+                      <a
+                        v-else-if="colors.length > 5 && showMoreColors"
+                        href="#"
+                        class="text-decoration-underline small"
+                        @click.prevent="showMoreColors = false"
+                        >Thu Gọn</a
+                      >
                     </div>
                   </div>
                 </div>
@@ -406,31 +435,36 @@ const fetchColorsAndSizes = async () => {
                   >
                     <div class="accordion-body">
                       <ul class="list-unstyled mb-0">
-                        <li class="mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
-                          <label class="form-check-label"
-                            >S <span class="text-muted">(58)</span></label
-                          >
-                        </li>
-                        <li class="mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
-                          <label class="form-check-label"
-                            >M <span class="text-muted">(51)</span></label
-                          >
-                        </li>
-                        <li class="mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
-                          <label class="form-check-label"
-                            >L <span class="text-muted">(16)</span></label
-                          >
-                        </li>
-                        <li class="mb-2">
-                          <input type="checkbox" class="form-check-input me-2" />
-                          <label class="form-check-label"
-                            >XL <span class="text-muted">(2)</span></label
-                          >
+                        <li
+                          v-for="size in showMoreSizes ? sizes : sizes.slice(0, 5)"
+                          :key="size.sizeId"
+                          class="mb-2"
+                        >
+                          <input
+                            type="checkbox"
+                            class="form-check-input me-2"
+                            v-model="selectedSizes"
+                            :value="size.sizeId"
+                          />
+                          <label class="form-check-label">
+                            {{ size.sizeName }}
+                          </label>
                         </li>
                       </ul>
+                      <a
+                        v-if="sizes.length > 5 && !showMoreSizes"
+                        href="#"
+                        class="text-decoration-underline small"
+                        @click.prevent="showMoreSizes = true"
+                        >Xem Thêm</a
+                      >
+                      <a
+                        v-else-if="sizes.length > 5 && showMoreSizes"
+                        href="#"
+                        class="text-decoration-underline small"
+                        @click.prevent="showMoreSizes = false"
+                        >Thu Gọn</a
+                      >
                     </div>
                   </div>
                 </div>
@@ -459,6 +493,7 @@ const fetchColorsAndSizes = async () => {
                         <input
                           type="range"
                           class="form-range price-range-slider"
+                          v-model="priceMin"
                           min="0"
                           max="10000000"
                           step="100000"
@@ -467,6 +502,7 @@ const fetchColorsAndSizes = async () => {
                         <input
                           type="range"
                           class="form-range price-range-slider"
+                          v-model="priceMax"
                           min="0"
                           max="10000000"
                           step="100000"
@@ -479,8 +515,8 @@ const fetchColorsAndSizes = async () => {
                           <input
                             type="text"
                             class="form-control"
+                            v-model="priceMin"
                             id="priceFromMobile"
-                            value="1,690,000"
                           />
                         </div>
                         <div class="form-group">
@@ -488,8 +524,8 @@ const fetchColorsAndSizes = async () => {
                           <input
                             type="text"
                             class="form-control"
+                            v-model="priceMax"
                             id="priceToMobile"
-                            value="4,190,000"
                           />
                         </div>
                       </div>
@@ -525,7 +561,7 @@ const fetchColorsAndSizes = async () => {
                 <div class="accordion-body">
                   <ul class="list-unstyled mb-2">
                     <li
-                      v-for="color in colors"
+                      v-for="color in showMoreColors ? colors : colors.slice(0, 5)"
                       :key="color.colorId"
                       class="d-flex align-items-center mb-2"
                     >
@@ -535,19 +571,30 @@ const fetchColorsAndSizes = async () => {
                         v-model="selectedColors"
                         :value="color.colorId"
                       />
-                      <!-- Nếu không có hexCode trong DB thì có thể random hoặc để màu xám -->
                       <span
                         class="color-dot me-2"
                         :style="{ backgroundColor: color.hexCode || '#ccc' }"
                       ></span>
-
                       <span>
                         {{ color.colorName }}
-                        <span class="text-muted">({{ color.productCount || 0 }})</span>
+
                       </span>
                     </li>
                   </ul>
-                  <a href="#" class="text-decoration-underline small">Xem Thêm</a>
+                  <a
+                    v-if="colors.length > 5 && !showMoreColors"
+                    href="#"
+                    class="text-decoration-underline small"
+                    @click.prevent="showMoreColors = true"
+                    >Xem Thêm</a
+                  >
+                  <a
+                    v-else-if="colors.length > 5 && showMoreColors"
+                    href="#"
+                    class="text-decoration-underline small"
+                    @click.prevent="showMoreColors = false"
+                    >Thu Gọn</a
+                  >
                 </div>
               </div>
             </div>
@@ -573,31 +620,36 @@ const fetchColorsAndSizes = async () => {
               >
                 <div class="accordion-body">
                   <ul class="list-unstyled mb-0">
-                    <li class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <label class="form-check-label"
-                        >S <span class="text-muted">(58)</span></label
-                      >
-                    </li>
-                    <li class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <label class="form-check-label"
-                        >M <span class="text-muted">(51)</span></label
-                      >
-                    </li>
-                    <li class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <label class="form-check-label"
-                        >L <span class="text-muted">(16)</span></label
-                      >
-                    </li>
-                    <li class="mb-2">
-                      <input type="checkbox" class="form-check-input me-2" />
-                      <label class="form-check-label"
-                        >XL <span class="text-muted">(2)</span></label
-                      >
+                    <li
+                      v-for="size in showMoreSizes ? sizes : sizes.slice(0, 5)"
+                      :key="size.sizeId"
+                      class="mb-2"
+                    >
+                      <input
+                        type="checkbox"
+                        class="form-check-input me-2"
+                        v-model="selectedSizes"
+                        :value="size.sizeId"
+                      />
+                      <label class="form-check-label">
+                        {{ size.sizeName }}
+                      </label>
                     </li>
                   </ul>
+                  <a
+                    v-if="sizes.length > 5 && !showMoreSizes"
+                    href="#"
+                    class="text-decoration-underline small"
+                    @click.prevent="showMoreSizes = true"
+                    >Xem Thêm</a
+                  >
+                  <a
+                    v-else-if="sizes.length > 5 && showMoreSizes"
+                    href="#"
+                    class="text-decoration-underline small"
+                    @click.prevent="showMoreSizes = false"
+                    >Thu Gọn</a
+                  >
                 </div>
               </div>
             </div>
@@ -626,6 +678,7 @@ const fetchColorsAndSizes = async () => {
                     <input
                       type="range"
                       class="form-range"
+                      v-model="priceMin"
                       min="0"
                       max="10000000"
                       step="100000"
@@ -634,6 +687,7 @@ const fetchColorsAndSizes = async () => {
                     <input
                       type="range"
                       class="form-range"
+                      v-model="priceMax"
                       min="0"
                       max="10000000"
                       step="100000"
@@ -646,8 +700,8 @@ const fetchColorsAndSizes = async () => {
                       <input
                         type="text"
                         class="form-control price-input"
+                        v-model="priceMin"
                         id="priceFromDesktop"
-                        value="1,690,000"
                       />
                     </div>
                     <div class="form-group">
@@ -655,8 +709,8 @@ const fetchColorsAndSizes = async () => {
                       <input
                         type="text"
                         class="form-control price-input"
+                        v-model="priceMax"
                         id="priceToDesktop"
-                        value="4,190,000"
                       />
                     </div>
                   </div>
@@ -666,13 +720,6 @@ const fetchColorsAndSizes = async () => {
           </div>
         </div>
       </div>
-<!--
-      <p
-        class="ps-5 product-count-text d-none d-md-block mt-2"
-        style="font-style: italic; color: #999; font-size: 14px"
-      >
-        Hiển thị 1 - 80 trong tổng số 127 sản phẩm
-      </p> -->
 
       <div class="dropdown product-sort-dropdown">
         <button
@@ -705,10 +752,10 @@ const fetchColorsAndSizes = async () => {
       </div>
     </div>
 
-    <div class="product-content-wrapper">
+    <div class="product-content-wrapper mb-3">
       <div class="container mt-5">
         <div class="row g-3">
-          <template v-for="product in products" :key="product.productId">
+          <template v-for="product in filteredProducts" :key="product.productId">
             <div
               v-if="product.variants && product.variants.length > 0"
               class="col-6 col-sm-6 col-md-4 col-lg-3"
@@ -719,20 +766,27 @@ const fetchColorsAndSizes = async () => {
                 @click.prevent="handleProductClick(product.productId)"
               >
                 <div class="product-item">
-                  <span class="discount-badge" v-if="product.discount">
-                    -{{ product.discount }}%
+                  <span
+                    class="discount-badge"
+                    v-if="product.variants[0]?.discountPercent > 0"
+                  >
+                    -{{ product.variants[0].discountPercent }}%
                   </span>
-                  <!-- Thêm console.log để debug -->
-                  {{ console.log("ImageName Default:", product.variants[0]?.imageName) }}
                   <img
-                    :src="getImageUrl(product.variants[0]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[0]?.imageName || 'fallback-image-default.jpg'
+                      )
+                    "
                     class="img-fluid img-default"
                     :alt="`${product.name} Default`"
                   />
-                  <!-- Thêm console.log để debug -->
-                  {{ console.log("ImageName Hover:", product.variants[1]?.imageName) }}
                   <img
-                    :src="getImageUrl(product.variants[1]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[1]?.imageName || 'fallback-image-hover.jpg'
+                      )
+                    "
                     class="img-fluid img-hover"
                     :alt="`${product.name} Hover`"
                   />
@@ -741,19 +795,20 @@ const fetchColorsAndSizes = async () => {
                 <div>
                   <span class="discounted-price">
                     {{
-                      product.variants[0]?.price
-                        ? product.variants[0].price.toLocaleString()
+                      product.variants[0]?.discountedPrice
+                        ? product.variants[0].discountedPrice.toLocaleString()
                         : "0"
                     }}₫
                   </span>
                   <span
                     class="original-price"
                     v-if="
-                      product.originalPrice &&
-                      product.originalPrice > product.variants[0]?.price
+                      product.variants[0]?.originalPrice &&
+                      product.variants[0]?.originalPrice >
+                        product.variants[0]?.discountedPrice
                     "
                   >
-                    {{ product.originalPrice.toLocaleString() }}₫
+                    {{ product.variants[0].originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
                 <div class="product-rating">
@@ -775,7 +830,6 @@ const fetchColorsAndSizes = async () => {
                   <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản
                   phẩm
                 </div>
-                <!-- Hiển thị tổng stock nếu <= 20, nhỏ hơn và nằm ngang -->
                 <div class="stock-count text-danger" v-if="product.totalStock <= 20">
                   <i class="bi bi-exclamation-triangle me-1"></i>Còn
                   {{ product.totalStock }} sản phẩm
@@ -783,13 +837,12 @@ const fetchColorsAndSizes = async () => {
               </a>
             </div>
           </template>
-          <!-- Hiển thị thông báo khi không có sản phẩm -->
           <div v-if="showNoProductsMessage" class="container text-center py-5">
             <i class="bi bi-emoji-frown fs-1 text-secondary mb-3"></i>
             <p class="text-muted fs-5 mb-4">Không có sản phẩm nào tìm thấy.</p>
           </div>
         </div>
-        <ul class="pagination mt-3">
+        <ul class="pagination mt-3" v-if="totalPages > 1">
           <li
             class="pagination-item pagination-arrow"
             :class="{ 'pagination-disabled': currentPage === 0 }"
@@ -822,5 +875,11 @@ const fetchColorsAndSizes = async () => {
 <style>
 .stock-count {
   font-size: 12px;
+}
+.color-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
 }
 </style>

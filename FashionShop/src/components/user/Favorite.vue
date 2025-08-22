@@ -24,7 +24,11 @@
       </div>
 
       <div class="favorite-container col-md-10">
-        <h3 class="text-center mb-3 fw-bold">Danh sách yêu thích</h3>
+        <div class="text-center mb-3">
+          <h3 class="text-center mb-3 fw-bold">Danh Sách Yêu Thích</h3>
+          <p class="text-muted">Quản lý sản phẩm bạn đã thêm vào danh sách yêu thích</p>
+        </div>
+
         <div v-if="favoriteProducts.length > 0" class="container mt-5">
           <div class="row g-3">
             <div
