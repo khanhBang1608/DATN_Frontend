@@ -67,6 +67,15 @@
               disabled
             />
           </div>
+          <div class="col-md-6">
+            <label class="form-label">Trạng thái</label>
+            <input
+              type="text"
+              class="form-control"
+              :value="review.isHidden ? 'Ẩn (Spam)' : 'Hiển thị'"
+              disabled
+            />
+          </div>
           <div class="col-12" v-if="review.media && review.media.length > 0">
             <label class="form-label">Media</label>
             <div class="d-flex flex-wrap gap-3">
@@ -90,6 +99,23 @@
           </div>
         </div>
         <div class="modal-footer">
+          <button
+            type="button"
+            class="btn"
+            :class="review.isHidden ? 'btn-success' : 'btn-warning'"
+            @click="toggleHideReview"
+            :disabled="loading"
+          >
+            {{ review.isHidden ? 'Hiện bình luận' : 'Ẩn bình luận (Spam)' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-danger"
+            @click="deleteReview"
+            :disabled="loading"
+          >
+            Xóa
+          </button>
           <button
             type="button"
             class="btn btn-secondary"
@@ -116,7 +142,7 @@
 </template>
 
 <script>
-import { getReviewById } from "@/api/admin/reviewAPI";
+import { getReviewById, hideReview, deleteReview } from "@/api/admin/reviewAPI";
 import { Modal } from "bootstrap";
 import { nextTick } from "vue";
 
@@ -154,6 +180,35 @@ export default {
       } catch (error) {
         console.error("Error fetching review:", error.message);
         this.error = "Không thể tải chi tiết đánh giá.";
+      } finally {
+        this.loading = false;
+      }
+    },
+    async toggleHideReview() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const newHiddenState = !this.review.isHidden;
+        await hideReview(this.reviewId, newHiddenState);
+        this.review.isHidden = newHiddenState; // Cập nhật trạng thái giao diện
+      } catch (error) {
+        console.error("Error toggling hide review:", error.message);
+        this.error = "Không thể thay đổi trạng thái ẩn/hiện.";
+      } finally {
+        this.loading = false;
+      }
+    },
+    async deleteReview() {
+      if (!confirm("Bạn có chắc muốn xóa đánh giá này?")) return;
+      this.loading = true;
+      this.error = null;
+      try {
+        await deleteReview(this.reviewId);
+        this.closeModal();
+        this.$emit("review-deleted", this.reviewId);
+      } catch (error) {
+        console.error("Error deleting review:", error.message);
+        this.error = "Không thể xóa đánh giá.";
       } finally {
         this.loading = false;
       }
@@ -204,6 +259,14 @@ export default {
 .btn-secondary {
   background-color: #6c757d;
   border-color: #6c757d;
+}
+.btn-warning {
+  background-color: #f0ad4e;
+  border-color: #f0ad4e;
+}
+.btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
 }
 .media-item {
   display: inline-block;

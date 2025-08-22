@@ -50,3 +50,15 @@ export const deleteReview = async (reviewId) => {
     throw new Error(error.response?.data?.message || 'Failed to delete review');
   }
 };
+
+export const hideReview = async (reviewId, hide) => {
+  try {
+    await axios.patch(`${API_URL}/${reviewId}/hide`, null, {
+      headers: getAuthHeaders(),
+      params: { hide },
+    });
+  } catch (error) {
+    console.error('API Error:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Failed to hide/unhide review');
+  }
+};

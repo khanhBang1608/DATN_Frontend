@@ -63,6 +63,7 @@ const resolveMediaUrl = (url) => {
   if (url.startsWith("http")) return url;
   return `${BASE_URL}${url}`;
 };
+
 const formatDate = (dateStr) => {
   const date = new Date(dateStr);
   const day = String(date.getDate()).padStart(2, "0");
@@ -127,7 +128,6 @@ const formatDate = (dateStr) => {
     </div>
 
     <!-- Danh sách đánh giá -->
-    <!-- Danh sách đánh giá -->
     <div v-else>
       <div
         v-for="review in filteredReviews"
@@ -145,9 +145,14 @@ const formatDate = (dateStr) => {
             :class="n <= review.rating ? 'bi bi-star-fill' : 'bi bi-star'"
           ></i>
         </div>
-        <p class="mb-1">{{ review.comment }}</p>
+        <!-- Kiểm tra isHidden -->
+        <p v-if="review.isHidden" class="mb-1 text-danger">
+          Bị ẩn do vi phạm hoặc spam!
+        </p>
+        <p v-else class="mb-1">{{ review.comment }}</p>
 
-        <div v-if="review.media?.length" class="d-flex gap-2">
+        <!-- Chỉ hiển thị media nếu không bị ẩn -->
+        <div v-if="!review.isHidden && review.media?.length" class="d-flex gap-2">
           <div v-for="media in review.media" :key="media.mediaId">
             <img
               v-if="media.reviewType === 'image'"
@@ -178,5 +183,8 @@ const formatDate = (dateStr) => {
 .review-section .bi-star,
 .review-section .bi-star-fill {
   margin-right: 4px;
+}
+.text-danger {
+  font-style: italic;
 }
 </style>
