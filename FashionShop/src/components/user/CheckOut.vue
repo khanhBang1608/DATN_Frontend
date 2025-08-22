@@ -804,27 +804,29 @@ export default {
             <!-- Mã giảm giá - Thiết kế mới cho desktop -->
             <div class="mb-3">
               <label class="form-label fw-bold">Mã giảm giá:</label>
-              <div class="d-flex flex-wrap gap-2">
-                <span
+              <div class="d-flex flex-wrap gap-3">
+                <div
                   v-for="d in displayedDiscounts"
                   :key="d.discountId"
-                  class="badge rounded-pill px-3 py-2 cursor-pointer"
+                  class="discount-card p-1 cursor-pointer"
                   :class="{
-                    'bg-primary text-white':
+                    selected:
                       selectedDiscount && selectedDiscount.discountId === d.discountId,
-                    'bg-light text-dark border': !(
-                      selectedDiscount && selectedDiscount.discountId === d.discountId
-                    ),
                   }"
                   @click="applyDiscount(d)"
-                  style="
-                    transition: all 0.3s ease;
-                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                  "
                 >
-                  {{ d.discountCode }} - {{ d.discountPercent }}% (tối đa
-                  {{ formatPrice(d.maxDiscountAmount || 0) }})
-                </span>
+                  <div
+                    class="d-flex align-items-center justify-content-center text-center gap-2"
+                  >
+                    <i class="fas fa-ticket-alt text-primary"></i>
+                    <span class="fw-bold">{{ d.discountCode }}</span>
+                  </div>
+
+                  <div class="text-muted small">
+                    Giảm {{ d.discountPercent }}% (Tối đa
+                    {{ formatPrice(d.maxDiscountAmount || 0) }})
+                  </div>
+                </div>
               </div>
 
               <!-- Nút xem thêm -->
