@@ -61,51 +61,73 @@ onMounted(() => {
 });
 
 // 🧠 Hàm vẽ biểu đồ người dùng
+let userChart = null;
+
 const drawUserChart = () => {
   const ctx = document.getElementById("userChart");
   if (!ctx) return;
 
+  // Nếu đã có chart cũ thì destroy để tránh bị chồng
+  if (userChart) {
+    userChart.destroy();
+  }
+
   const labels = monthlyUserRegistrations.value.map((item) => item.monthYear);
   const data = monthlyUserRegistrations.value.map((item) => item.userCount);
 
-  new Chart(ctx, {
-    type: "bar",
+  userChart = new Chart(ctx, {
+    type: "line", // 🔥 đổi từ "bar" sang "line"
     data: {
       labels,
-      datasets: [{
-        label: "Người dùng đăng ký",
-        data,
-        backgroundColor: "rgba(54, 162, 235, 0.6)",
-        borderColor: "rgba(54, 162, 235, 1)",
-        borderWidth: 1,
-      }],
+      datasets: [
+        {
+          label: "Người dùng đăng ký",
+          data,
+          backgroundColor: "rgba(54, 162, 235, 0.2)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 2,
+          tension: 0.3, // 🔥 bo cong đường
+          fill: true,   // tô nền phía dưới
+        },
+      ],
     },
     options: {
       responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => `${context.raw.toLocaleString("vi-VN")} người`,
+          },
+        },
+      },
       scales: {
         y: {
           beginAtZero: true,
           ticks: {
-            precision: 0
-          }
+            precision: 0,
+          },
         },
       },
     },
   });
 };
 
-// 🧠 Hàm vẽ biểu đồ doanh thu
+
 const drawRevenueChart = () => {
   const ctx = document.getElementById("myChart2");
   if (!ctx) return;
 
-  const labels = monthlyRevenue.value.map((item) => `Tháng ${item.month}`);
-  const data = monthlyRevenue.value.map((item) => item.revenue);
+  // Tạo mảng 12 tháng mặc định
+  const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
+
+  // Map dữ liệu doanh thu vào đúng tháng
+  const revenueMap = Object.fromEntries(monthlyRevenue.value.map(item => [item.month, item.revenue]));
+  const data = allMonths.map(month => revenueMap[month] || 0);
 
   new Chart(ctx, {
     type: "line",
     data: {
-      labels,
+      labels: allMonths.map(m => `Tháng ${m}`),
       datasets: [{
         label: "Doanh thu (VNĐ)",
         data,
@@ -118,6 +140,13 @@ const drawRevenueChart = () => {
     },
     options: {
       responsive: true,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => `${context.raw.toLocaleString("vi-VN")} VNĐ`,
+          },
+        },
+      },
       scales: {
         y: {
           beginAtZero: true,
