@@ -6,40 +6,20 @@
         <h3 class="text-center mb-4 fw-bold">TOP 8 SẢN PHẨM MỚI NHẤT</h3>
         <div class="row g-3">
           <template v-for="product in topNewestProducts" :key="product.productId">
-            <div
-              v-if="product.variants && product.variants.length > 0"
-              class="col-6 col-sm-6 col-md-4 col-lg-3"
-            >
-              <a
-                href="#"
-                class="product-link"
-                @click.prevent="handleProductClick(product.productId)"
-              >
+            <div v-if="product.variants && product.variants.length > 0" class="col-6 col-sm-6 col-md-4 col-lg-3">
+              <a href="#" class="product-link" @click.prevent="handleProductClick(product.productId)">
                 <div class="product-item position-relative">
-                  <span
-                    v-if="product.variants[0]?.discountPercent > 0"
-                    class="discount-badge"
-                  >
+                  <span v-if="product.variants[0]?.discountPercent > 0" class="discount-badge">
                     -{{ product.variants[0].discountPercent }}%
                   </span>
-                  <img
-                    :src="
-                      getImageUrl(
-                        product.variants[0]?.imageName || 'fallback-image-default.jpg'
-                      )
-                    "
-                    class="img-fluid img-default"
-                    :alt="`${product.name} Default`"
-                  />
-                  <img
-                    :src="
-                      getImageUrl(
-                        product.variants[1]?.imageName || 'fallback-image-hover.jpg'
-                      )
-                    "
-                    class="img-fluid img-hover"
-                    :alt="`${product.name} Hover`"
-                  />
+                  <img :src="getImageUrl(
+                    product.variants[0]?.imageName || 'fallback-image-default.jpg'
+                  )
+                    " class="img-fluid img-default" :alt="`${product.name} Default`" />
+                  <img :src="getImageUrl(
+                    product.variants[1]?.imageName || 'fallback-image-hover.jpg'
+                  )
+                    " class="img-fluid img-hover" :alt="`${product.name} Hover`" />
                 </div>
                 <div class="product-name text-truncate">{{ product.name }}</div>
                 <div>
@@ -50,27 +30,20 @@
                         : product.variants[0]?.price.toLocaleString() || "0"
                     }}₫
                   </span>
-                  <span
-                    class="original-price text-muted text-decoration-line-through ms-2"
-                    v-if="
-                      product.variants[0]?.originalPrice &&
-                      product.variants[0]?.originalPrice >
-                        product.variants[0]?.discountedPrice
-                    "
-                  >
+                  <span class="original-price text-muted text-decoration-line-through ms-2" v-if="
+                    product.variants[0]?.originalPrice &&
+                    product.variants[0]?.originalPrice >
+                    product.variants[0]?.discountedPrice
+                  ">
                     {{ product.variants[0].originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
                 <div class="product-rating">
                   <span v-for="i in 5" :key="i">
-                    <i
-                      class="bi"
-                      :class="
-                        i <= Math.round(product.averageRating || 0)
-                          ? 'bi-star-fill text-warning'
-                          : 'bi-star text-muted'
-                      "
-                    ></i>
+                    <i class="bi" :class="i <= Math.round(product.averageRating || 0)
+                        ? 'bi-star-fill text-warning'
+                        : 'bi-star text-muted'
+                      "></i>
                   </span>
                   <span class="ms-1 text-muted">
                     ({{ product.averageRating?.toFixed(1) || "0.0" }})
@@ -90,13 +63,12 @@
     <section class="dreams-section">
       <div class="row align-items-center">
         <div class="col-12 col-md-6 dreams-image">
-          <a href="#">
-            <img
-              src="https://placehold.co/700x500?text=Fashion+Store+L'hex"
-              alt="Cửa hàng thời trang L'hex"
-            />
-          </a>
+          <div class="ratio ratio-16x9">
+            <iframe src="https://www.youtube.com/embed/GvVModMnZyE?autoplay=1&mute=1&loop=1&playlist=GvVModMnZyE"
+              title="Fashion Brand Intro" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+          </div>
         </div>
+
         <div class="col-12 col-md-6 dreams-text">
           <a href="#" style="text-decoration: none; color: inherit">
             <h2>CHÀO MỪNG ĐẾN VỚI L'HEX</h2>
@@ -119,40 +91,20 @@
         <h3 class="text-center mb-4 fw-bold">TOP SẢN PHẨM BÁN CHẠY NHẤT</h3>
         <div class="row g-3">
           <template v-for="product in topBestSellingProducts" :key="product.productId">
-            <div
-              v-if="product.variants && product.variants.length > 0"
-              class="col-6 col-sm-6 col-md-4 col-lg-3"
-            >
-              <a
-                href="#"
-                class="product-link"
-                @click.prevent="handleProductClick(product.productId)"
-              >
+            <div v-if="product.variants && product.variants.length > 0" class="col-6 col-sm-6 col-md-4 col-lg-3">
+              <a href="#" class="product-link" @click.prevent="handleProductClick(product.productId)">
                 <div class="product-item position-relative">
-                  <span
-                    v-if="product.variants[0]?.discountPercent > 0"
-                    class="discount-badge"
-                  >
+                  <span v-if="product.variants[0]?.discountPercent > 0" class="discount-badge">
                     -{{ product.variants[0].discountPercent }}%
                   </span>
-                  <img
-                    :src="
-                      getImageUrl(
-                        product.variants[0]?.imageName || 'fallback-image-default.jpg'
-                      )
-                    "
-                    class="img-fluid img-default"
-                    :alt="`${product.name} Default`"
-                  />
-                  <img
-                    :src="
-                      getImageUrl(
-                        product.variants[1]?.imageName || 'fallback-image-hover.jpg'
-                      )
-                    "
-                    class="img-fluid img-hover"
-                    :alt="`${product.name} Hover`"
-                  />
+                  <img :src="getImageUrl(
+                    product.variants[0]?.imageName || 'fallback-image-default.jpg'
+                  )
+                    " class="img-fluid img-default" :alt="`${product.name} Default`" />
+                  <img :src="getImageUrl(
+                    product.variants[1]?.imageName || 'fallback-image-hover.jpg'
+                  )
+                    " class="img-fluid img-hover" :alt="`${product.name} Hover`" />
                 </div>
                 <div class="product-name text-truncate">{{ product.name }}</div>
                 <div>
@@ -163,27 +115,20 @@
                         : product.variants[0]?.price.toLocaleString() || "0"
                     }}₫
                   </span>
-                  <span
-                    class="original-price text-muted text-decoration-line-through ms-2"
-                    v-if="
-                      product.variants[0]?.originalPrice &&
-                      product.variants[0]?.originalPrice >
-                        product.variants[0]?.discountedPrice
-                    "
-                  >
+                  <span class="original-price text-muted text-decoration-line-through ms-2" v-if="
+                    product.variants[0]?.originalPrice &&
+                    product.variants[0]?.originalPrice >
+                    product.variants[0]?.discountedPrice
+                  ">
                     {{ product.variants[0].originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
                 <div class="product-rating">
                   <span v-for="i in 5" :key="i">
-                    <i
-                      class="bi"
-                      :class="
-                        i <= Math.round(product.averageRating || 0)
-                          ? 'bi-star-fill text-warning'
-                          : 'bi-star text-muted'
-                      "
-                    ></i>
+                    <i class="bi" :class="i <= Math.round(product.averageRating || 0)
+                        ? 'bi-star-fill text-warning'
+                        : 'bi-star text-muted'
+                      "></i>
                   </span>
                   <span class="ms-1 text-muted">
                     ({{ product.averageRating?.toFixed(1) || "0.0" }})
@@ -199,27 +144,17 @@
         </div>
         <nav class="mt-4 d-flex justify-content-center" v-if="totalPages > 1">
           <ul class="pagination mt-3">
-            <li
-              class="pagination-item pagination-arrow"
-              :class="{ 'pagination-disabled': currentPage === 0 }"
-              @click="fetchTopBestSellingProducts(currentPage - 1)"
-            >
+            <li class="pagination-item pagination-arrow" :class="{ 'pagination-disabled': currentPage === 0 }"
+              @click="fetchTopBestSellingProducts(currentPage - 1)">
               &lt;
             </li>
-            <li
-              v-for="page in totalPages"
-              :key="page"
-              class="pagination-item"
-              :class="{ 'pagination-active': page - 1 === currentPage }"
-              @click="fetchTopBestSellingProducts(page - 1)"
-            >
+            <li v-for="page in totalPages" :key="page" class="pagination-item"
+              :class="{ 'pagination-active': page - 1 === currentPage }" @click="fetchTopBestSellingProducts(page - 1)">
               {{ page }}
             </li>
-            <li
-              class="pagination-item pagination-arrow"
+            <li class="pagination-item pagination-arrow"
               :class="{ 'pagination-disabled': currentPage === totalPages - 1 }"
-              @click="fetchTopBestSellingProducts(currentPage + 1)"
-            >
+              @click="fetchTopBestSellingProducts(currentPage + 1)">
               &gt;
             </li>
           </ul>
@@ -233,40 +168,20 @@
         <h3 class="text-center mb-4 fw-bold">ĐÃ XEM GẦN ĐÂY</h3>
         <div class="row g-3">
           <template v-for="product in recentViewedProducts" :key="product.productId">
-            <div
-              v-if="product.variants && product.variants.length > 0"
-              class="col-6 col-sm-6 col-md-4 col-lg-3"
-            >
-              <a
-                href="#"
-                class="product-link"
-                @click.prevent="handleProductClick(product.productId)"
-              >
+            <div v-if="product.variants && product.variants.length > 0" class="col-6 col-sm-6 col-md-4 col-lg-3">
+              <a href="#" class="product-link" @click.prevent="handleProductClick(product.productId)">
                 <div class="product-item position-relative">
-                  <span
-                    v-if="product.variants[0]?.discountPercent > 0"
-                    class="discount-badge"
-                  >
+                  <span v-if="product.variants[0]?.discountPercent > 0" class="discount-badge">
                     -{{ product.variants[0].discountPercent }}%
                   </span>
-                  <img
-                    :src="
-                      getImageUrl(
-                        product.variants[0]?.imageName || 'fallback-image-default.jpg'
-                      )
-                    "
-                    class="img-fluid img-default"
-                    :alt="`${product.name} Default`"
-                  />
-                  <img
-                    :src="
-                      getImageUrl(
-                        product.variants[1]?.imageName || 'fallback-image-hover.jpg'
-                      )
-                    "
-                    class="img-fluid img-hover"
-                    :alt="`${product.name} Hover`"
-                  />
+                  <img :src="getImageUrl(
+                    product.variants[0]?.imageName || 'fallback-image-default.jpg'
+                  )
+                    " class="img-fluid img-default" :alt="`${product.name} Default`" />
+                  <img :src="getImageUrl(
+                    product.variants[1]?.imageName || 'fallback-image-hover.jpg'
+                  )
+                    " class="img-fluid img-hover" :alt="`${product.name} Hover`" />
                 </div>
                 <div class="product-name text-truncate">{{ product.name }}</div>
                 <div>
@@ -277,14 +192,11 @@
                         : product.variants[0]?.price.toLocaleString() || "0"
                     }}₫
                   </span>
-                  <span
-                    class="original-price text-muted text-decoration-line-through ms-2"
-                    v-if="
-                      product.variants[0]?.originalPrice &&
-                      product.variants[0]?.originalPrice >
-                        product.variants[0]?.discountedPrice
-                    "
-                  >
+                  <span class="original-price text-muted text-decoration-line-through ms-2" v-if="
+                    product.variants[0]?.originalPrice &&
+                    product.variants[0]?.originalPrice >
+                    product.variants[0]?.discountedPrice
+                  ">
                     {{ product.variants[0].originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
@@ -294,14 +206,10 @@
                 </div>
                 <div class="product-rating">
                   <span v-for="i in 5" :key="i">
-                    <i
-                      class="bi"
-                      :class="
-                        i <= Math.round(product.averageRating || 0)
-                          ? 'bi-star-fill text-warning'
-                          : 'bi-star text-muted'
-                      "
-                    ></i>
+                    <i class="bi" :class="i <= Math.round(product.averageRating || 0)
+                        ? 'bi-star-fill text-warning'
+                        : 'bi-star text-muted'
+                      "></i>
                   </span>
                   <span class="ms-1 text-muted">
                     ({{ product.averageRating?.toFixed(1) || "0.0" }})
@@ -312,27 +220,17 @@
           </template>
           <nav class="mt-4 d-flex justify-content-center" v-if="recentTotalPages > 1">
             <ul class="pagination mt-3">
-              <li
-                class="pagination-item pagination-arrow"
-                :class="{ 'pagination-disabled': recentPage === 0 }"
-                @click="goToRecentPage(recentPage - 1)"
-              >
+              <li class="pagination-item pagination-arrow" :class="{ 'pagination-disabled': recentPage === 0 }"
+                @click="goToRecentPage(recentPage - 1)">
                 &lt;
               </li>
-              <li
-                v-for="page in recentTotalPages"
-                :key="page"
-                class="pagination-item"
-                :class="{ 'pagination-active': page - 1 === recentPage }"
-                @click="goToRecentPage(page - 1)"
-              >
+              <li v-for="page in recentTotalPages" :key="page" class="pagination-item"
+                :class="{ 'pagination-active': page - 1 === recentPage }" @click="goToRecentPage(page - 1)">
                 {{ page }}
               </li>
-              <li
-                class="pagination-item pagination-arrow"
+              <li class="pagination-item pagination-arrow"
                 :class="{ 'pagination-disabled': recentPage === recentTotalPages - 1 }"
-                @click="goToRecentPage(recentPage + 1)"
-              >
+                @click="goToRecentPage(recentPage + 1)">
                 &gt;
               </li>
             </ul>
