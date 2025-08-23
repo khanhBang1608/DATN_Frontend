@@ -423,7 +423,7 @@ watch(
         <div class="product-detail-gallery">
           <div class="product-detail-thumbnails" v-if="!isMobile">
             <img
-              v-for="(src, index) in imageSources"
+              v-for="(src, index) in imageSources.slice(0, 4)"
               :key="index"
               :src="src"
               :class="{ active: currentIndex === index }"
