@@ -172,20 +172,7 @@
  }
 
 
- /* Nền của accordion body */
-.accordion-body {
-    background-color: #f1f1f1 !important;
-}
 
-/* Nút accordion (khi đóng/mở) */
-.accordion-button {
-    background-color: #f1f1f1 !important;
-}
-
-/* Khi mở cũng giữ nguyên */
-.accordion-button:not(.collapsed) {
-    background-color: #f1f1f1 !important;
-}
 
 
  /* ========== Thông tin công ty ========== */

@@ -73,9 +73,12 @@ body {
 }
 
 .product-content-wrapper {
+    min-height: 450px;
     transition: margin-left 0.3s ease;
 }
-
+main {
+    position: relative;
+}
 /* Khi sidebar mở */
 .sidebar-pushed {
     margin-left: 280px;
@@ -102,12 +105,10 @@ body {
     width: 280px;
     background-color: #fff;
     padding: 15px 0 15px 30px;
-    position: fixed;
+    position: absolute;
     left: -300px;
-    height: 100vh;
     overflow-y: auto;
     transition: left 0.3s ease;
-    z-index: 950;
     border: none;
     border-radius: 0 !important;
 }
@@ -116,20 +117,13 @@ body {
     left: -300px !important;
 }
 
-/* .filter-sidebar-wrapper {
-    z-index: 1600;
-    position: relative;
-}
-
-#mobileFilterSidebar.offcanvas {
-    z-index: 1500 !important;
-}
-
-#mobileFilterSidebar.offcanvas.show {
-    z-index: 1500 !important;
-} */
 .product-sidebar.show {
     left: 0 !important;
+}
+.accordion-body {
+  max-height: 300px; /* Chiều cao tối đa của nội dung collapse */
+  overflow-y: auto; /* Kích hoạt thanh cuộn dọc khi nội dung vượt quá chiều cao */
+  padding: 10px; /* Đảm bảo padding hợp lý */
 }
 
 .filter-header {

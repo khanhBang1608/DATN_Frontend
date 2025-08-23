@@ -215,18 +215,14 @@ const applyFilters = () => {
   // Filter by color
   if (selectedColors.value.length > 0) {
     filtered = filtered.filter((product) =>
-      product.variants.some((variant) =>
-        selectedColors.value.includes(variant.colorId)
-      )
+      product.variants.some((variant) => selectedColors.value.includes(variant.colorId))
     );
   }
 
   // Filter by size
   if (selectedSizes.value.length > 0) {
     filtered = filtered.filter((product) =>
-      product.variants.some((variant) =>
-        selectedSizes.value.includes(variant.sizeId)
-      )
+      product.variants.some((variant) => selectedSizes.value.includes(variant.sizeId))
     );
   }
 
@@ -251,12 +247,14 @@ const handleSort = (option) => {
   switch (option) {
     case "Giá: Tăng dần":
       sortedProducts.sort(
-        (a, b) => (a.variants[0]?.discountedPrice || 0) - (b.variants[0]?.discountedPrice || 0)
+        (a, b) =>
+          (a.variants[0]?.discountedPrice || 0) - (b.variants[0]?.discountedPrice || 0)
       );
       break;
     case "Giá: Giảm dần":
       sortedProducts.sort(
-        (a, b) => (b.variants[0]?.discountedPrice || 0) - (a.variants[0]?.discountedPrice || 0)
+        (a, b) =>
+          (b.variants[0]?.discountedPrice || 0) - (a.variants[0]?.discountedPrice || 0)
       );
       break;
     case "Tên: A-Z":
@@ -387,10 +385,10 @@ watch(
                             v-model="selectedColors"
                             :value="color.colorId"
                           />
-                          <span
+                          <!-- <span
                             class="color-dot me-2"
                             :style="{ backgroundColor: color.hexCode || '#ccc' }"
-                          ></span>
+                          ></span> -->
                           <span>
                             {{ color.colorName }}
                           </span>
@@ -571,13 +569,8 @@ watch(
                         v-model="selectedColors"
                         :value="color.colorId"
                       />
-                      <span
-                        class="color-dot me-2"
-                        :style="{ backgroundColor: color.hexCode || '#ccc' }"
-                      ></span>
                       <span>
                         {{ color.colorName }}
-
                       </span>
                     </li>
                   </ul>
