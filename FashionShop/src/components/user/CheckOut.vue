@@ -51,14 +51,16 @@ export default {
       discountError: "",
 
       showAllDiscounts: false,
+      displayCount: 4,
     };
   },
 
   computed: {
     displayedDiscounts() {
+      // Hiển thị 4 mã hoặc tất cả tùy thuộc vào showAllDiscounts
       return this.showAllDiscounts
         ? this.validDiscounts
-        : this.validDiscounts.slice(0, 5); // Chỉ lấy 5 mã đầu
+        : this.validDiscounts.slice(0, this.displayCount);
     },
     defaultAddress() {
       return this.addressList.find((a) => a.isDefault) || this.addressList[0];
@@ -111,7 +113,19 @@ export default {
 
   methods: {
     toggleShowDiscounts() {
-      this.showAllDiscounts = !this.showAllDiscounts;
+      if (!this.showAllDiscounts) {
+        // Nếu chưa hiển thị hết, tăng số lượng hiển thị
+        this.displayCount += 4;
+        // Kiểm tra nếu đã hiển thị hết mã
+        if (this.displayCount >= this.validDiscounts.length) {
+          this.showAllDiscounts = true;
+          this.displayCount = this.validDiscounts.length;
+        }
+      } else {
+        // Nếu đang hiển thị hết, thu gọn lại
+        this.showAllDiscounts = false;
+        this.displayCount = 4;
+      }
     },
     goToNewAddress() {
       // Đóng modal trước
@@ -440,7 +454,7 @@ export default {
             <label class="form-label fw-bold">Mã giảm giá:</label>
             <div class="d-flex flex-wrap gap-2">
               <span
-                v-for="d in validDiscounts"
+                v-for="d in displayedDiscounts"
                 :key="d.discountId"
                 class="badge rounded-pill px-3 py-2 cursor-pointer"
                 :class="{
@@ -458,6 +472,15 @@ export default {
               >
                 {{ d.discountCode }} - {{ d.discountPercent }}% (tối đa
                 {{ formatPrice(d.maxDiscountAmount || 0) }})
+              </span>
+            </div>
+            <div v-if="validDiscounts.length > 4" class="mt-2">
+              <span
+                class="text-primary choose-address"
+                role="button"
+                @click="toggleShowDiscounts"
+              >
+                {{ showAllDiscounts ? "Thu gọn" : "Xem thêm" }}
               </span>
             </div>
             <div v-if="discountError" class="text-danger mt-2">{{ discountError }}</div>
@@ -821,25 +844,23 @@ export default {
                     <i class="fas fa-ticket-alt text-primary"></i>
                     <span class="fw-bold">{{ d.discountCode }}</span>
                   </div>
-
                   <div class="text-muted small">
-                    Giảm {{ d.discountPercent }}% (Tối đa
-                    {{ formatPrice(d.maxDiscountAmount || 0) }})
+                    Giảm
+                    <strong class="text-danger">{{ d.discountPercent }}%</strong> (Tối đa
+                    <strong>{{ formatPrice(d.maxDiscountAmount || 0) }}</strong
+                    >)
                   </div>
                 </div>
               </div>
-
-              <!-- Nút xem thêm -->
-              <div v-if="validDiscounts.length > 5" class="mt-2">
+              <div v-if="validDiscounts.length > 4" class="mt-2">
                 <span
                   class="text-primary choose-address"
                   role="button"
                   @click="toggleShowDiscounts"
                 >
-                  {{ showAllDiscounts ? "Thu gọn" : "Xem thêm" }}
+                  {{ showAllDiscounts ? "Thu gọn" : "Xem thêm mã giảm giá" }}
                 </span>
               </div>
-
               <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
             </div>
 

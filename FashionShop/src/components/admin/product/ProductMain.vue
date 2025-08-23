@@ -4,7 +4,10 @@ import { useRouter } from "vue-router";
 import axios from "axios";
 import { getAllCategories } from "@/api/adminCategoryAPI";
 import { addProduct, updateProduct, getProductById } from "@/api/adminProductAPI";
-import { getTotalStockByProductId } from "@/api/admin/ProductStockAPI";
+import {
+  getTotalStockByProductId,
+  getSystemProductStats,
+} from "@/api/admin/ProductStockAPI";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 import Editor from "@tinymce/tinymce-vue";
@@ -102,18 +105,6 @@ const filteredProducts = computed(() => {
   }
 
   return list;
-});
-
-const getTotalVariantCount = computed(() => {
-  return products.value.reduce((total, product) => {
-    return total + (product.variants?.length || 0);
-  }, 0);
-});
-
-const getTotalStockCount = computed(() => {
-  return products.value.reduce((total, product) => {
-    return total + (product.totalStock || 0);
-  }, 0);
 });
 
 const fetchProducts = async (page = 0) => {
@@ -300,8 +291,25 @@ const displayedPages = computed(() => {
 
   return pages;
 });
+const systemStats = ref({
+  totalVariants: 0,
+  totalStock: 0,
+});
 
-onMounted(fetchProducts);
+const fetchSystemStats = async () => {
+  try {
+    const data = await getSystemProductStats();
+    systemStats.value.totalVariants = data.totalVariants;
+    systemStats.value.totalStock = data.totalStock;
+  } catch (error) {
+    console.error("Lỗi khi tải thống kê hệ thống:", error);
+  }
+};
+
+onMounted(async () => {
+  await fetchProducts(); // load sản phẩm
+  await fetchSystemStats(); // load thống kê toàn hệ thống
+});
 
 const changePage = (page) => {
   if (page >= 0 && page < totalPages.value) {
@@ -428,7 +436,8 @@ const changePage = (page) => {
         style="background: linear-gradient(135deg, #28a745, #20c997)"
       >
         <i class="bi bi-box-seam-fill fs-5"></i>
-        Tổng biến thể: <strong class="text-danger">{{ getTotalVariantCount }}</strong>
+        Tổng biến thể:
+        <strong class="text-danger">{{ systemStats.totalVariants }}</strong>
       </span>
 
       <!-- Tổng tồn kho -->
@@ -437,7 +446,8 @@ const changePage = (page) => {
         style="background: linear-gradient(135deg, #17a2b8, #0d6efd)"
       >
         <i class="bi bi-tags-fill fs-5"></i>
-        Tổng tồn kho: <strong class="text-danger">{{ getTotalStockCount }}</strong>
+        Tổng tồn kho:
+        <strong class="text-danger">{{ systemStats.totalStock }}</strong>
       </span>
     </div>
 
