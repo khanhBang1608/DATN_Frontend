@@ -3,7 +3,7 @@
     <!-- Sản phẩm mới -->
     <div class="product-content-wrapper">
       <div class="container mt-5">
-        <h3 class="text-center mb-4 fw-bold">TOP 10 SẢN PHẨM MỚI NHẤT</h3>
+        <h3 class="text-center mb-4 fw-bold">TOP 8 SẢN PHẨM MỚI NHẤT</h3>
         <div class="row g-3">
           <template v-for="product in topNewestProducts" :key="product.productId">
             <div
@@ -15,38 +15,50 @@
                 class="product-link"
                 @click.prevent="handleProductClick(product.productId)"
               >
-                <div class="product-item">
-                  <span class="discount-badge" v-if="product.discount">
-                    -{{ product.discount }}%
+                <div class="product-item position-relative">
+                  <span
+                    v-if="product.variants[0]?.discountPercent > 0"
+                    class="discount-badge"
+                  >
+                    -{{ product.variants[0].discountPercent }}%
                   </span>
                   <img
-                    :src="getImageUrl(product.variants[0]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[0]?.imageName || 'fallback-image-default.jpg'
+                      )
+                    "
                     class="img-fluid img-default"
                     :alt="`${product.name} Default`"
                   />
                   <img
-                    :src="getImageUrl(product.variants[1]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[1]?.imageName || 'fallback-image-hover.jpg'
+                      )
+                    "
                     class="img-fluid img-hover"
                     :alt="`${product.name} Hover`"
                   />
                 </div>
-                <div class="product-name">{{ product.name }}</div>
+                <div class="product-name text-truncate">{{ product.name }}</div>
                 <div>
-                  <span class="discounted-price">
+                  <span class="discounted-price text-danger fw-bold">
                     {{
-                      product.variants[0]?.price
-                        ? product.variants[0].price.toLocaleString()
-                        : "0"
+                      product.variants[0]?.discountedPrice
+                        ? product.variants[0].discountedPrice.toLocaleString()
+                        : product.variants[0]?.price.toLocaleString() || "0"
                     }}₫
                   </span>
                   <span
-                    class="original-price"
+                    class="original-price text-muted text-decoration-line-through ms-2"
                     v-if="
-                      product.originalPrice &&
-                      product.originalPrice > product.variants[0]?.price
+                      product.variants[0]?.originalPrice &&
+                      product.variants[0]?.originalPrice >
+                        product.variants[0]?.discountedPrice
                     "
                   >
-                    {{ product.originalPrice.toLocaleString() }}₫
+                    {{ product.variants[0].originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
                 <div class="product-rating">
@@ -60,9 +72,9 @@
                       "
                     ></i>
                   </span>
-                  <span class="ms-1 text-muted"
-                    >({{ product.averageRating?.toFixed(1) || "0.0" }})</span
-                  >
+                  <span class="ms-1 text-muted">
+                    ({{ product.averageRating?.toFixed(1) || "0.0" }})
+                  </span>
                 </div>
                 <div class="sold-count text-muted" style="font-size: 14px">
                   <i class="bi bi-bag-check me-1"></i>{{ product.soldCount || 0 }} sản
@@ -71,33 +83,6 @@
               </a>
             </div>
           </template>
-          <nav aria-label="Pagination sản phẩm mới nhất">
-            <ul class="pagination mt-3">
-              <li
-                class="pagination-item pagination-arrow"
-                :class="{ 'pagination-disabled': newestPage === 0 }"
-                @click="fetchTopNewestProducts(newestPage - 1)"
-              >
-                &lt;
-              </li>
-              <li
-                v-for="page in newestTotalPages"
-                :key="page"
-                class="pagination-item"
-                :class="{ 'pagination-active': page - 1 === newestPage }"
-                @click="fetchTopNewestProducts(page - 1)"
-              >
-                {{ page }}
-              </li>
-              <li
-                class="pagination-item pagination-arrow"
-                :class="{ 'pagination-disabled': newestPage === newestTotalPages - 1 }"
-                @click="fetchTopNewestProducts(newestPage + 1)"
-              >
-                &gt;
-              </li>
-            </ul>
-          </nav>
         </div>
       </div>
     </div>
@@ -128,30 +113,6 @@
       </div>
     </section>
 
-    <!-- <section class="dreams-section">
-      <div class="row align-items-center">
-        <div class="col-12 col-md-6 dreams-image">
-          <a href="#">
-            <img
-              src="https://placehold.co/700x500?text=New+Collection+L'hex"
-              alt="Bộ sưu tập thời trang mới của L'hex"
-            />
-          </a>
-        </div>
-        <div class="col-12 col-md-6 dreams-text">
-          <a href="#" style="text-decoration: none; color: inherit">
-            <h2>BỘ SƯU TẬP MỚI</h2>
-            <p>
-              Khám phá những thiết kế mới nhất từ L'hex – nơi hội tụ sự sáng tạo và xu
-              hướng thời trang quốc tế. Mỗi chi tiết đều được chăm chút tỉ mỉ để mang đến
-              cho bạn trải nghiệm mặc hoàn hảo, giúp bạn tỏa sáng trong mọi khoảnh khắc.
-            </p>
-          </a>
-          <a href="#" class="dreams-btn">XEM THÊM</a>
-        </div>
-      </div>
-    </section> -->
-
     <!-- Top sản phẩm bán chạy có phân trang -->
     <div class="product-content-wrapper">
       <div class="container mt-5">
@@ -167,38 +128,50 @@
                 class="product-link"
                 @click.prevent="handleProductClick(product.productId)"
               >
-                <div class="product-item">
-                  <span class="discount-badge" v-if="product.discount">
-                    -{{ product.discount }}%
+                <div class="product-item position-relative">
+                  <span
+                    v-if="product.variants[0]?.discountPercent > 0"
+                    class="discount-badge"
+                  >
+                    -{{ product.variants[0].discountPercent }}%
                   </span>
                   <img
-                    :src="getImageUrl(product.variants[0]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[0]?.imageName || 'fallback-image-default.jpg'
+                      )
+                    "
                     class="img-fluid img-default"
                     :alt="`${product.name} Default`"
                   />
                   <img
-                    :src="getImageUrl(product.variants[1]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[1]?.imageName || 'fallback-image-hover.jpg'
+                      )
+                    "
                     class="img-fluid img-hover"
                     :alt="`${product.name} Hover`"
                   />
                 </div>
-                <div class="product-name">{{ product.name }}</div>
+                <div class="product-name text-truncate">{{ product.name }}</div>
                 <div>
-                  <span class="discounted-price">
+                  <span class="discounted-price text-danger fw-bold">
                     {{
-                      product.variants[0]?.price
-                        ? product.variants[0].price.toLocaleString()
-                        : "0"
+                      product.variants[0]?.discountedPrice
+                        ? product.variants[0].discountedPrice.toLocaleString()
+                        : product.variants[0]?.price.toLocaleString() || "0"
                     }}₫
                   </span>
                   <span
-                    class="original-price"
+                    class="original-price text-muted text-decoration-line-through ms-2"
                     v-if="
-                      product.originalPrice &&
-                      product.originalPrice > product.variants[0]?.price
+                      product.variants[0]?.originalPrice &&
+                      product.variants[0]?.originalPrice >
+                        product.variants[0]?.discountedPrice
                     "
                   >
-                    {{ product.originalPrice.toLocaleString() }}₫
+                    {{ product.variants[0].originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
                 <div class="product-rating">
@@ -255,7 +228,7 @@
     </div>
 
     <!-- Đã xem gần đây -->
-    <div class="product-content-wrapper">
+    <div class="product-content-wrapper" v-if="recentViewedProducts.length > 0">
       <div class="container mt-5">
         <h3 class="text-center mb-4 fw-bold">ĐÃ XEM GẦN ĐÂY</h3>
         <div class="row g-3">
@@ -269,46 +242,56 @@
                 class="product-link"
                 @click.prevent="handleProductClick(product.productId)"
               >
-                <div class="product-item">
-                  <span class="discount-badge" v-if="product.discount">
-                    -{{ product.discount }}%
+                <div class="product-item position-relative">
+                  <span
+                    v-if="product.variants[0]?.discountPercent > 0"
+                    class="discount-badge"
+                  >
+                    -{{ product.variants[0].discountPercent }}%
                   </span>
                   <img
-                    :src="getImageUrl(product.variants[0]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[0]?.imageName || 'fallback-image-default.jpg'
+                      )
+                    "
                     class="img-fluid img-default"
                     :alt="`${product.name} Default`"
                   />
                   <img
-                    :src="getImageUrl(product.variants[1]?.imageName)"
+                    :src="
+                      getImageUrl(
+                        product.variants[1]?.imageName || 'fallback-image-hover.jpg'
+                      )
+                    "
                     class="img-fluid img-hover"
                     :alt="`${product.name} Hover`"
                   />
                 </div>
-                <div class="product-name">{{ product.name }}</div>
+                <div class="product-name text-truncate">{{ product.name }}</div>
                 <div>
-                  <span class="discounted-price">
+                  <span class="discounted-price text-danger fw-bold">
                     {{
-                      product.variants[0]?.price
-                        ? product.variants[0].price.toLocaleString()
-                        : "0"
+                      product.variants[0]?.discountedPrice
+                        ? product.variants[0].discountedPrice.toLocaleString()
+                        : product.variants[0]?.price.toLocaleString() || "0"
                     }}₫
                   </span>
                   <span
-                    class="original-price"
+                    class="original-price text-muted text-decoration-line-through ms-2"
                     v-if="
-                      product.originalPrice &&
-                      product.originalPrice > product.variants[0]?.price
+                      product.variants[0]?.originalPrice &&
+                      product.variants[0]?.originalPrice >
+                        product.variants[0]?.discountedPrice
                     "
                   >
-                    {{ product.originalPrice.toLocaleString() }}₫
+                    {{ product.variants[0].originalPrice.toLocaleString() }}₫
                   </span>
                 </div>
-
                 <div class="view-count text-muted" style="font-size: 14px">
                   <i class="bi bi-eye me-1"></i>{{ product.viewCount || 0 }}
                   <i class="bi bi-bag-check me-1 ms-3"></i>{{ product.soldCount || 0 }}
                 </div>
-
                 <div class="product-rating">
                   <span v-for="i in 5" :key="i">
                     <i
@@ -320,9 +303,9 @@
                       "
                     ></i>
                   </span>
-                  <span class="ms-1 text-muted"
-                    >({{ product.averageRating?.toFixed(1) || "0.0" }})</span
-                  >
+                  <span class="ms-1 text-muted">
+                    ({{ product.averageRating?.toFixed(1) || "0.0" }})
+                  </span>
                 </div>
               </a>
             </div>
@@ -371,12 +354,18 @@ import promotionApi from "@/api/PromotionClien";
 const topNewestProducts = ref([]);
 const recentViewedProducts = ref([]);
 const topBestSellingProducts = ref([]);
+const recentPage = ref(0);
+const recentTotalPages = ref(0);
+const recentPageSize = ref(8);
+const currentPage = ref(0);
+const totalPages = ref(0);
+const pageSize = ref(8);
 
 // Hàm getImageUrl
 const getImageUrl = (imageName) => {
   return imageName && imageName.trim()
     ? `http://localhost:8080/images/${imageName.trim()}`
-    : "/images/fallback-image.jpg";
+    : "/images/fallback-image-default.jpg";
 };
 
 // Hàm xử lý khi click vào sản phẩm
@@ -415,38 +404,47 @@ const processProducts = async (products) => {
           console.log(`Sản phẩm ${product.productId} không có biến thể`);
           return {
             ...product,
-            variants: [{ imageName: "fallback-image.jpg", price: 0 }],
+            variants: [
+              { imageName: "fallback-image-default.jpg" },
+              { imageName: "fallback-image-hover.jpg" },
+            ],
           };
         }
 
         // Chọn minVariant ưu tiên có imageName
-        let minVariant = product.variants.reduce((min, v) => {
-          if (!v.imageName && min.imageName) return min;
-          if (v.imageName && !min.imageName) return v;
-          return v.price < min.price ? v : min;
-        }, product.variants.find((v) => v.imageName) || product.variants[0]);
+        let minVariant = product.variants.find((v) => v.imageName) || product.variants[0];
+        // Chọn hoverVariant khác với minVariant
+        let hoverVariant =
+          product.variants.find(
+            (v) => v.imageName && v.imageName !== minVariant.imageName
+          ) || minVariant;
 
-        // Nếu minVariant không có imageName, lấy từ variant khác
-        if (!minVariant.imageName && product.variants.length > 1) {
-          const fallbackVariant = product.variants.find((v) => v.imageName);
-          minVariant.imageName = fallbackVariant
-            ? fallbackVariant.imageName
-            : "fallback-image.jpg";
+        // Nếu hoverVariant không có imageName hoặc giống minVariant, sử dụng fallback
+        if (!hoverVariant.imageName || hoverVariant.imageName === minVariant.imageName) {
+          hoverVariant = {
+            ...minVariant,
+            imageName: "fallback-image-hover.jpg",
+          };
         }
-
-        console.log(
-          `minVariant imageName cho sản phẩm ${product.productId}:`,
-          minVariant.imageName
-        );
 
         const promo = promotionMap.get(minVariant.productVariantId);
         if (promo) {
           const discountPercent = promo.discountAmount || 0;
           const originalPrice = minVariant.price;
           const discountedPrice = originalPrice * (1 - discountPercent / 100);
-          product.originalPrice = originalPrice;
-          minVariant = { ...minVariant, price: Math.round(discountedPrice) };
-          product.discount = discountPercent;
+          minVariant = {
+            ...minVariant,
+            originalPrice: originalPrice,
+            discountedPrice: Math.round(discountedPrice),
+            discountPercent: discountPercent,
+          };
+        } else {
+          minVariant = {
+            ...minVariant,
+            originalPrice: minVariant.price,
+            discountedPrice: minVariant.price,
+            discountPercent: 0,
+          };
         }
 
         const rating = await fetchAverageRating(product.productId);
@@ -457,10 +455,9 @@ const processProducts = async (products) => {
         );
         product.soldCount = soldResponse.data.soldCount || 0;
 
-        product.variants = [
-          minVariant,
-          ...product.variants.filter((v) => v !== minVariant),
-        ];
+        // Chỉ giữ hai biến thể: minVariant (default) và hoverVariant (hover)
+        product.variants = [minVariant, hoverVariant];
+
         return product;
       })
     );
@@ -470,38 +467,21 @@ const processProducts = async (products) => {
   }
 };
 
-const newestPage = ref(0);
-const newestTotalPages = ref(0);
-const newestPageSize = ref(8);
-
-const fetchTopNewestProducts = async (page = 0) => {
+// Fetch top 8 newest products (no pagination)
+const fetchTopNewestProducts = async () => {
   try {
-    const response = await axios.get("/api/public/products/top10", {
-      params: {
-        page,
-        size: newestPageSize.value,
-      },
-    });
-
-    const filtered = response.data.content.filter(
+    const response = await axios.get("/api/public/products/top8");
+    const filtered = response.data.filter(
       (product) =>
         product.variants &&
         product.variants.length > 0 &&
         product.variants[0]?.price !== undefined
     );
-
     topNewestProducts.value = await processProducts(filtered);
-    newestPage.value = response.data.number;
-    newestTotalPages.value = response.data.totalPages;
   } catch (error) {
     console.error("Lỗi khi lấy sản phẩm mới nhất:", error);
   }
 };
-
-// Hàm lấy sản phẩm đã xem gần đây
-const recentPage = ref(0);
-const recentTotalPages = ref(0);
-const recentPageSize = ref(8); // số sản phẩm/ trang
 
 const fetchRecentViews = async (page = 0) => {
   try {
@@ -518,27 +498,31 @@ const fetchRecentViews = async (page = 0) => {
 
     const productDTOs = response.data.content || [];
 
-    const seen = new Map();
-    productDTOs.forEach((item) => {
-      const product = item.product?.[0];
-      const variant = product?.variants?.[0];
+    // Chuyển đổi dữ liệu từ API để phù hợp với cấu trúc sản phẩm
+    const products = productDTOs
+      .map((item) => {
+        const product = item.product?.[0];
+        const variant = product?.variants?.[0];
 
-      if (
-        product?.productId &&
-        !seen.has(product.productId) &&
-        product.variants?.length > 0 &&
-        variant?.price !== undefined
-      ) {
-        seen.set(product.productId, {
-          productId: product.productId,
-          name: product.name,
-          variants: [variant],
-          viewCount: product.viewCount || 0,
-        });
-      }
-    });
+        if (
+          product?.productId &&
+          product.variants?.length > 0 &&
+          variant?.price !== undefined
+        ) {
+          return {
+            productId: product.productId,
+            name: product.name,
+            variants: product.variants, // Giữ nguyên toàn bộ variants để xử lý trong processProducts
+            viewCount: product.viewCount || 0,
+            soldCount: product.soldCount || 0,
+          };
+        }
+        return null;
+      })
+      .filter((product) => product !== null);
 
-    recentViewedProducts.value = await processProducts(Array.from(seen.values()));
+    // Sử dụng processProducts để xử lý hình ảnh và khuyến mãi
+    recentViewedProducts.value = await processProducts(products);
     recentPage.value = response.data.number;
     recentTotalPages.value = response.data.totalPages;
   } catch (error) {
@@ -552,10 +536,7 @@ const goToRecentPage = async (page) => {
   }
 };
 
-const currentPage = ref(0);
-const totalPages = ref(0);
-const pageSize = ref(8);
-
+// Fetch top best selling products
 const fetchTopBestSellingProducts = async (page = 0) => {
   try {
     const response = await axios.get("/api/public/top50-products", {
@@ -578,16 +559,6 @@ const fetchTopBestSellingProducts = async (page = 0) => {
     console.error("Lỗi khi lấy sản phẩm bán chạy:", error);
   }
 };
-
-import { computed } from "vue";
-
-const chunkedBestSellingProducts = computed(() => {
-  const chunks = [];
-  for (let i = 0; i < topBestSellingProducts.value.length; i += 4) {
-    chunks.push(topBestSellingProducts.value.slice(i, i + 4));
-  }
-  return chunks;
-});
 
 // onMounted hook
 onMounted(async () => {

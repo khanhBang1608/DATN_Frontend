@@ -3,11 +3,13 @@
     <nav class="custom-breadcrumb container">
       <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="/user/account" class="custom-breadcrumb-link custom-breadcrumb-current">Tổng quan tài khoản</a>
+      <a href="/user/account" class="custom-breadcrumb-link">Tổng quan tài khoản</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Sổ địa chỉ</a>
+      <a href="#" class="custom-breadcrumb-link">Sổ địa chỉ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Thêm địa chỉ mới</a>
+      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
+        >Thêm địa chỉ mới</a
+      >
     </nav>
   </div>
 
@@ -20,14 +22,15 @@
         <a href="/user/listaddress" class="active">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
-        <a href="#">Danh sách yêu thích</a>
+        <a href="/user/favorite">Danh sách yêu thích</a>
       </div>
 
       <div class="address-form-container col-md-10">
         <div class="mb-4">
           <h3 class="text-center fw-bold mb-3">Địa Chỉ Đặt Hàng</h3>
           <div
-            class="d-flex justify-content-between flex-column flex-sm-row align-items-start align-items-sm-center mt-3">
+            class="d-flex justify-content-between flex-column flex-sm-row align-items-start align-items-sm-center mt-3"
+          >
             <div>
               <h6 class="fw-bold mb-1">Thêm Địa Chỉ Mới</h6>
               <small class="text-muted">* Trường thông tin bắt buộc</small>
@@ -38,19 +41,35 @@
         <form @submit.prevent="submitForm" class="mt-4">
           <div class="row g-2 mb-3">
             <div class="col-sm-12 col-md-6 mb-2">
-              <label for="customerName" class="form-label address-form-label">Họ tên người nhận *</label>
-              <input type="text" v-model="form.customerName" class="form-control address-form-input" id="customerName"
-                @input="clearFieldError('customerName')" placeholder="Vui lòng nhập họ tên người nhận!" />
+              <label for="customerName" class="form-label address-form-label"
+                >Họ tên người nhận *</label
+              >
+              <input
+                type="text"
+                v-model="form.customerName"
+                class="form-control address-form-input"
+                id="customerName"
+                @input="clearFieldError('customerName')"
+                placeholder="Vui lòng nhập họ tên người nhận!"
+              />
 
               <small v-if="errors.customerName" class="text-danger">{{
                 errors.customerName
-                }}</small>
+              }}</small>
             </div>
 
             <div class="col-sm-12 col-md-6 mb-2">
-              <label for="phone" class="form-label address-form-label">Số điện thoại *</label>
-              <input type="text" v-model="form.phone" class="form-control address-form-input" id="phone"
-                @input="clearFieldError('phone')" placeholder="Vui lòng nhập số điện thoại!" />
+              <label for="phone" class="form-label address-form-label"
+                >Số điện thoại *</label
+              >
+              <input
+                type="text"
+                v-model="form.phone"
+                class="form-control address-form-input"
+                id="phone"
+                @input="clearFieldError('phone')"
+                placeholder="Vui lòng nhập số điện thoại!"
+              />
 
               <small v-if="errors.phone" class="text-danger">{{ errors.phone }}</small>
             </div>
@@ -59,12 +78,16 @@
           <div class="row g-2 mb-3">
             <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Tỉnh/Thành phố *</label>
-              <select class="form-select address-form-select" v-model="form.provinceId" @change="
-                () => {
-                  loadDistricts();
-                  clearFieldError('provinceId');
-                }
-              ">
+              <select
+                class="form-select address-form-select"
+                v-model="form.provinceId"
+                @change="
+                  () => {
+                    loadDistricts();
+                    clearFieldError('provinceId');
+                  }
+                "
+              >
                 <option value="">Tỉnh/Thành</option>
                 <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
                   {{ p.ProvinceName }}
@@ -72,17 +95,21 @@
               </select>
               <small v-if="errors.provinceId" class="text-danger">{{
                 errors.provinceId
-                }}</small>
+              }}</small>
             </div>
 
             <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Quận/Huyện *</label>
-              <select class="form-select address-form-select" v-model="form.districtId" @change="
-                () => {
-                  loadWards();
-                  clearFieldError('districtId');
-                }
-              ">
+              <select
+                class="form-select address-form-select"
+                v-model="form.districtId"
+                @change="
+                  () => {
+                    loadWards();
+                    clearFieldError('districtId');
+                  }
+                "
+              >
                 <option value="">Quận/Huyện</option>
                 <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">
                   {{ d.DistrictName }}
@@ -90,12 +117,16 @@
               </select>
               <small v-if="errors.districtId" class="text-danger">{{
                 errors.districtId
-                }}</small>
+              }}</small>
             </div>
 
             <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Phường/Xã *</label>
-              <select class="form-select address-form-select" v-model="form.wardId" @change="clearFieldError('wardId')">
+              <select
+                class="form-select address-form-select"
+                v-model="form.wardId"
+                @change="clearFieldError('wardId')"
+              >
                 <option value="">Phường/Xã</option>
                 <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">
                   {{ w.WardName }}
@@ -107,8 +138,13 @@
 
           <div class="mb-3">
             <label class="form-label address-form-label">Địa chỉ cụ thể *</label>
-            <input type="text" v-model="form.address" class="form-control address-form-input"
-              @input="clearFieldError('address')" placeholder="Vui lòng nhập địa chỉ cụ thể!" />
+            <input
+              type="text"
+              v-model="form.address"
+              class="form-control address-form-input"
+              @input="clearFieldError('address')"
+              placeholder="Vui lòng nhập địa chỉ cụ thể!"
+            />
             <small v-if="errors.address" class="text-danger">{{ errors.address }}</small>
           </div>
           <!-- <div class="mb-3 form-check">
@@ -195,8 +231,6 @@ function validateForm() {
     errors.phone = "Số điện thoại phải bắt đầu bằng 03, 05, 07, 08 hoặc 09";
     valid = false;
   }
-
-
 
   if (!form.provinceId) {
     errors.provinceId = "Vui lòng chọn Tỉnh/Thành";
@@ -316,7 +350,14 @@ async function submitForm() {
 
     // ⏳ Giữ loading và chuyển trang sau 500ms
     setTimeout(() => {
-      window.location.href = "/user/listaddress";
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirect = urlParams.get("redirect");
+
+      if (redirect === "checkout") {
+        window.location.href = "/user/checkout";
+      } else {
+        window.location.href = "/user/listaddress";
+      }
     }, 1000);
   } catch (err) {
     iziToast.error({
@@ -413,7 +454,6 @@ onMounted(() => {
 
 /* Responsive */
 @media (max-width: 576px) {
-
   .address-form-label,
   .address-form-input,
   .address-form-select,

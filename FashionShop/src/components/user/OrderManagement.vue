@@ -1,156 +1,179 @@
 <template>
   <div class="custom-breadcrumb-wrapper">
     <nav class="custom-breadcrumb container">
-      <router-link to="/" class="custom-breadcrumb-link">Trang chủ</router-link>
+      <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <router-link
-        to="/order-history"
-        class="custom-breadcrumb-link custom-breadcrumb-current"
+      <a href="/user/account" class="custom-breadcrumb-link">Tổng quan tài khoản</a>
+      <span class="custom-breadcrumb-separator">/</span>
+      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
+        >Quản lý đơn hàng</a
       >
-        Quản lý đơn hàng
-      </router-link>
     </nav>
   </div>
-  <div class="container order-management mt-3">
-    <h4 class="order-management-title text-center">Quản Lý Đơn Hàng</h4>
-    <div class="order-management-nav mt-3">
-      <!-- <router-link to="/reviews" class="order-management-nav-link">
-          Xem lịch sử đánh giá
-        </router-link> -->
-    </div>
-    <div class="row my-3">
-      <div class="col-md-9">
-        <div class="order-management-tabs">
-          <div
-            class="order-management-tab"
-            :class="{ active: selectedStatus === '' }"
-            @click="selectedStatus = ''"
-          >
-            Tất cả
+  <div class="container account-summary-container my-5">
+    <div class="row">
+      <div class="col-md-2 account-sidebar d-none d-md-block">
+        <a href="/user/account">Tổng quan tài khoản</a><br />
+        <a href="/user/profile">Thông tin của tôi</a><br />
+        <a href="/user/change-password">Đổi mật khẩu</a><br />
+        <a href="/user/listaddress">Sổ địa chỉ</a><br />
+        <a href="/user/review-history">Đánh giá của tôi</a><br />
+        <a href="#" class="active">Mua hàng & Trả hàng</a><br />
+        <a href="/user/favorite">Danh sách yêu thích</a>
+      </div>
+      <div class="container order-management col-md-10">
+        <div class="text-center mb-3">
+          <h3 class="order-management-title text-center fw-bold">Quản Lý Đơn Hàng</h3>
+          <p class="text-muted">Theo dõi và quản lý các đơn hàng của bạn</p>
+        </div>
+
+        <div class="row my-3">
+          <div class="col-md-9">
+            <div class="order-management-tabs">
+              <div
+                class="order-management-tab"
+                :class="{ active: selectedStatus === '' }"
+                @click="selectedStatus = ''"
+              >
+                Tất cả
+              </div>
+              <div
+                class="order-management-tab"
+                :class="{ active: selectedStatus === 'pending' }"
+                @click="selectedStatus = 'pending'"
+              >
+                Chờ xác nhận
+              </div>
+              <div
+                class="order-management-tab"
+                :class="{ active: selectedStatus === 'taking' }"
+                @click="selectedStatus = 'taking'"
+              >
+                Chờ lấy hàng
+              </div>
+
+              <div
+                class="order-management-tab"
+                :class="{ active: selectedStatus === 'processing' }"
+                @click="selectedStatus = 'processing'"
+              >
+                Chờ giao hàng
+              </div>
+              <div
+                class="order-management-tab"
+                :class="{ active: selectedStatus === 'delivered' }"
+                @click="selectedStatus = 'delivered'"
+              >
+                Đã giao
+              </div>
+              <div
+                class="order-management-tab"
+                :class="{ active: selectedStatus === 'returnRequested' }"
+                @click="selectedStatus = 'returnRequested'"
+              >
+                Yêu cầu trả hàng
+              </div>
+
+              <div
+                class="order-management-tab"
+                :class="{ active: selectedStatus === 'refund' }"
+                @click="selectedStatus = 'refund'"
+              >
+                Trả hàng
+              </div>
+              <div
+                class="order-management-tab"
+                :class="{ active: selectedStatus === 'cancelled' }"
+                @click="selectedStatus = 'cancelled'"
+              >
+                Đã hủy
+              </div>
+
+              <div
+                class="order-management-tab"
+                :class="{ active: selectedStatus === 'rejected' }"
+                @click="selectedStatus = 'rejected'"
+              >
+                Từ chối trả hàng
+              </div>
+            </div>
           </div>
-          <div
-            class="order-management-tab"
-            :class="{ active: selectedStatus === 'pending' }"
-            @click="selectedStatus = 'pending'"
-          >
-            Chờ xác nhận
-          </div>
-          <div
-            class="order-management-tab"
-            :class="{ active: selectedStatus === 'taking' }"
-            @click="selectedStatus = 'taking'"
-          >
-            Chờ lấy hàng
-          </div>
-          <div
-            class="order-management-tab"
-            :class="{ active: selectedStatus === 'processing' }"
-            @click="selectedStatus = 'processing'"
-          >
-            Chờ giao hàng
-          </div>
-          <div
-            class="order-management-tab"
-            :class="{ active: selectedStatus === 'delivered' }"
-            @click="selectedStatus = 'delivered'"
-          >
-            Đã giao
-          </div>
-          <div
-            class="order-management-tab"
-            :class="{ active: selectedStatus === 'returnRequested' }"
-            @click="selectedStatus = 'returnRequested'"
-          >
-            Yêu cầu trả hàng
-          </div>
-          <div
-            class="order-management-tab"
-            :class="{ active: selectedStatus === 'refund' }"
-            @click="selectedStatus = 'refund'"
-          >
-            Trả hàng
-          </div>
-          <div
-            class="order-management-tab"
-            :class="{ active: selectedStatus === 'cancelled' }"
-            @click="selectedStatus = 'cancelled'"
-          >
-            Đã hủy
-          </div>
-          <div
-            class="order-management-tab"
-            :class="{ active: selectedStatus === 'rejected' }"
-            @click="selectedStatus = 'rejected'"
-          >
-            Từ chối trả hàng
+
+          <div class="col-md-3">
+            <label for="dateFilter">Ngày đặt hàng:</label>
+            <input
+              id="dateFilter"
+              type="date"
+              class="form-control"
+              v-model="selectedDate"
+            />
           </div>
         </div>
+        <div v-if="loading" class="text-center">
+          <p>Đang tải đơn hàng...</p>
+        </div>
+        <div v-else-if="filteredOrders.length === 0" class="order-management-empty">
+          <div class="order-management-empty-icon">
+            <i class="bi bi-box text-secondary fs-3"></i>
+          </div>
+          <h2 class="order-management-empty-title">Chưa có đơn hàng</h2>
+          <p class="order-management-empty-message">Hãy đặt hàng để bắt đầu!</p>
+          <router-link to="/" class="order-management-start-btn">
+            <i class="bi bi-bag me-2"></i>
+            Bắt đầu mua sắm
+          </router-link>
+        </div>
+
+        <div v-else class="order-management-table-wrapper">
+          <table class="order-management-table">
+            <thead>
+              <tr>
+                <th>Mã đơn hàng</th>
+                <th>Ngày đặt</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="order in filteredOrders" :key="order.orderId">
+                <td>#{{ order.orderId }}</td>
+                <td>{{ formatDate(order.orderDate) }}</td>
+                <td>{{ formatPrice(order.totalAmount) }}</td>
+                <td>
+                  <span :class="getStatusClass(order.status)">
+                    {{ getStatusText(order.status) }}
+                  </span>
+                </td>
+                <td>
+                  <router-link
+                    class="order-management-action-btn view"
+                    :to="`/user/order-detail/${order.orderId}`"
+                  >
+                    <i class="bi bi-eye me-1"></i> Xem
+                  </router-link>
+
+                  <button
+                    v-if="order.status === 3"
+                    class="order-management-action-btn return"
+                    @click="openReturnModal(order.orderId)"
+                  >
+                    <i class="bi bi-box-arrow-left me-1"></i> Yêu cầu trả hàng
+                  </button>
+
+                  <button
+                    v-if="order.status === 0"
+                    class="order-management-action-btn cancel"
+                    @click="cancelOrder(order.orderId)"
+                  >
+                    <i class="bi bi-x-lg me-1"></i> Hủy
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <div class="col-md-3">
-        <label for="dateFilter">Ngày đặt hàng:</label>
-        <input id="dateFilter" type="date" class="form-control" v-model="selectedDate" />
-      </div>
-    </div>
-    <div v-if="loading" class="text-center">
-      <p>Đang tải đơn hàng...</p>
-    </div>
-    <div v-else-if="filteredOrders.length === 0" class="order-management-empty">
-      <div class="order-management-empty-icon">
-        <i class="bi bi-box text-secondary fs-3"></i>
-      </div>
-      <h2 class="order-management-empty-title">Chưa có đơn hàng</h2>
-      <p class="order-management-empty-message">Hãy đặt hàng để bắt đầu!</p>
-      <router-link to="/" class="order-management-start-btn">
-        <i class="bi bi-bag me-2"></i>
-        Bắt đầu mua sắm
-      </router-link>
-    </div>
-    <div v-else class="order-management-table-wrapper">
-      <table class="order-management-table">
-        <thead>
-          <tr>
-            <th>Mã đơn hàng</th>
-            <th>Ngày đặt</th>
-            <th>Tổng tiền</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="order in filteredOrders" :key="order.orderId">
-            <td>#{{ order.orderId }}</td>
-            <td>{{ formatDate(order.orderDate) }}</td>
-            <td>{{ formatPrice(order.totalAmount) }}</td>
-            <td>
-              <span :class="getStatusClass(order.status)">
-                {{ getStatusText(order.status) }}
-              </span>
-            </td>
-            <td>
-              <router-link
-                class="order-management-action-btn view"
-                :to="`/user/order-detail/${order.orderId}`"
-              >
-                <i class="bi bi-eye me-1"></i> Xem
-              </router-link>
-              <button
-                v-if="order.status === 3"
-                class="order-management-action-btn return"
-                @click="openReturnModal(order.orderId)"
-              >
-                <i class="bi bi-box-arrow-left me-1"></i> Yêu cầu trả hàng
-              </button>
-              <button
-                v-if="order.status === 0"
-                class="order-management-action-btn cancel"
-                @click="cancelOrder(order.orderId)"
-              >
-                <i class="bi bi-x-lg me-1"></i> Hủy
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
   <div class="modal fade" id="returnModal" tabindex="-1">

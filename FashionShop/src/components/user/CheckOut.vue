@@ -17,7 +17,13 @@ export default {
       districts: [],
       wards: [],
       addressList: [],
-      selectedAddressId: '',
+      selectedAddressId: "",
+
+      errors: {
+        fullName: "",
+        phone: "",
+        address: "",
+      },
 
       // Thông tin form
       form: {
@@ -44,11 +50,18 @@ export default {
       selectedDiscount: null,
       discountCode: '',
       discountAmount: 0,
-      discountError: '',
-    }
+      discountError: "",
+
+      showAllDiscounts: false,
+    };
   },
 
   computed: {
+    displayedDiscounts() {
+      return this.showAllDiscounts
+        ? this.validDiscounts
+        : this.validDiscounts.slice(0, 5); // Chỉ lấy 5 mã đầu
+    },
     defaultAddress() {
       return this.addressList.find((a) => a.isDefault) || this.addressList[0]
     },
@@ -62,9 +75,9 @@ export default {
       return this.isMobileOrderVisible ? 'bi-chevron-up' : 'bi-chevron-down'
     },
     validDiscounts() {
-      return this.discountList.filter(
-        (d) => d.quantityLimit !== 0 && this.subtotal >= (d.minOrderAmount || 0),
-      )
+      return this.discountList
+        .filter((d) => d.quantityLimit !== 0 && this.subtotal >= (d.minOrderAmount || 0))
+        .sort((a, b) => (b.maxDiscountAmount || 0) - (a.maxDiscountAmount || 0)); // Sắp xếp theo maxDiscountAmount từ cao đến thấp
     },
   },
 
@@ -101,20 +114,25 @@ export default {
   },
 
   methods: {
+    toggleShowDiscounts() {
+      this.showAllDiscounts = !this.showAllDiscounts;
+    },
     goToNewAddress() {
       // Đóng modal trước
       const modal = bootstrap.Modal.getInstance(document.getElementById('addressModal'))
       if (modal) modal.hide()
 
       // Điều hướng sang trang thêm địa chỉ
-      this.$router.push('/user/address')
+      this.$router.push({ path: "/user/address", query: { redirect: "checkout" } });
     },
     openAddressModal() {
       const modal = new bootstrap.Modal(document.getElementById('addressModal'))
       modal.show()
     },
     confirmAddress() {
-      this.onSelectAddress()
+      this.onSelectAddress();
+      const modal = bootstrap.Modal.getInstance(document.getElementById("addressModal"));
+      if (modal) modal.hide();
     },
     formatPrice(price) {
       return new Intl.NumberFormat('vi-VN', {
@@ -127,13 +145,13 @@ export default {
       this.isMobileOrderVisible = !this.isMobileOrderVisible
     },
 
-    applyDiscount() {
-      this.discountAmount = 0
-      this.discountCode = ''
-      this.discountError = ''
+    applyDiscount(discount) {
+      this.discountAmount = 0;
+      this.discountCode = "";
+      this.discountError = "";
+      this.selectedDiscount = discount;
 
-      const discount = this.selectedDiscount
-      if (!discount) return
+      if (!discount) return;
 
       // Kiểm tra số tiền tối thiểu, nếu không đủ thì ẩn mã giảm giá
       if (this.subtotal < (discount.minOrderAmount || 0)) {
@@ -146,7 +164,11 @@ export default {
       this.discountAmount = Math.min(percentDiscount, maxDiscount)
       this.discountCode = discount.discountCode
 
-      toast.success(`Áp dụng mã ${this.discountCode} thành công!`)
+      //  iziToast.success({
+      //   title: 'Thành công',
+      //   message: `Áp dụng mã ${this.discountCode} thành công!`,
+      //   position: 'topRight'
+      // });
     },
 
     async calculateShippingFee() {
@@ -172,16 +194,16 @@ export default {
           insuranceValue: this.subtotal,
         })
 
-        console.log('✅ Phản hồi từ API phí vận chuyển:', response)
+        console.log("Phản hồi từ API phí vận chuyển:", response);
 
         if (response && response.data && typeof response.data.total === 'number') {
           this.shippingFee = response.data.total
         } else {
-          console.warn("⚠️ Không tìm thấy 'total' trong phản hồi. Dùng mặc định 10000")
-          this.shippingFee = 10000
+          console.warn("Không tìm thấy 'total' trong phản hồi. Dùng mặc định 10000");
+          this.shippingFee = 10000;
         }
       } catch (err) {
-        console.error('❌ Không thể tính phí vận chuyển:')
+        console.error("Không thể tính phí vận chuyển:");
 
         // Ghi chi tiết nếu là lỗi từ response GHN
         if (err.response && err.response.data) {
@@ -205,20 +227,36 @@ export default {
       })
     },
     async placeOrder() {
+      this.errors = { fullName: "", phone: "", address: "" };
       if (!this.selectedAddressId) {
-        toast.error('Vui lòng chọn địa chỉ giao hàng trước khi đặt hàng.')
-        return
+        iziToast.error({
+          title: "Lỗi",
+          message: "Vui lòng chọn địa chỉ giao hàng trước khi đặt hàng.",
+          position: "topRight",
+        });
+        return;
       }
-      // Kiểm tra tên người nhận
-      const namePattern = /^[a-zA-ZÀ-ỹ\s]{1,50}$/
-      if (!namePattern.test(this.form.fullName.trim())) {
-        toast.error('Tên người nhận không hợp lệ. Vui lòng chỉ nhập chữ và tối thiểu 2 ký tự.')
-        return
+
+      const namePattern = /^[a-zA-ZÀ-ỹ\s]{2,50}$/;
+      if (!this.form.fullName.trim()) {
+        this.errors.fullName = "Vui lòng nhập tên người nhận.";
+      } else if (!namePattern.test(this.form.fullName.trim())) {
+        this.errors.fullName = "Tên chỉ được chứa chữ, tối thiểu 2 ký tự.";
       }
-      const phonePattern = /^(0[3|5|7|8|9][0-9]{8}|(\+84)[3|5|7|8|9][0-9]{8})$/
-      if (!phonePattern.test(this.form.phone.trim())) {
-        toast.error('Số điện thoại không hợp lệ. Vui lòng nhập đúng định dạng.')
-        return
+
+      const phonePattern = /^(0[3|5|7|8|9][0-9]{8}|(\+84)[3|5|7|8|9][0-9]{8})$/;
+      if (!this.form.phone.trim()) {
+        this.errors.phone = "Vui lòng nhập số điện thoại.";
+      } else if (!phonePattern.test(this.form.phone.trim())) {
+        this.errors.phone = "Số điện thoại không đúng định dạng.";
+      }
+
+      if (!this.form.address.trim()) {
+        this.errors.address = "Vui lòng nhập địa chỉ.";
+      }
+
+      if (this.errors.fullName || this.errors.phone || this.errors.address) {
+        return;
       }
 
       if (this.loading) return
@@ -250,9 +288,13 @@ export default {
           for (const item of this.cartDetails) {
             await removeCartItem(item.cartDetailId)
           }
-          toast.success(`Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`)
-          this.$router.push('/user/order-management')
-        } else if (this.paymentMethod === 'VNPAY') {
+          iziToast.success({
+            title: "Thành công",
+            message: `Đặt hàng thành công! Mã đơn hàng: #${response.orderId}`,
+            position: "topRight",
+          });
+          this.$router.push("/user/order-management");
+        } else if (this.paymentMethod === "VNPAY") {
           const requestData = {
             total: this.total,
             address: fullAddress,
@@ -284,8 +326,12 @@ export default {
           window.location.href = res.data.paymentUrl
         }
       } catch (error) {
-        console.error('Lỗi khi đặt hàng:', error)
-        toast.error('Có lỗi xảy ra khi đặt hàng.')
+        console.error("Lỗi khi đặt hàng:", error);
+        iziToast.error({
+          title: "Lỗi",
+          message: "Có lỗi xảy ra khi đặt hàng.",
+          position: "topRight",
+        });
       } finally {
         this.loading = false
       }
@@ -298,8 +344,12 @@ export default {
         this.addressList = res.data
 
         if (this.addressList.length === 0) {
-          this.$toast.warning('Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước.')
-          this.$router.push('/user/address')
+          iziToast.warning({
+            title: "Cảnh báo",
+            message: "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước.",
+            position: "topRight",
+          });
+          this.$router.push("/user/address");
         }
       } catch (err) {
         console.error('Lỗi khi lấy địa chỉ:', err)
@@ -335,21 +385,38 @@ export default {
         this.discountError = 'Không thể tải mã giảm giá.'
       })
 
-    this.fetchAddresses()
-
-    if (!localStorage.getItem('token')) {
-      toast.error('Vui lòng đăng nhập để tiếp tục.')
-      this.$router.push('/login')
+    if (!localStorage.getItem("token")) {
+      iziToast.error({
+        title: "Lỗi",
+        message: "Vui lòng đăng nhập để tiếp tục.",
+        position: "topRight",
+      });
+      this.$router.push("/login");
     } else {
       const cartDetails = localStorage.getItem('cartDetails')
       if (cartDetails) {
         this.cartDetails = JSON.parse(cartDetails)
         this.calculateShippingFee()
       } else {
-        toast.error('Không tìm thấy thông tin giỏ hàng.')
-        this.$router.push('/user/cart')
+        iziToast.error({
+          title: "Lỗi",
+          message: "Không tìm thấy thông tin giỏ hàng.",
+          position: "topRight",
+        });
+        this.$router.push("/user/cart");
       }
     }
+
+    this.fetchAddresses().then(() => {
+      if (this.addressList.length === 1) {
+        // Nếu chỉ có 1 địa chỉ, tự động chọn
+        this.selectedAddressId = this.addressList[0].addressId;
+        this.onSelectAddress();
+      } else if (this.addressList.length > 1) {
+        // Nếu nhiều địa chỉ, mở modal để chọn ngay
+        this.openAddressModal();
+      }
+    });
   },
 }
 </script>
@@ -371,34 +438,32 @@ export default {
             </button>
           </div>
 
-          <!-- Mã giảm giá -->
-          <!-- <div class="checkout-discount mb-3">
-            <div class="input-group">
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Mã giảm giá"
-                v-model="discountCode"
-              />
-              <button class="btn btn-secondary" @click="applyDiscount">Sử dụng</button>
-            </div>
-            <div v-if="discountError" class="text-danger mt-2">{{ discountError }}</div>
-          </div> -->
+          <!-- Mã giảm giá - Thiết kế mới như ảnh: các badge clickable -->
           <div class="mb-3">
             <label class="form-label fw-bold">Mã giảm giá:</label>
-            <select
-              class="form-select small-text"
-              v-model="selectedDiscount"
-              @change="applyDiscount"
-            >
-              <option v-for="d in validDiscounts" :key="d.discountId" :value="d">
-                {{ d.discountCode }} | {{ d.discountPercent }}% tối đa
-                {{ formatPrice(d.maxDiscountAmount || 0) }} | đơn từ
-                {{ formatPrice(d.minOrderAmount) }} | còn {{ d.quantityLimit }}
-              </option>
-            </select>
-
-            <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
+            <div class="d-flex flex-wrap gap-2">
+              <span
+                v-for="d in validDiscounts"
+                :key="d.discountId"
+                class="badge rounded-pill px-3 py-2 cursor-pointer"
+                :class="{
+                  'bg-primary text-white':
+                    selectedDiscount && selectedDiscount.discountId === d.discountId,
+                  'bg-light text-dark border': !(
+                    selectedDiscount && selectedDiscount.discountId === d.discountId
+                  ),
+                }"
+                @click="applyDiscount(d)"
+                style="
+                  transition: all 0.3s ease;
+                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                "
+              >
+                {{ d.discountCode }} - {{ d.discountPercent }}% (tối đa
+                {{ formatPrice(d.maxDiscountAmount || 0) }})
+              </span>
+            </div>
+            <div v-if="discountError" class="text-danger mt-2">{{ discountError }}</div>
           </div>
 
           <!-- Collapse đơn hàng -->
@@ -616,6 +681,9 @@ export default {
                   placeholder="Nhập họ và tên..."
                   v-model="form.fullName"
                 />
+                <div v-if="errors.fullName" class="text-danger small mt-1">
+                  {{ errors.fullName }}
+                </div>
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label fw-semibold">Số điện thoại</label>
@@ -625,6 +693,9 @@ export default {
                   placeholder="Nhập số điện thoại..."
                   v-model="form.phone"
                 />
+                <div v-if="errors.phone" class="text-danger small mt-1">
+                  {{ errors.phone }}
+                </div>
               </div>
             </div>
 
@@ -636,6 +707,9 @@ export default {
                 placeholder="Nhập địa chỉ chi tiết..."
                 v-model="form.address"
               />
+              <div v-if="errors.address" class="text-danger small mt-1">
+                {{ errors.address }}
+              </div>
             </div>
 
             <!-- Phương thức vận chuyển -->
@@ -719,19 +793,42 @@ export default {
               </div>
             </div>
 
+            <!-- Mã giảm giá - Thiết kế mới cho desktop -->
             <div class="mb-3">
               <label class="form-label fw-bold">Mã giảm giá:</label>
-              <select
-                class="form-select small-text"
-                v-model="selectedDiscount"
-                @change="applyDiscount"
-              >
-                <option v-for="d in validDiscounts" :key="d.discountId" :value="d">
-                  {{ d.discountCode }} | {{ d.discountPercent }}% tối đa
-                  {{ formatPrice(d.maxDiscountAmount || 0) }} | đơn từ
-                  {{ formatPrice(d.minOrderAmount) }} | còn {{ d.quantityLimit }}
-                </option>
-              </select>
+              <div class="d-flex flex-wrap gap-2">
+                <span
+                  v-for="d in displayedDiscounts"
+                  :key="d.discountId"
+                  class="badge rounded-pill px-3 py-2 cursor-pointer"
+                  :class="{
+                    'bg-primary text-white':
+                      selectedDiscount && selectedDiscount.discountId === d.discountId,
+                    'bg-light text-dark border': !(
+                      selectedDiscount && selectedDiscount.discountId === d.discountId
+                    ),
+                  }"
+                  @click="applyDiscount(d)"
+                  style="
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                  "
+                >
+                  {{ d.discountCode }} - {{ d.discountPercent }}% (tối đa
+                  {{ formatPrice(d.maxDiscountAmount || 0) }})
+                </span>
+              </div>
+
+              <!-- Nút xem thêm -->
+              <div v-if="validDiscounts.length > 5" class="mt-2">
+                <span
+                  class="text-primary choose-address"
+                  role="button"
+                  @click="toggleShowDiscounts"
+                >
+                  {{ showAllDiscounts ? "Thu gọn" : "Xem thêm" }}
+                </span>
+              </div>
 
               <div v-if="discountError" class="text-danger mt-1">{{ discountError }}</div>
             </div>
@@ -773,3 +870,12 @@ export default {
 </template>
 
 <style src="@/assets/css/checkout.css"></style>
+<style>
+.cursor-pointer {
+  cursor: pointer;
+}
+.badge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+</style>

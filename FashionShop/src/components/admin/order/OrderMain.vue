@@ -80,7 +80,7 @@
             <th>Mã đơn hàng</th>
             <th>Tên người đặt</th>
             <th>Ngày đặt hàng</th>
-            <th>Địa chỉ</th>
+
             <th>Số điện thoại</th>
             <th>Tổng tiền</th>
             <th>Phương thức thanh toán</th>
@@ -93,7 +93,7 @@
             <td>{{ order.orderId }}</td>
             <td>{{ order.userFullName || "Không xác định" }}</td>
             <td>{{ new Date(order.orderDate).toLocaleDateString("vi-VN") }}</td>
-            <td>{{ extractAddress(order.address) }}</td>
+        
             <td>{{ extractPhone(order.address) }}</td>
             <td>{{ formatPrice(order.totalAmount) }}</td>
             <td>{{ order.paymentMethod }}</td>

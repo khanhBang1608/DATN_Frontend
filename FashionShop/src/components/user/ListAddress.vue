@@ -3,24 +3,22 @@
     <nav class="custom-breadcrumb container">
       <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="/user/account" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Tổng quan tài khoản</a
-      >
+      <a href="/user/account" class="custom-breadcrumb-link">Tổng quan tài khoản</a>
       <span class="custom-breadcrumb-separator">/</span>
       <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Sổ địa chỉ</a>
     </nav>
   </div>
-  <div class="container p-4 size-body">
+  <div class="container account-summary-container my-5">
     <div class="row">
       <!-- SIDEBAR -->
       <div class="col-md-2 account-sidebar d-none d-md-block">
         <a href="/user/account">Tổng quan tài khoản</a><br />
         <a href="/user/profile">Thông tin của tôi</a><br />
         <a href="/user/change-password">Đổi mật khẩu</a><br />
-        <a href="/user/listaddress" class="active">Sổ địa chỉ</a><br />
+        <a href="#" class="active">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
-        <a href="#">Danh sách yêu thích</a>
+        <a href="/user/favorite">Danh sách yêu thích</a>
       </div>
 
       <div class="address-container col-md-10">

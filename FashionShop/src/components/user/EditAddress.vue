@@ -3,11 +3,9 @@
     <nav class="custom-breadcrumb container">
       <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="/user/account" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Tổng quan tài khoản</a
-      >
+      <a href="/user/account" class="custom-breadcrumb-link">Tổng quan tài khoản</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current">Sổ địa chỉ</a>
+      <a href="#" class="custom-breadcrumb-link">Sổ địa chỉ</a>
       <span class="custom-breadcrumb-separator">/</span>
       <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
         >Chỉnh sửa địa chỉ</a
@@ -24,7 +22,7 @@
         <a href="/user/listaddress" class="active">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
-        <a href="#">Danh sách yêu thích</a>
+        <a href="/user/favorite">Danh sách yêu thích</a>
       </div>
 
       <div class="address-form-container col-md-10">
@@ -79,15 +77,15 @@
             <div class="col-sm-12 col-md-4 mb-2">
               <label class="form-label address-form-label">Tỉnh/Thành phố *</label>
               <select
-                  class="form-select address-form-select"
-                  v-model="form.provinceId"
-                  @change="
-                    () => {
-                      loadDistricts(); // không truyền true => sẽ reset districtId + wardId
-                      clearFieldError('provinceId');
-                    }
-                  "
-                >
+                class="form-select address-form-select"
+                v-model="form.provinceId"
+                @change="
+                  () => {
+                    loadDistricts(); // không truyền true => sẽ reset districtId + wardId
+                    clearFieldError('provinceId');
+                  }
+                "
+              >
                 <option value="">Tỉnh/Thành</option>
                 <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">
                   {{ p.ProvinceName }}
@@ -237,7 +235,6 @@ function validateForm() {
     valid = false;
   }
 
-
   if (!form.provinceId) {
     errors.provinceId = "Vui lòng chọn Tỉnh/Thành";
     valid = false;
@@ -267,7 +264,6 @@ function validateForm() {
     valid = false;
   }
 
-
   return valid;
 }
 
@@ -286,7 +282,7 @@ async function loadDistricts(keepOld = false) {
     form.districtId = "";
     form.wardId = "";
   }
-   if (!form.provinceId) return;
+  if (!form.provinceId) return;
 
   const res = await fetch(
     "https://online-gateway.ghn.vn/shiip/public-api/master-data/district",
@@ -300,7 +296,6 @@ async function loadDistricts(keepOld = false) {
   districts.value = data.data || [];
 }
 
-
 async function loadWards() {
   const res = await fetch(
     `https://online-gateway.ghn.vn/shiip/public-api/master-data/ward?district_id=${form.districtId}`,
@@ -312,7 +307,6 @@ async function loadWards() {
 
 async function submitForm() {
   if (!validateForm()) return;
-  
 
   const Token = localStorage.getItem("token");
   if (!Token) {
@@ -353,27 +347,30 @@ async function submitForm() {
       }
     );
     if (res.status === 304) {
-    iziToast.warning({
-      title: "Thông báo",
-      message: "Không có sự thay đổi nào. Bạn có muốn tiếp tục sửa?",
-      position: "topRight",
-      buttons: [
-        [
-          "<button>Tiếp tục sửa</button>",
-          function () {
-            // Không làm gì, cho user tiếp tục sửa
-          },
+      iziToast.warning({
+        title: "Thông báo",
+        message: "Không có sự thay đổi nào. Bạn có muốn tiếp tục sửa?",
+        position: "topRight",
+        timeout: false,
+        buttons: [
+          [
+            "<button>Tiếp tục sửa</button>",
+            function (instance, toast) {
+              instance.hide({ transitionOut: "fadeOut" }, toast, "button");
+              isLoading.value = false;
+            },
+          ],
+          [
+            "<button>Không!</button>",
+            function () {
+              window.location.href = "/user/listaddress";
+            },
+          ],
         ],
-        [
-          "<button>Quay lại</button>",
-          function () {
-            window.location.href = "/user/listaddress";
-          },
-        ],
-      ],
-    });
-    return;
-  }
+      });
+
+      return;
+    }
 
     if (!res.ok) throw new Error("Cập nhật thất bại");
 
@@ -403,29 +400,25 @@ async function loadEditData() {
   if (!stored) return;
 
   const data = JSON.parse(stored);
-  
+
   form.customerName = data.customerName || "";
   form.phone = data.phone || "";
   form.address = data.address || "";
   form.provinceId = data.provinceId || "";
 
-  await loadDistricts(true); 
+  await loadDistricts(true);
   form.districtId = data.districtId || "";
 
-  await loadWards(); 
+  await loadWards();
   form.wardId = data.wardId || "";
 
   form.defaultAddress = data.defaultAddress || false;
 }
 
-
-
-
 onMounted(async () => {
-  await loadProvinces();     // ✅ Bây giờ dùng được await
+  await loadProvinces(); // ✅ Bây giờ dùng được await
   await loadEditData();
 });
-
 </script>
 
 <style scoped>

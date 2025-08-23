@@ -19,7 +19,7 @@
         </div>
         <div class="col-md-6">
           <label class="form-label fw-bold">Địa chỉ</label>
-          <input type="text" class="form-control" :value="extractedAddress" disabled />
+          <textarea  class="form-control" :value="extractedAddress" disabled></textarea>
         </div>
         <div class="col-md-6">
           <label class="form-label fw-bold">Số điện thoại</label>
@@ -265,6 +265,9 @@
 <script setup>
 import { onMounted, ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import Swal from "sweetalert2";
+import "izitoast/dist/css/iziToast.min.css";
+
 import {
   getOrderById,
   updateOrder,
@@ -556,6 +559,7 @@ async function printGhnLabel() {
   }
 }
 
+
 onMounted(() => {
   if (!isNaN(orderId.value)) fetchOrderData()
 })
@@ -567,3 +571,4 @@ watch(
   },
 )
 </script>
+

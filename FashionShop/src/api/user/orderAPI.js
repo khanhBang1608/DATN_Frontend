@@ -56,3 +56,9 @@ export const syncGhnStatus = async (orderId) => {
     throw new Error(err.response?.data?.message || 'Không thể đồng bộ trạng thái GHN.');
   }
 };
+export const checkReturnStatus = async (orderId) => {
+  const res = await axios.get(`${BASE_URL}/${orderId}/return-status`, {
+    headers: getAuthHeaders(),
+  });
+  return res.data;
+};
