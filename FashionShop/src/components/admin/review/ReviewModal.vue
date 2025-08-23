@@ -7,7 +7,6 @@
           <button
             type="button"
             class="btn-close btn-close-white"
-            data-bs-dismiss="modal"
             @click="closeModal"
           ></button>
         </div>
@@ -119,7 +118,6 @@
           <button
             type="button"
             class="btn btn-secondary"
-            data-bs-dismiss="modal"
             @click="closeModal"
           >
             Đóng
@@ -145,6 +143,7 @@
 import { getReviewById, hideReview, deleteReview } from "@/api/admin/reviewAPI";
 import { Modal } from "bootstrap";
 import { nextTick } from "vue";
+import Swal from "sweetalert2";
 
 export default {
   name: "ReviewModal",
@@ -190,7 +189,7 @@ export default {
       try {
         const newHiddenState = !this.review.isHidden;
         await hideReview(this.reviewId, newHiddenState);
-        this.review.isHidden = newHiddenState; // Cập nhật trạng thái giao diện
+        this.review.isHidden = newHiddenState;
       } catch (error) {
         console.error("Error toggling hide review:", error.message);
         this.error = "Không thể thay đổi trạng thái ẩn/hiện.";
@@ -199,7 +198,17 @@ export default {
       }
     },
     async deleteReview() {
-      if (!confirm("Bạn có chắc muốn xóa đánh giá này?")) return;
+      const result = await Swal.fire({
+        title: "Bạn có chắc muốn xóa đánh giá này?",
+        text: "Hành động này không thể hoàn tác!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Xóa",
+        cancelButtonText: "Hủy",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+      });
+      if (!result.isConfirmed) return;
       this.loading = true;
       this.error = null;
       try {
@@ -227,13 +236,26 @@ export default {
       }
     },
     closeModal() {
-      if (this.modalInstance) {
-        this.modalInstance.hide();
-        this.modalInstance.dispose?.();
-        this.modalInstance = null;
-      }
-      this.review = null;
-      this.$emit("close");
+      Swal.fire({
+        title: "Bạn có chắc muốn đóng?",
+        text: "Hành động này sẽ đóng cửa sổ chi tiết đánh giá.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Đồng ý",
+        cancelButtonText: "Hủy",
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          if (this.modalInstance) {
+            this.modalInstance.hide();
+            this.modalInstance.dispose?.();
+            this.modalInstance = null;
+          }
+          this.review = null;
+          this.$emit("close");
+        }
+      });
     },
   },
   watch: {

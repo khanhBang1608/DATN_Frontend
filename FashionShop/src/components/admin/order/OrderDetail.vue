@@ -279,7 +279,6 @@ import {
   approveOrderAPI
 } from '@/api/admin/orderAPI'
 import { useToast } from 'vue-toastification'
-import Swal from 'sweetalert2'
 
 const BASE_IMAGE_URL = 'http://localhost:8080'
 
