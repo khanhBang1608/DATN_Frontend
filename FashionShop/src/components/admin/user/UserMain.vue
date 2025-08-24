@@ -44,7 +44,7 @@
             class="admin-search-text"
             :placeholder="searchType === 'name' ? 'Nhập họ tên...' : 'Nhập email...'"
             v-model="searchQuery"
-            @input="fetchUsers(0)"
+            @input="fetchUsersDebounced(0)"
           />
           <i class="bi bi-search admin-search-icon"></i>
         </div>
@@ -171,8 +171,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue"; // Thêm computed
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
+import { debounce } from "lodash";
 import axios from "axios";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
@@ -329,6 +330,10 @@ const formatDate = (dateStr) => {
         year: "numeric",
       });
 };
+
+const fetchUsersDebounced = debounce((page) => {
+  fetchUsers(page);
+}, 500); // Chờ 500ms trước khi gọi API
 
 onMounted(fetchUsers);
 </script>
