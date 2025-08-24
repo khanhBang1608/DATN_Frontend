@@ -147,8 +147,8 @@ function handleSearch() {
         class="container d-flex flex-column flex-md-row justify-content-between align-items-center py-2"
       >
         <div class="contact-info d-none d-md-block">
-          <a href="tel:0378447716">Hotline: 037 844 7716</a> |
-          <a href="mailto:bytecrew@gmail.com">Gmail: customers@lhex.vnã</a>
+          <a href="tel:0378447716">Hotline: 077 9824 008</a> |
+          <a href="mailto:bytecrew@gmail.com">Gmail: Bangtkpc08621@gmail.com</a>
         </div>
 
         <div

@@ -93,7 +93,7 @@
             <td>{{ order.orderId }}</td>
             <td>{{ order.userFullName || "Không xác định" }}</td>
             <td>{{ new Date(order.orderDate).toLocaleDateString("vi-VN") }}</td>
-        
+
             <td>{{ extractPhone(order.address) }}</td>
             <td>{{ formatPrice(order.totalAmount) }}</td>
             <td>{{ order.paymentMethod }}</td>
@@ -115,7 +115,10 @@
                 >Xem</router-link
               >
               <button
-                v-if="order.status === 0"
+                v-if="
+                  (order.status === 0 || order.status === 1) &&
+                  order.paymentMethod !== 'VNPAY'
+                "
                 class="btn btn-danger btn-sm"
                 @click="cancelOrder(order.orderId)"
               >
@@ -300,10 +303,20 @@ export default {
       this.loading = true;
       try {
         const order = await getOrderById(orderId);
-        if (order.status !== 0) {
-          this.toast.warning('Chỉ có thể hủy đơn hàng ở trạng thái "Chờ xác nhận".');
+        if (![0, 1].includes(order.status)) {
+          this.toast.warning(
+            'Chỉ có thể hủy đơn hàng ở trạng thái "Chờ xác nhận" hoặc "Chờ lấy hàng".'
+          );
           return;
         }
+        // Nếu là VNPAY thì không cho hủy
+        if (order.paymentMethod && order.paymentMethod.toUpperCase() === "VNPAY") {
+          this.toast.warning(
+            "Đơn hàng thanh toán qua VNPAY không thể tự hủy. Vui lòng liên hệ hỗ trợ."
+          );
+          return;
+        }
+
         await updateOrder(orderId, { ...order, status: 5 });
         await this.fetchOrders();
         this.toast.success("Đơn hàng đã được hủy.");
