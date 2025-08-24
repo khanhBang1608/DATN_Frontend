@@ -30,6 +30,12 @@ export function setupFilterSidebar() {
       collapseEl.removeEventListener("show.bs.collapse", handleShow);
       collapseEl.removeEventListener("hide.bs.collapse", handleHide);
 
+      // Khởi tạo Collapse instance với tùy chọn không phụ thuộc vào accordion
+      const collapseInstance = new Collapse(collapseEl, {
+        toggle: false,
+        parent: null // Loại bỏ hành vi accordion
+      });
+
       collapseEl.addEventListener("show.bs.collapse", handleShow);
       collapseEl.addEventListener("hide.bs.collapse", handleHide);
     });
@@ -41,7 +47,6 @@ export function setupFilterSidebar() {
     });
   }
 
-
   function logClick(event) {
     console.log("Accordion button clicked:", event.currentTarget.getAttribute("data-bs-target"), new Date().toISOString());
   }
@@ -50,55 +55,50 @@ export function setupFilterSidebar() {
     if (desktopSidebar && mobileSidebar) {
       console.log("syncSidebarContent called at:", new Date().toISOString());
 
-      // Dọn collapse đang mở trước khi thay HTML
       mobileSidebar.querySelectorAll(".accordion-collapse.show").forEach((el) => {
         el.classList.remove("show");
       });
 
-      // Thay nội dung từ desktop → mobile
       mobileSidebar.innerHTML = desktopSidebar.innerHTML
         .replace(/priceMinDesktop/g, "priceMinMobile")
         .replace(/priceMaxDesktop/g, "priceMaxMobile")
         .replace(/priceFromDesktop/g, "priceFromMobile")
         .replace(/priceToDesktop/g, "priceToMobile");
 
-      // ✅ Gắn lại thuộc tính cho toggle button
       const toggleButtons = mobileSidebar.querySelectorAll(".accordion-btn");
       toggleButtons.forEach((btn) => {
         const targetId = btn.getAttribute("data-bs-target");
         if (targetId) {
-          btn.setAttribute("data-bs-toggle", "collapse");
           const collapseEl = mobileSidebar.querySelector(targetId);
           if (collapseEl) {
-            collapseEl.setAttribute("data-bs-parent", "#filterAccordionMobile");
-            new Collapse(collapseEl, { toggle: false });
+            new Collapse(collapseEl, {
+              toggle: false,
+              parent: null // Đảm bảo collapse hoạt động độc lập
+            });
           }
         }
       });
 
-      // Sự kiện show/hide accordion
       initCollapseEvents(mobileSidebar);
-
-      // Gắn lại input price
       initPriceInputEvents();
     }
   }
 
-
   function resetAllCollapses(container) {
     container.querySelectorAll(".accordion-collapse.show").forEach((el) => {
+      const collapseInstance = Collapse.getInstance(el);
+      if (collapseInstance) {
+        collapseInstance.hide();
+      }
       el.classList.remove("show");
     });
   }
 
-
-
-  // Khởi tạo ban đầu
   initCollapseEvents(desktopSidebar);
-  // Chỉ gọi syncSidebarContent khi cần
   if (window.innerWidth <= 768) {
     syncSidebarContent();
   }
+
   window.addEventListener('resize', function () {
     const isMobile = window.innerWidth <= 768;
     if (lastIsMobile !== isMobile) {
@@ -106,7 +106,6 @@ export function setupFilterSidebar() {
     }
   });
 
-  // Toggle sidebar
   if (toggleBtn) {
     toggleBtn.addEventListener("click", () => {
       const isMobile = window.innerWidth <= 768;
@@ -125,17 +124,12 @@ export function setupFilterSidebar() {
     });
   }
 
-  
-
-  // Ẩn sidebar khi scroll xuống
   window.addEventListener("scroll", () => {
     if (!sidebar || window.innerWidth <= 768) return;
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    sidebar.classList.toggle("hide-sidebar", scrollTop > lastScrollTop);
     lastScrollTop = Math.max(scrollTop, 0);
   });
 
-  // Chỉ sync lại nội dung khi chuyển mobile ↔ desktop
   window.addEventListener("resize", () => {
     const currentView = window.innerWidth <= 768;
     if (currentView !== isMobileView) {
@@ -149,8 +143,6 @@ export function setupFilterSidebar() {
     }
   });
 
-
-  // Định dạng tiền
   const formatMoney = (value) => {
     const numValue = parseFloat(value);
     return isNaN(numValue) ? "0" : new Intl.NumberFormat("vi-VN").format(numValue);

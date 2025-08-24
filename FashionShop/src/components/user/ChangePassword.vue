@@ -3,12 +3,10 @@
     <nav class="custom-breadcrumb container">
       <a href="#" class="custom-breadcrumb-link">Trang chủ</a>
       <span class="custom-breadcrumb-separator">/</span>
-      <a href="/user/account" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Tổng quan tài khoản</a
-      >
+      <a href="/user/account" class="custom-breadcrumb-link">Tổng quan tài khoản</a>
       <span class="custom-breadcrumb-separator">/</span>
       <a href="#" class="custom-breadcrumb-link custom-breadcrumb-current"
-        >Đổi Mật Khẩu</a
+        >Đổi mật khẩu</a
       >
     </nav>
   </div>
@@ -22,11 +20,14 @@
         <a href="/user/listaddress">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
-        <a href="#">Danh sách yêu thích</a>
+        <a href="/user/favorite">Danh sách yêu thích</a>
       </div>
 
       <div class="change-password-container col-md-10">
-        <h3 class="text-center change-password-title">Đổi Mật Khẩu</h3>
+        <div class="text-center mb-3">
+          <h3 class="text-center change-password-title fw-bold">Đổi Mật Khẩu</h3>
+          <p class="text-muted">Cập nhật mật khẩu mới để bảo vệ tài khoản của bạn</p>
+        </div>
 
         <form @submit.prevent="handleChangePassword">
           <div class="mb-3">

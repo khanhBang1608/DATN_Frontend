@@ -148,7 +148,7 @@ function handleSearch() {
       >
         <div class="contact-info d-none d-md-block">
           <a href="tel:0378447716">Hotline: 037 844 7716</a> |
-          <a href="mailto:bytecrew@gmail.com">Gmail: bytecrew@gmail.com</a>
+          <a href="mailto:bytecrew@gmail.com">Gmail: customers@lhex.vnã</a>
         </div>
 
         <div
@@ -177,7 +177,7 @@ function handleSearch() {
 
     <nav class="navbar navbar-light bg-white d-block d-lg-none">
       <div class="container">
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="/">
           <img src="@/assets/img/logo-brand.png" alt="Nike Logo" height="45" />
         </a>
         <div class="d-flex align-items-center d-lg-none">
@@ -330,7 +330,7 @@ function handleSearch() {
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white d-none d-lg-block">
       <div class="container">
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="/">
           <img src="@/assets/img/logo-brand.png" alt="Nike Logo" height="54" />
         </a>
         <div class="collapse navbar-collapse" id="navbarNav">

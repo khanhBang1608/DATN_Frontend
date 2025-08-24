@@ -1,5 +1,4 @@
-<script>
-</script>
+<script></script>
 <template>
   <div class="custom-breadcrumb-wrapper">
     <nav class="custom-breadcrumb container">
@@ -20,7 +19,7 @@
         <a href="/user/listaddress">Sổ địa chỉ</a><br />
         <a href="/user/review-history">Đánh giá của tôi</a><br />
         <a href="/user/order-management">Mua hàng & Trả hàng</a><br />
-        <a href="#">Danh sách yêu thích</a>
+        <a href="/user/favorite">Danh sách yêu thích</a>
       </div>
 
       <div class="col-md-10">
@@ -35,7 +34,9 @@
               <p class="account-card-desc">
                 Quản lý thông tin hồ sơ, thông tin đăng nhập và sở thích đăng ký của bạn
               </p>
-              <a href="/user/profile" class="account-card-link">Chỉnh sửa hồ sơ của bạn</a>
+              <a href="/user/profile" class="account-card-link"
+                >Chỉnh sửa hồ sơ của bạn</a
+              >
             </div>
           </div>
 
@@ -46,7 +47,9 @@
               <p class="account-card-desc">
                 Thay đổi mật khẩu đăng nhập của bạn để bảo vệ tài khoản an toàn hơn
               </p>
-              <a href="/user/change-password" class="account-card-link">Thay đổi mật khẩu</a>
+              <a href="/user/change-password" class="account-card-link"
+                >Thay đổi mật khẩu</a
+              >
             </div>
           </div>
 
@@ -57,7 +60,9 @@
               <p class="account-card-desc">
                 Thêm và chỉnh sửa địa chỉ thanh toán và giao hàng của bạn
               </p>
-              <a href="/user/listaddress" class="account-card-link">Quản lý địa chỉ của bạn</a>
+              <a href="/user/listaddress" class="account-card-link"
+                >Quản lý địa chỉ của bạn</a
+              >
             </div>
           </div>
 
@@ -68,7 +73,9 @@
               <p class="account-card-desc">
                 Xem và chỉnh sửa các đánh giá bạn đã gửi cho sản phẩm
               </p>
-              <a href="/user/review-history" class="account-card-link">Xem đánh giá của bạn</a>
+              <a href="/user/review-history" class="account-card-link"
+                >Xem đánh giá của bạn</a
+              >
             </div>
           </div>
 
@@ -92,7 +99,9 @@
               <p class="account-card-desc">
                 Xem lại và quản lý các sản phẩm bạn đã thêm vào danh sách yêu thích
               </p>
-              <a href="#" class="account-card-link">Xem danh sách yêu thích</a>
+              <a href="/user/favorite" class="account-card-link"
+                >Xem danh sách yêu thích</a
+              >
             </div>
           </div>
         </div>

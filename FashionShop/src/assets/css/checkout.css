@@ -4,6 +4,31 @@
     margin-bottom: 20px;
 }
 
+.discount-card {
+  min-width: 120px;                 /* nhỏ gọn hơn */
+  padding: 8px 12px;                /* thu padding lại */
+  font-size: 0.85rem;               /* chữ nhỏ gọn */
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.discount-card:hover {
+  transform: translateY(-2px);      /* hover nhẹ hơn */
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
+  border-color: #007bff;
+}
+
+.discount-card.selected {
+  border: 1.5px solid #007bff;
+  background: #f0f8ff;
+  color: #007bff;
+}
+
+
+
 /* .checkout-form .form-control,
 .checkout-form .form-select {
     border-radius: 6px;
