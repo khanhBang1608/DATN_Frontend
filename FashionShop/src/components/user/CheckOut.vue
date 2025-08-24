@@ -358,7 +358,7 @@ export default {
             message: "Bạn chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ trước.",
             position: "topRight",
           });
-          this.$router.push("/user/address");
+          this.$router.push({ path: "/user/address", query: { redirect: "checkout" } });
         }
       } catch (err) {
         console.error("Lỗi khi lấy địa chỉ:", err);

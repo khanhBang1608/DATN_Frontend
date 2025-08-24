@@ -216,14 +216,14 @@
 <script>
 import { getUserOrders, cancelOrder, requestReturn } from "@/api/user/orderAPI";
 import { createReview, checkReviewsForOrderDetails } from "@/api/user/reviewAPI";
-import { useToast } from "vue-toastification";
 import axios from "axios";
+import iziToast from "izitoast";
 
-const toast = useToast();
 export async function getProductIdByVariantId(variantId) {
   const res = await axios.get(`/api/public/variants/${variantId}/product-id`);
   return res.data.productId;
 }
+
 export default {
   data() {
     return {
@@ -232,12 +232,12 @@ export default {
       selectedStatus: "",
       selectedOrder: null,
       loading: false,
-      activeReviewCollapse: null, // Theo dõi collapse đang mở
-      reviewRatings: {}, // Lưu rating cho từng orderDetailId
-      reviewComments: {}, // Lưu comment cho từng orderDetailId
-      reviewTypes: {}, // Lưu loại đánh giá cho từng orderDetailId
-      filePreviews: {}, // Lưu preview URL cho từng orderDetailId
-      mediaFiles: {}, // Lưu file gốc cho từng orderDetailId
+      activeReviewCollapse: null,
+      reviewRatings: {},
+      reviewComments: {},
+      reviewTypes: {},
+      filePreviews: {},
+      mediaFiles: {},
       returnReason: "",
       returnFile: null,
       returnFilePreview: null,
@@ -274,7 +274,6 @@ export default {
         return matchesStatus && matchesDate;
       });
 
-      // 👉 Sắp xếp theo trạng thái tăng dần
       return result.sort((a, b) => a.status - b.status);
     },
   },
@@ -297,7 +296,11 @@ export default {
 
       const maxSize = 20 * 1024 * 1024;
       if (file.size > maxSize) {
-        toast.error("File quá lớn! Vui lòng chọn file dưới 20MB.");
+        iziToast.error({
+          title: "Lỗi",
+          message: "File quá lớn! Vui lòng chọn file dưới 20MB.",
+          position: "topRight",
+        });
         return;
       }
 
@@ -310,7 +313,13 @@ export default {
     },
 
     async submitReturn() {
-      if (!this.returnReason.trim()) return toast.error("Vui lòng nhập lý do trả hàng.");
+      if (!this.returnReason.trim()) {
+        return iziToast.error({
+          title: "Lỗi",
+          message: "Vui lòng nhập lý do trả hàng.",
+          position: "topRight",
+        });
+      }
 
       const form = new FormData();
       form.append("reason", this.returnReason);
@@ -326,24 +335,41 @@ export default {
         this.orders = this.orders.map((order) =>
           order.orderId === this.returnOrderId ? { ...order, status: 4 } : order
         );
-        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${this.returnOrderId}`);
+        iziToast.success({
+          title: "Thành công",
+          message: `Đã gửi yêu cầu trả hàng cho đơn hàng #${this.returnOrderId}`,
+          position: "topRight",
+        });
 
         const modalEl = document.getElementById("returnModal");
         const modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.hide();
       } catch (err) {
-        toast.error(err.response?.data?.message || "Gửi yêu cầu trả hàng thất bại.");
+        iziToast.error({
+          title: "Lỗi",
+          message: err.response?.data?.message || "Gửi yêu cầu trả hàng thất bại.",
+          position: "topRight",
+        });
       }
     },
+
     async requestReturn(orderId) {
       try {
         await requestReturn(orderId);
         this.orders = this.orders.map((order) =>
           order.orderId === orderId ? { ...order, status: 4 } : order
         );
-        toast.success(`Đã gửi yêu cầu trả hàng cho đơn hàng #${orderId}`);
+        iziToast.success({
+          title: "Thành công",
+          message: `Đã gửi yêu cầu trả hàng cho đơn hàng #${orderId}`,
+          position: "topRight",
+        });
       } catch (error) {
-        toast.error(error.message || "Gửi yêu cầu trả hàng thất bại.");
+        iziToast.error({
+          title: "Lỗi",
+          message: error.message || "Gửi yêu cầu trả hàng thất bại.",
+          position: "topRight",
+        });
       }
     },
 
@@ -353,6 +379,7 @@ export default {
         currency: "VND",
       }).format(price);
     },
+
     formatDate(date) {
       return new Date(date).toLocaleDateString("vi-VN", {
         day: "2-digit",
@@ -360,6 +387,7 @@ export default {
         year: "numeric",
       });
     },
+
     getStatusText(status) {
       const statusMap = {
         0: "Chờ xác nhận",
@@ -373,6 +401,7 @@ export default {
       };
       return statusMap[status] || "Không xác định";
     },
+
     getStatusClass(status) {
       return {
         "status status-pending": status === 0,
@@ -390,14 +419,13 @@ export default {
       this.loading = true;
       try {
         this.orders = await getUserOrders();
-        console.log("Đơn hàng từ API:", this.orders);
         const orderDetailIds = this.orders
           .filter((order) => order.status === 3)
           .flatMap((order) => order.orderDetails.map((item) => item.orderDetailId));
+
         if (orderDetailIds.length > 0) {
           try {
             const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
-            console.log("Trạng thái đánh giá:", reviewStatus);
             this.orders = this.orders.map((order) => ({
               ...order,
               orderDetails: order.orderDetails.map((item) => ({
@@ -406,29 +434,49 @@ export default {
               })),
             }));
           } catch (error) {
-            console.error("Lỗi khi kiểm tra trạng thái đánh giá:", error);
-            toast.error("Không thể kiểm tra trạng thái đánh giá.");
+            iziToast.error({
+              title: "Lỗi",
+              message: "Không thể kiểm tra trạng thái đánh giá.",
+              position: "topRight",
+            });
           }
         }
-        toast.success("Tải danh sách đơn hàng thành công!");
+        // iziToast.success({
+        //   title: "Thành công",
+        //   message: "Tải danh sách đơn hàng thành công!",
+        //   position: "topRight",
+        // });
       } catch (error) {
-        console.error("Lỗi khi tải đơn hàng:", error);
-        toast.error(error.message || "Không thể tải danh sách đơn hàng.");
+        iziToast.error({
+          title: "Lỗi",
+          message: error.message || "Không thể tải danh sách đơn hàng.",
+          position: "topRight",
+        });
       } finally {
         this.loading = false;
       }
     },
+
     async cancelOrder(orderId) {
       try {
         await cancelOrder(orderId);
         this.orders = this.orders.map((o) =>
           o.orderId === orderId ? { ...o, status: 5 } : o
         );
-        toast.success(`Đã hủy đơn hàng #${orderId}`);
+        iziToast.success({
+          title: "Thành công",
+          message: `Đã hủy đơn hàng #${orderId}`,
+          position: "topRight",
+        });
       } catch (error) {
-        toast.error(error.message || "Hủy đơn hàng thất bại.");
+        iziToast.error({
+          title: "Lỗi",
+          message: error.message || "Hủy đơn hàng thất bại.",
+          position: "topRight",
+        });
       }
     },
+
     toggleReviewCollapse(orderDetailId) {
       this.activeReviewCollapse =
         this.activeReviewCollapse === orderDetailId ? null : orderDetailId;
@@ -440,19 +488,25 @@ export default {
         this.mediaFiles[orderDetailId] = null;
       }
     },
+
     setReviewRating(orderDetailId, rating) {
       this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: rating };
     },
+
     handleFileUpload(event, orderDetailId) {
       const file = event.target.files[0];
       if (!file) return;
 
-      const maxSize = 5 * 1024 * 1024; // 5MB
+      const maxSize = 5 * 1024 * 1024;
       const imageTypes = ["image/jpeg", "image/png", "image/gif"];
       const videoTypes = ["video/mp4", "video/webm", "video/ogg"];
 
       if (file.size > maxSize) {
-        toast.error("File quá lớn! Vui lòng chọn file dưới 5MB.");
+        iziToast.error({
+          title: "Lỗi",
+          message: "File quá lớn! Vui lòng chọn file dưới 5MB.",
+          position: "topRight",
+        });
         return;
       }
 
@@ -460,7 +514,11 @@ export default {
         this.reviewTypes[orderDetailId] === "image" &&
         !imageTypes.includes(file.type)
       ) {
-        toast.error("Vui lòng chọn file hình ảnh (jpg, png, gif)!");
+        iziToast.error({
+          title: "Lỗi",
+          message: "Vui lòng chọn file hình ảnh (jpg, png, gif)!",
+          position: "topRight",
+        });
         return;
       }
 
@@ -468,36 +526,45 @@ export default {
         this.reviewTypes[orderDetailId] === "video" &&
         !videoTypes.includes(file.type)
       ) {
-        toast.error("Vui lòng chọn file video (mp4, webm, ogg)!");
+        iziToast.error({
+          title: "Lỗi",
+          message: "Vui lòng chọn file video (mp4, webm, ogg)!",
+          position: "topRight",
+        });
         return;
       }
 
-      // Lưu file gốc để gửi FormData
       this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: file };
-
-      // Tạo preview
       const reader = new FileReader();
       reader.onload = () => {
         this.filePreviews = { ...this.filePreviews, [orderDetailId]: reader.result };
       };
       reader.readAsDataURL(file);
     },
+
     async submitReview(orderDetailId, productName) {
       if (!this.reviewRatings[orderDetailId]) {
-        toast.error("Vui lòng chọn số sao đánh giá");
-        return;
+        return iziToast.error({
+          title: "Lỗi",
+          message: "Vui lòng chọn số sao đánh giá",
+          position: "topRight",
+        });
       }
       if (!this.reviewComments[orderDetailId]?.trim()) {
-        toast.error("Vui lòng nhập bình luận");
-        return;
+        return iziToast.error({
+          title: "Lỗi",
+          message: "Vui lòng nhập bình luận",
+          position: "topRight",
+        });
       }
       if (this.reviewTypes[orderDetailId] !== "text" && !this.mediaFiles[orderDetailId]) {
-        toast.error(
-          `Vui lòng tải lên ${
+        return iziToast.error({
+          title: "Lỗi",
+          message: `Vui lòng tải lên ${
             this.reviewTypes[orderDetailId] === "image" ? "hình ảnh" : "video"
-          }`
-        );
-        return;
+          }`,
+          position: "topRight",
+        });
       }
 
       try {
@@ -514,7 +581,6 @@ export default {
 
         await createReview(formData);
 
-        // Cập nhật trạng thái reviewed trong orders và selectedOrder
         this.orders = this.orders.map((o) =>
           o.orderId === this.selectedOrder.orderId
             ? {
@@ -534,13 +600,11 @@ export default {
           ),
         };
 
-        // Gọi lại checkReviewsForOrderDetails để đồng bộ với backend
         const orderDetailIds = this.selectedOrder.orderDetails.map(
           (item) => item.orderDetailId
         );
         if (orderDetailIds.length > 0) {
           const reviewStatus = await checkReviewsForOrderDetails(orderDetailIds);
-          console.log("Trạng thái đánh giá sau khi gửi:", reviewStatus);
           this.orders = this.orders.map((o) =>
             o.orderId === this.selectedOrder.orderId
               ? {
@@ -561,7 +625,6 @@ export default {
           };
         }
 
-        // Reset collapse và dữ liệu form
         this.activeReviewCollapse = null;
         this.reviewRatings = { ...this.reviewRatings, [orderDetailId]: 0 };
         this.reviewComments = { ...this.reviewComments, [orderDetailId]: "" };
@@ -569,18 +632,32 @@ export default {
         this.filePreviews = { ...this.filePreviews, [orderDetailId]: null };
         this.mediaFiles = { ...this.mediaFiles, [orderDetailId]: null };
 
-        toast.success(`Đã gửi đánh giá cho sản phẩm ${productName}`);
+        iziToast.success({
+          title: "Thành công",
+          message: `Đã gửi đánh giá cho sản phẩm ${productName}`,
+          position: "topRight",
+        });
       } catch (error) {
-        toast.error(error.message || "Gửi đánh giá thất bại.");
+        iziToast.error({
+          title: "Lỗi",
+          message: error.message || "Gửi đánh giá thất bại.",
+          position: "topRight",
+        });
       }
     },
+
     handleImageError(event) {
       event.target.src = "https://via.placeholder.com/50?text=No+Image";
     },
   },
+
   mounted() {
     if (!localStorage.getItem("token")) {
-      toast.error("Vui lòng đăng nhập để xem đơn hàng.");
+      iziToast.error({
+        title: "Lỗi",
+        message: "Vui lòng đăng nhập để xem đơn hàng.",
+        position: "topRight",
+      });
       this.$router.push("/login");
     } else {
       this.fetchOrders();

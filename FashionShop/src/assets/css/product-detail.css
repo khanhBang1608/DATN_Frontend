@@ -64,7 +64,7 @@
 .product-detail-fullscreen-icon {
     position: absolute;
     bottom: 25px;
-    left: 30%;
+    left: 55%;
     transform: translateX(-50%);
     z-index: 10;
     cursor: pointer;
@@ -74,6 +74,10 @@
 .product-detail-fullscreen-icon i {
     font-size: 18px;
     color: black;
+}
+
+.product-detail-gallery {
+  position: relative;
 }
 
 /* ========== Swiper di động (đổi class) ========== */
