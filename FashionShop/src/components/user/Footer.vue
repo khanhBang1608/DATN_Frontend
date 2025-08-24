@@ -20,14 +20,14 @@
             </p>
             <p class="mb-1">
               Hotline:
-              <a href="tel:0378447716" class="text-decoration-none text-dark">
-                0378 447 716
+              <a href="tel:0779824008" class="text-decoration-none text-dark">
+                077 9824 008
               </a>
             </p>
             <p class="mb-2">
               Email:
-              <a href="mailto:customers@lhex.vn" class="text-decoration-none text-dark">
-                customers@lhex.vn
+              <a href="mailto:Bangtkpc08621@gmail.com" class="text-decoration-none text-dark">
+                Bangtkpc08621@gmail.com
               </a>
             </p>
           </div>
@@ -275,14 +275,14 @@
             </p>
             <p class="mb-1">
               Hotline:
-              <a href="tel:0378447716" class="text-decoration-none text-dark">
-                0378 447 716
+              <a href="tel:0779824008" class="text-decoration-none text-dark">
+                077 9824 008
               </a>
             </p>
             <p class="mb-2">
               Email:
-              <a href="mailto:customers@lhex.vn" class="text-decoration-none text-dark">
-                customers@lhex.vn
+              <a href="mailto:Bangtkpc08621@gmail.com" class="text-decoration-none text-dark">
+                Bangtkpc08621@gmail.com
               </a>
             </p>
 
