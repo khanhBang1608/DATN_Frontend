@@ -64,7 +64,6 @@
       </section>
 
       <!-- Liên hệ hỗ trợ -->
-      <!-- Liên hệ hỗ trợ -->
       <section id="lien-he" class="policy-block">
         <h2 class="section-title">5. Liên hệ hỗ trợ</h2>
         <div class="contact-card">
@@ -74,7 +73,7 @@
           </p>
           <div class="contact-item">
             <span class="contact-label">📧 Email:</span>
-            <a href="mailto:support@fashionstore.com">support@l'hex.com</a>
+            <a href="mailto:support@fashionstore.com">customers@lhex.vn</a>
           </div>
           <div class="contact-item">
             <span class="contact-label">📞 Hotline:</span>

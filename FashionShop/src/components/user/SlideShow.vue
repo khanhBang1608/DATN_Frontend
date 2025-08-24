@@ -10,7 +10,9 @@
         <div class="slider-info">
           <h2 class="slider-title">{{ slide.title }}</h2>
           <p class="slider-description">{{ slide.description }}</p>
-          <a href="#" class="slider-button">{{ slide.button }}</a>
+          <a :href="slide.link" class="slider-button">
+            {{ slide.button }}
+          </a>
         </div>
       </div>
     </div>

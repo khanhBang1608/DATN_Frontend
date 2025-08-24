@@ -13,7 +13,6 @@ import "izitoast/dist/css/iziToast.min.css";
 import Editor from "@tinymce/tinymce-vue";
 
 const errors = ref({});
-
 const router = useRouter();
 const products = ref([]);
 const token = localStorage.getItem("token");
@@ -22,14 +21,13 @@ const showModal = ref(false);
 const isEditing = ref(false);
 const currentProductId = ref(null);
 
-// ... (phần còn lại của code hiện có của bạn)
-
 const product = ref({
   name: "",
   description: "",
   status: true,
   categoryId: "",
 });
+
 // Bộ lọc nâng cao
 const filters = ref({
   searchType: "product", // "product" hoặc "category"
@@ -41,6 +39,11 @@ const filters = ref({
   priceSort: "",
 });
 
+const categories = ref([]);
+const totalPages = ref(0);
+const currentPage = ref(0);
+const pageSize = ref(8);
+
 const resetFilter = () => {
   filters.value = {
     searchType: "product",
@@ -51,12 +54,45 @@ const resetFilter = () => {
     interactionSort: "",
     priceSort: "",
   };
+  iziToast.info({
+    title: "Thông báo",
+    message: "Đã xóa tất cả bộ lọc.",
+    position: "topRight",
+  });
 };
 
-const categories = ref([]);
+const fetchProducts = async (page = 0) => {
+  try {
+    const response = await axios.get(
+      `http://localhost:8080/api/admin/products?page=${page}&size=${pageSize.value}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
-const totalPages = ref(0);
-const currentPage = ref(0);
+    products.value = response.data.products;
+    totalPages.value = response.data.totalPages;
+    currentPage.value = response.data.currentPage;
+
+    // Lấy stock song song cho nhanh
+    await Promise.all(
+      products.value.map(async (p) => {
+        try {
+          const stockData = await getTotalStockByProductId(p.productId);
+          p.totalStock = stockData.totalStock;
+        } catch {
+          p.totalStock = 0;
+        }
+      })
+    );
+  } catch (error) {
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không thể tải danh sách sản phẩm.",
+      position: "topRight",
+    });
+  }
+};
 
 const filteredProducts = computed(() => {
   let list = [...products.value];
@@ -107,37 +143,57 @@ const filteredProducts = computed(() => {
   return list;
 });
 
-const fetchProducts = async (page = 0) => {
-  try {
-    const response = await axios.get(
-      `http://localhost:8080/api/admin/products?page=${page}&size=8`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
+const displayedPages = computed(() => {
+  const pages = [];
+  const maxPagesToShow = 5;
+
+  if (totalPages.value <= maxPagesToShow) {
+    for (let i = 1; i <= totalPages.value; i++) {
+      pages.push(i);
+    }
+  } else {
+    pages.push(1);
+    if (currentPage.value < 3) {
+      pages.push(2, 3, 4);
+      if (totalPages.value > 4) {
+        pages.push("...");
       }
-    );
+      pages.push(totalPages.value);
+    } else if (currentPage.value >= totalPages.value - 2) {
+      if (totalPages.value > 4) {
+        pages.push("...");
+      }
+      pages.push(
+        totalPages.value - 3,
+        totalPages.value - 2,
+        totalPages.value - 1,
+        totalPages.value
+      );
+    } else {
+      pages.push("...");
+      const startPage = currentPage.value + 1;
+      const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (!pages.includes(i)) pages.push(i);
+      }
+      if (endPage < totalPages.value) {
+        pages.push(totalPages.value);
+      }
+    }
+  }
 
-    products.value = response.data.products;
-    totalPages.value = response.data.totalPages;
-    currentPage.value = response.data.currentPage;
+  return pages;
+});
 
-    // Lấy stock song song cho nhanh
-    await Promise.all(
-      products.value.map(async (p) => {
-        try {
-          const stockData = await getTotalStockByProductId(p.productId);
-          p.totalStock = stockData.totalStock;
-        } catch {
-          p.totalStock = 0;
-        }
-      })
-    );
-  } catch (error) {
-    console.error("Lỗi khi tải sản phẩm:", error);
+const changePage = (page) => {
+  if (page >= 0 && page < totalPages.value) {
+    currentPage.value = page;
+    fetchProducts(page);
   }
 };
 
 watch(
-  () => ({ ...filters.value }),
+  filters,
   () => {
     currentPage.value = 0;
     fetchProducts(0);
@@ -149,7 +205,11 @@ const fetchCategories = async () => {
   try {
     categories.value = await getAllCategories();
   } catch (error) {
-    console.error("Không tải được danh mục:", error);
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không tải được danh mục.",
+      position: "topRight",
+    });
   }
 };
 
@@ -157,6 +217,7 @@ const openAddModal = async () => {
   isEditing.value = false;
   currentProductId.value = null;
   product.value = { name: "", description: "", status: true, categoryId: "" };
+  errors.value = {};
   await fetchCategories();
   showModal.value = true;
 };
@@ -164,17 +225,22 @@ const openAddModal = async () => {
 const openEditModal = async (id) => {
   isEditing.value = true;
   currentProductId.value = id;
+  errors.value = {};
   await fetchCategories();
   try {
     product.value = await getProductById(id);
     showModal.value = true;
   } catch (error) {
-    console.error("Lỗi khi tải sản phẩm:", error);
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không tải được thông tin sản phẩm.",
+      position: "topRight",
+    });
   }
 };
 
 const handleSubmit = async () => {
-  errors.value = {}; // reset lỗi trước
+  errors.value = {};
 
   try {
     if (!product.value.name?.trim())
@@ -192,19 +258,19 @@ const handleSubmit = async () => {
       iziToast.success({
         title: "Thành công",
         message: "Cập nhật sản phẩm thành công",
-        position: "topRight", // ✅ đặt đúng vị trí
+        position: "topRight",
       });
     } else {
       await addProduct(product.value);
       iziToast.success({
         title: "Thành công",
         message: "Thêm sản phẩm thành công",
-        position: "topRight", // ✅ đặt đúng vị trí
+        position: "topRight",
       });
     }
 
     showModal.value = false;
-    await fetchProducts();
+    await fetchProducts(currentPage.value);
   } catch (error) {
     if (error.response?.status === 400 && typeof error.response.data === "string") {
       const lines = error.response.data.split("\n");
@@ -214,12 +280,10 @@ const handleSubmit = async () => {
       });
     } else {
       iziToast.error({
-        title: "Lỗi hệ thống",
+        title: "Lỗi",
         message: error.message || "Đã xảy ra lỗi không xác định.",
-        position: "topRight", // ✅ thêm dòng này
+        position: "topRight",
       });
-
-      console.error(error);
     }
   }
 };
@@ -253,44 +317,6 @@ const formatDate = (dateStr) => {
   )}/${d.getFullYear()}`;
 };
 
-const displayedPages = computed(() => {
-  const pages = [];
-  const maxPagesToShow = 5;
-
-  if (totalPages.value <= maxPagesToShow) {
-    for (let i = 1; i <= totalPages.value; i++) {
-      pages.push(i);
-    }
-  } else {
-    pages.push(1);
-    if (currentPage.value < 3) {
-      pages.push(2, 3, 4);
-      if (totalPages.value > 4) {
-        pages.push("...");
-      }
-      pages.push(totalPages.value);
-    } else if (currentPage.value >= totalPages.value - 2) {
-      if (totalPages.value > 4) {
-        pages.push("...");
-      }
-      pages.push(
-        totalPages.value - 3,
-        totalPages.value - 2,
-        totalPages.value - 1,
-        totalPages.value
-      );
-    } else {
-      pages.push("...");
-      pages.push(currentPage.value, currentPage.value + 1, currentPage.value + 2);
-      if (currentPage.value + 2 < totalPages.value - 1) {
-        pages.push("...");
-      }
-      pages.push(totalPages.value);
-    }
-  }
-
-  return pages;
-});
 const systemStats = ref({
   totalVariants: 0,
   totalStock: 0,
@@ -302,21 +328,20 @@ const fetchSystemStats = async () => {
     systemStats.value.totalVariants = data.totalVariants;
     systemStats.value.totalStock = data.totalStock;
   } catch (error) {
-    console.error("Lỗi khi tải thống kê hệ thống:", error);
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không tải được thống kê hệ thống.",
+      position: "topRight",
+    });
   }
 };
 
 onMounted(async () => {
-  await fetchProducts(); // load sản phẩm
-  await fetchSystemStats(); // load thống kê toàn hệ thống
+  await fetchProducts(0);
+  await fetchSystemStats();
 });
-
-const changePage = (page) => {
-  if (page >= 0 && page < totalPages.value) {
-    fetchProducts(page);
-  }
-};
 </script>
+
 <template>
   <div class="card p-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
@@ -469,8 +494,14 @@ const changePage = (page) => {
           </tr>
         </thead>
         <tbody>
+          <tr v-if="filteredProducts.length === 0">
+            <td colspan="11" class="text-center text-white fs-5 py-4">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Không có
+              sản phẩm nào được tìm thấy.
+            </td>
+          </tr>
           <tr v-for="(product, index) in filteredProducts" :key="product.productId">
-            <td>{{ index + 1 + currentPage * 10 }}</td>
+            <td>{{ index + 1 + currentPage * pageSize }}</td>
             <td>
               <img
                 :src="
@@ -502,7 +533,6 @@ const changePage = (page) => {
                 </span>
               </div>
             </td>
-
             <td>{{ formatPrice(getMinPrice(product.variants)) }}</td>
             <td>
               <span :class="['badge', product.status ? 'bg-success' : 'bg-danger']">
@@ -536,8 +566,6 @@ const changePage = (page) => {
       >
         &lt; Trước
       </div>
-
-      <!-- Hiển thị các trang động -->
       <div
         v-for="page in displayedPages"
         :key="page"
@@ -547,7 +575,6 @@ const changePage = (page) => {
       >
         {{ page }}
       </div>
-
       <div
         class="admin-button admin-next"
         :class="{ disabled: currentPage === totalPages - 1 }"
@@ -558,7 +585,7 @@ const changePage = (page) => {
     </div>
   </div>
 
-  <!-- 🔽 Modal Thêm/Cập nhật Sản phẩm -->
+  <!-- Modal Thêm/Cập nhật Sản phẩm -->
   <div
     v-if="showModal"
     class="modal fade show d-block"
@@ -584,7 +611,6 @@ const changePage = (page) => {
                 class="form-control"
                 :class="{ 'is-invalid': errors.name }"
               />
-
               <div class="invalid-feedback" v-if="errors.name">{{ errors.name }}</div>
             </div>
 

@@ -148,7 +148,7 @@ function handleSearch() {
       >
         <div class="contact-info d-none d-md-block">
           <a href="tel:0378447716">Hotline: 037 844 7716</a> |
-          <a href="mailto:bytecrew@gmail.com">Gmail: customers@lhex.vnã</a>
+          <a href="mailto:bytecrew@gmail.com">Gmail: customers@lhex.vn</a>
         </div>
 
         <div
