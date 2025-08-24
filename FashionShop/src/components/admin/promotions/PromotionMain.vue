@@ -368,8 +368,12 @@ const applyFilters = async () => {
     filtered = filtered.filter((p) => p.discountAmount <= +filters.value.discountMax);
 
   if (filters.value.isCurrentlyActive) {
-    filtered = filtered.filter((p) => p.startDate <= today && p.endDate >= today);
-  }
+  const now = new Date();
+  filtered = filtered.filter(
+    (p) => new Date(p.startDate) <= now && new Date(p.endDate) >= now
+  );
+}
+
 
   promotions.value = filtered;
 };
@@ -393,6 +397,12 @@ const changePage = (page) => {
   }
 };
 
+const toDateTimeLocal = (dateStr) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return date.toISOString().slice(0, 16); // yyyy-MM-ddTHH:mm
+};
+
 const openModal = async (id = null) => {
   currentId.value = id;
   isEdit.value = !!id;
@@ -404,8 +414,8 @@ const openModal = async (id = null) => {
     const promo = res.data;
     form.value = {
       ...promo,
-      startDate: promo.startDate?.split("T")[0],
-      endDate: promo.endDate?.split("T")[0],
+      startDate: toDateTimeLocal(promo.startDate),
+      endDate: toDateTimeLocal(promo.endDate),
     };
   } else {
     form.value = {
@@ -419,6 +429,7 @@ const openModal = async (id = null) => {
   }
   showModal.value = true;
 };
+
 
 const closeModal = () => {
   showModal.value = false;
@@ -507,18 +518,26 @@ const goToPromotionProducts = (id) => {
 const formatDiscount = (val) => `${val} %`;
 
 const formatDate = (d) =>
-  new Date(d).toLocaleDateString("vi-VN", {
+  new Date(d).toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
+
 
 const clearError = (field) => (errors.value[field] = null);
 
 const isCurrentlyActive = (promo) => {
-  const today = new Date().toISOString().split("T")[0];
-  return promo.status === true && promo.startDate <= today && promo.endDate >= today;
+  const now = new Date();
+  return (
+    promo.status === true &&
+    new Date(promo.startDate) <= now &&
+    new Date(promo.endDate) >= now
+  );
 };
+
 
 const displayedPages = computed(() => {
   const pages = [];
