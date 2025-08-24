@@ -458,11 +458,14 @@ const formatCurrency = (value) =>
   new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(value);
 
 const formatDate = (dateStr) =>
-  new Date(dateStr).toLocaleDateString("vi-VN", {
+  new Date(dateStr).toLocaleString("vi-VN", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
+
 
 const clearError = (field) => {
   errors.value[field] = null;
@@ -488,14 +491,15 @@ watch(
 
 // Hàm kiểm tra trạng thái thực tế
 const isActive = (discount) => {
-  const today = new Date().toISOString().split("T")[0];
+  const now = new Date();
   return (
     discount.status === true &&
     discount.quantityLimit > 0 &&
-    discount.startDate <= today &&
-    discount.endDate >= today
+    new Date(discount.startDate) <= now &&
+    new Date(discount.endDate) >= now
   );
 };
+
 
 const filteredDiscounts = computed(() => {
   return discounts.value.filter((d) => {
