@@ -116,7 +116,7 @@
                 class="btn btn-sm btn-info m-1"
                 @click="viewReview(review.reviewId)"
               >
-                <i class="bi bi-eye-fill"></i> Xem đánh giá
+                <i class="bi bi-eye-fill"></i> Xem
               </button>
             </td>
           </tr>
