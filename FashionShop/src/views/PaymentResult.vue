@@ -1,12 +1,12 @@
 <script setup>
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute, useRouter } from "vue-router";
 import { createOrder } from "@/api/user/orderAPI";
 import { clearCart } from "@/api/user/cartAPI";
-import { useToast } from 'vue-toastification';
+import iziToast from "izitoast"; // ✅ import iziToast
+import "izitoast/dist/css/iziToast.min.css"; // ✅ import CSS
 
 const route = useRoute();
 const router = useRouter();
-const toast = useToast();
 
 const vnpStatus = route.query.vnp_TransactionStatus;
 
@@ -17,18 +17,34 @@ if (vnpStatus === "00") {
       .then(async () => {
         await clearCart();
         localStorage.removeItem("pendingOrder");
-        toast.success("Thanh toán & đặt hàng thành công!");
+        iziToast.success({
+          title: "Thành công",
+          message: "Thanh toán & đặt hàng thành công!",
+          position: "topRight",
+        });
         router.push("/user/order-management");
       })
       .catch(() => {
-        toast.error("Tạo đơn hàng thất bại sau khi thanh toán.");
+        iziToast.error({
+          title: "Lỗi",
+          message: "Tạo đơn hàng thất bại sau khi thanh toán.",
+          position: "topRight",
+        });
       });
   } else {
-    toast.error("Không tìm thấy đơn hàng để xác nhận.");
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không tìm thấy đơn hàng để xác nhận.",
+      position: "topRight",
+    });
     router.push("/");
   }
 } else {
-  toast.error("Thanh toán thất bại hoặc bị hủy.");
+  iziToast.error({
+    title: "Thanh toán thất bại",
+    message: "Thanh toán thất bại hoặc bị hủy.",
+    position: "topRight",
+  });
   setTimeout(() => {
     router.push("/user/cart");
   }, 2000);

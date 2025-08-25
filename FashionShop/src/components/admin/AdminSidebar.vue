@@ -28,7 +28,7 @@ function goLogout() {
         </li>
         <li>
           <i class="fas fa-headset fa-fw"></i>
-          <router-link to="/admin/order">Quản lí đơn</router-link>
+          <router-link to="/admin/order">Đơn hàng</router-link>
         </li>
         <li>
           <i class="fas fa-users fa-fw"></i>

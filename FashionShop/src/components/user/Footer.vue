@@ -101,14 +101,16 @@
               >
                 <div class="accordion-body">
                   <ul class="list-unstyled small ps-3">
-                    <li><a href="#">Kiểm tra trạng thái đơn hàng</a></li>
-                    <li><a href="#">Câu hỏi thường gặp</a></li>
-                    <li><a href="#">Liên hệ</a></li>
-                    <li><a href="#">CẢNH GIÁC LỪA ĐẢO</a></li>
-                    <li><a href="#">Ưu đãi thành viên</a></li>
-                    <li><a href="#">Chính sách Giao Hàng</a></li>
-                    <li><a href="#">Chính sách Bảo hành & Đổi trả</a></li>
-                    <li><a href="#">Bảng quy đổi kích thước</a></li>
+                    <li>
+                      <a href="/user/order-management">Kiểm tra trạng thái đơn hàng</a>
+                    </li>
+                    <!-- <li><a href="#">Câu hỏi thường gặp</a></li> -->
+                    <li><a href="/contact-us">Liên hệ</a></li>
+                    <!-- <li><a href="#">CẢNH GIÁC LỪA ĐẢO</a></li> -->
+                    <!-- <li><a href="#">Ưu đãi thành viên</a></li> -->
+                    <li><a href="/contact">Chính sách Giao Hàng</a></li>
+                    <li><a href="/contact">Chính sách Bảo hành & Đổi trả</a></li>
+                    <!-- <li><a href="#">Bảng quy đổi kích thước</a></li> -->
                   </ul>
                 </div>
               </div>
@@ -135,9 +137,9 @@
               >
                 <div class="accordion-body">
                   <ul class="list-unstyled small ps-3">
-                    <li><a href="#">Về thương hiệu</a></li>
-                    <li><a href="#">Phát triển bền vững</a></li>
-                    <li><a href="#">Nhượng quyền thương mại</a></li>
+                    <li><a href="/about">Về thương hiệu</a></li>
+                    <li><a href="/about">Phát triển bền vững</a></li>
+                    <!-- <li><a href="#">Nhượng quyền thương mại</a></li> -->
                   </ul>
                 </div>
               </div>
@@ -164,9 +166,9 @@
               >
                 <div class="accordion-body">
                   <ul class="list-unstyled small ps-3">
-                    <li><a href="#">Định vị cửa hàng</a></li>
-                    <li><a href="#">Hướng dẫn thời trang</a></li>
-                    <li><a href="#">Khuyến mãi</a></li>
+                    <li><a href="/contact-us">Định vị cửa hàng</a></li>
+                    <li><a href="/contact">Hướng dẫn thời trang</a></li>
+                    <!-- <li><a href="">Khuyến mãi</a></li> -->
                   </ul>
                 </div>
               </div>
@@ -193,9 +195,9 @@
               >
                 <div class="accordion-body">
                   <ul class="list-unstyled small ps-3">
-                    <li><a href="#">Điều khoản sử dụng</a></li>
-                    <li><a href="#">Chính sách bảo mật</a></li>
-                    <li><a href="#">Chính sách Cookies</a></li>
+                    <li><a href="/contact">Điều khoản sử dụng</a></li>
+                    <li><a href="/contact">Chính sách bảo mật</a></li>
+                    <!-- <li><a href="#">Chính sách Cookies</a></li> -->
                   </ul>
                 </div>
               </div>
@@ -208,41 +210,41 @@
           <div class="col-md-2 footer-column">
             <h6 class="footer-heading fw-bold">CẦN GIÚP ĐỠ?</h6>
             <ul class="footer-list list-unstyled small">
-              <li><a href="#">Kiểm tra trạng thái đơn hàng</a></li>
-              <li><a href="#">Câu hỏi thường gặp</a></li>
-              <li><a href="#">Liên hệ</a></li>
-              <li><a href="#">CẢNH GIÁC LỪA ĐẢO</a></li>
-              <li><a href="#">Ưu đãi thành viên</a></li>
-              <li><a href="#">Chính sách Giao Hàng</a></li>
-              <li><a href="#">Chính sách Bảo hành & Đổi trả</a></li>
-              <li><a href="#">Bảng quy đổi kích thước</a></li>
+              <li><a href="/user/order-management">Kiểm tra trạng thái đơn hàng</a></li>
+              <!-- <li><a href="">Câu hỏi thường gặp</a></li> -->
+              <li><a href="/contact-us">Liên hệ</a></li>
+              <!-- <li><a href="#">CẢNH GIÁC LỪA ĐẢO</a></li>
+              <li><a href="#">Ưu đãi thành viên</a></li> -->
+              <li><a href="/contact">Chính sách Giao Hàng</a></li>
+              <li><a href="/contact">Chính sách Bảo hành & Đổi trả</a></li>
+              <!-- <li><a href="#">Bảng quy đổi kích thước</a></li> -->
             </ul>
           </div>
 
           <div class="col-md-2 footer-column">
             <h6 class="footer-heading fw-bold">VỀ CHÚNG TÔI</h6>
             <ul class="footer-list list-unstyled small">
-              <li><a href="#">Về thương hiệu</a></li>
-              <li><a href="#">Phát triển bền vững</a></li>
-              <li><a href="#">Nhượng quyền thương mại</a></li>
+              <li><a href="/about">Về thương hiệu</a></li>
+              <li><a href="/about">Phát triển bền vững</a></li>
+              <!-- <li><a href="#">Nhượng quyền thương mại</a></li> -->
             </ul>
           </div>
 
           <div class="col-md-2 footer-column">
             <h6 class="footer-heading fw-bold">MUA SẮM NÀO</h6>
             <ul class="footer-list list-unstyled small">
-              <li><a href="#">Định vị cửa hàng</a></li>
-              <li><a href="#">Hướng dẫn thời trang</a></li>
-              <li><a href="#">Khuyến mãi</a></li>
+              <li><a href="/contact-us">Định vị cửa hàng</a></li>
+              <li><a href="/contact">Hướng dẫn thời trang</a></li>
+              <!-- <li><a href="">Khuyến mãi</a></li> -->
             </ul>
           </div>
 
           <div class="col-md-2 footer-column">
             <h6 class="footer-heading fw-bold">PHÁP LÝ</h6>
             <ul class="footer-list list-unstyled small">
-              <li><a href="#">Điều khoản sử dụng</a></li>
-              <li><a href="#">Chính sách bảo mật</a></li>
-              <li><a href="#">Chính sách Cookies</a></li>
+              <li><a href="/contact">Điều khoản sử dụng</a></li>
+              <li><a href="/contact">Chính sách bảo mật</a></li>
+              <!-- <li><a href="#">Chính sách Cookies</a></li> -->
             </ul>
           </div>
 
