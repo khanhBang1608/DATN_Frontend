@@ -316,7 +316,7 @@ onMounted(async () => {
       <div v-if="errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
       <div class="row g-3 mb-3">
         <div class="col-md-3">
-          <label class="form-label">Sắp xếp màu</label>
+          <label class="form-label">Tìm kiếm màu</label>
           <div class="admin-search-box">
             <select class="admin-select" v-model="filterColorId">
               <option value="">Tất cả màu</option>
@@ -327,7 +327,7 @@ onMounted(async () => {
           </div>
         </div>
         <div class="col-md-3">
-          <label class="form-label">Sắp xếp kích thước</label>
+          <label class="form-label">Tìm kiếm kích thước</label>
           <div class="admin-search-box">
             <select class="admin-select" v-model="filterSizeId">
               <option value="">Tất cả kích thước</option>
