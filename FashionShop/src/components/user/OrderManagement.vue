@@ -217,7 +217,9 @@
 import { getUserOrders, cancelOrder, requestReturn } from "@/api/user/orderAPI";
 import { createReview, checkReviewsForOrderDetails } from "@/api/user/reviewAPI";
 import axios from "axios";
+import Swal from "sweetalert2";
 import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
 export async function getProductIdByVariantId(variantId) {
   const res = await axios.get(`/api/public/variants/${variantId}/product-id`);
@@ -459,15 +461,29 @@ export default {
 
     async cancelOrder(orderId) {
       try {
-        await cancelOrder(orderId);
-        this.orders = this.orders.map((o) =>
-          o.orderId === orderId ? { ...o, status: 5 } : o
-        );
-        iziToast.success({
-          title: "Thành công",
-          message: `Đã hủy đơn hàng #${orderId}`,
-          position: "topRight",
+        const result = await Swal.fire({
+          title: "Bạn có chắc chắn?",
+          text: `Bạn có chắc muốn hủy đơn hàng #${orderId}?`,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonColor: "#d33",
+          cancelButtonColor: "#3085d6",
+          confirmButtonText: "Có, hủy ngay!",
+          cancelButtonText: "Không",
         });
+
+        if (result.isConfirmed) {
+          await cancelOrder(orderId);
+          this.orders = this.orders.map((o) =>
+            o.orderId === orderId ? { ...o, status: 5 } : o
+          );
+
+          iziToast.success({
+            title: "Thành công",
+            message: `Đã hủy đơn hàng #${orderId}`,
+            position: "topRight",
+          });
+        }
       } catch (error) {
         iziToast.error({
           title: "Lỗi",
