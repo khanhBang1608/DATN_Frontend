@@ -62,7 +62,6 @@
 
       <!-- Nút lọc -->
       <div>
-        <!-- <button class="btn btn-primary me-2" @click="applyFilters">Áp dụng bộ lọc</button> -->
         <button class="btn btn-secondary" @click="clearFilters">Xóa tất cả bộ lọc</button>
       </div>
     </div>
@@ -80,7 +79,6 @@
             <th>Mã đơn hàng</th>
             <th>Tên người đặt</th>
             <th>Ngày đặt hàng</th>
-
             <th>Số điện thoại</th>
             <th>Tổng tiền</th>
             <th>Phương thức thanh toán</th>
@@ -89,11 +87,16 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-if="filteredOrders.length === 0">
+            <td colspan="8" class="text-center text-white fs-5 py-4">
+              <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Không có
+              đơn hàng nào được tìm thấy.
+            </td>
+          </tr>
           <tr v-for="order in filteredOrders" :key="order.orderId">
             <td>{{ order.orderId }}</td>
             <td>{{ order.userFullName || "Không xác định" }}</td>
             <td>{{ new Date(order.orderDate).toLocaleDateString("vi-VN") }}</td>
-
             <td>{{ extractPhone(order.address) }}</td>
             <td>{{ formatPrice(order.totalAmount) }}</td>
             <td>{{ order.paymentMethod }}</td>
@@ -132,140 +135,115 @@
     <div v-if="totalPages > 1" class="admin-pagination">
       <div
         class="admin-button admin-prev"
-        :disabled="currentPage === 0"
-        @click="fetchOrders(currentPage - 1)"
+        :class="{ disabled: currentPage === 0 }"
+        @click="changePage(currentPage - 1)"
       >
-        &lt; prev
+        &lt; Trước
       </div>
-
       <div
-        v-for="page in totalPages"
+        v-for="page in displayedPages"
         :key="page"
         class="admin-page"
-        :class="{ active: currentPage === page - 1 }"
-        @click="fetchOrders(page - 1)"
+        :class="{ active: currentPage === page - 1, ellipsis: page === '...' }"
+        @click="page !== '...' && changePage(page - 1)"
       >
         {{ page }}
       </div>
-
       <div
         class="admin-button admin-next"
-        :disabled="currentPage >= totalPages - 1"
-        @click="fetchOrders(currentPage + 1)"
+        :class="{ disabled: currentPage === totalPages - 1 }"
+        @click="changePage(currentPage + 1)"
       >
-        next &gt;
+        Sau &gt;
       </div>
     </div>
   </div>
 </template>
-
 <script>
 import { getAllOrders, getOrderById, updateOrder } from "@/api/admin/orderAPI";
 import Datepicker from "vue3-datepicker";
-import { useToast } from "vue-toastification";
+import Swal from "sweetalert2";
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
+import { ref, computed, watch, onMounted } from "vue";
 
 export default {
   name: "OrderMain",
   components: { Datepicker },
-  data() {
-    return {
-      orders: [],
-      filteredOrders: [],
-      loading: false,
-      filters: {
-        status: [],
-        startDate: null,
-        endDate: null,
-        userFullName: "",
-        totalPages: 0,
-        currentPage: 0,
-      },
-      debounceTimer: null,
-      statusOptions: [
-        "Chờ xác nhận", // 0
-        "Chờ lấy hàng", // 1
-        "Chờ giao hàng", // 2
-        "Đã giao", // 3
-        "Yêu cầu trả hàng", // 4
-        "Đã hủy", // 5
-        "Trả hàng đã duyệt", // 6
-        "Từ chối trả hàng", // 7 -> CÁI NÀY MÀY VIẾT CHƯA CHẮC CHẮN
-      ],
+  setup() {
+    const token = localStorage.getItem("token") || "";
 
-      toast: useToast(),
-    };
-  },
+    // Data
+    const orders = ref([]);
+    const loading = ref(false);
+    const totalPages = ref(0);
+    const currentPage = ref(0);
+    const pageSize = ref(8);
 
-  watch: {
-    // ✅ Tự động lọc khi thay đổi status, startDate, endDate
-    "filters.status": {
-      handler() {
-        this.applyFilters();
-      },
-      deep: true,
-    },
-    "filters.startDate"() {
-      this.applyFilters();
-    },
-    "filters.endDate"() {
-      this.applyFilters();
-    },
-    // ✅ Debounce khi nhập tên
-    "filters.userFullName"(val) {
-      clearTimeout(this.debounceTimer);
-      this.debounceTimer = setTimeout(() => {
-        this.applyFilters();
-      }, 500);
-    },
-  },
-  methods: {
-    extractPhone(address) {
-      return address?.split(" - ")[0] || "Không xác định";
-    },
-    extractAddress(address) {
-      return address?.split(" - ")[2] || address;
-    },
+    const filters = ref({
+      status: [],
+      startDate: null,
+      endDate: null,
+      userFullName: "",
+    });
 
-    formatPrice(price) {
-      return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-      }).format(price);
-    },
-    orderStatus(status) {
-      return this.statusOptions[status] || "Không xác định";
-    },
-    async fetchOrders(pageNum = 0) {
-      this.loading = true;
+    const statusOptions = [
+      "Chờ xác nhận", // 0
+      "Chờ lấy hàng", // 1
+      "Chờ giao hàng", // 2
+      "Đã giao", // 3
+      "Yêu cầu trả hàng", // 4
+      "Đã hủy", // 5
+      "Trả hàng đã duyệt", // 6
+      "Từ chối trả hàng", // 7
+    ];
+
+    // Fetch orders
+    const fetchOrders = async (page = 0) => {
+      loading.value = true;
       try {
-        const res = await getAllOrders(pageNum, 8);
-        this.orders = res.content;
-        this.totalPages = res.totalPages;
-        this.currentPage = res.currentPage || pageNum;
-        this.applyFilters();
+        const res = await getAllOrders(page, pageSize.value);
+        orders.value = res.content;
+        totalPages.value = res.totalPages;
+        currentPage.value = res.currentPage || page;
       } catch (err) {
         if (err.message.includes("Access denied")) {
-          this.toast.error(
-            "Bạn không có quyền truy cập. Vui lòng đăng nhập tài khoản admin."
-          );
+          iziToast.error({
+            title: "Lỗi",
+            message: "Bạn không có quyền truy cập. Vui lòng đăng nhập tài khoản admin.",
+            position: "topRight",
+          });
           this.$router.push("/login");
         } else {
-          this.toast.error("Không thể tải danh sách đơn hàng.");
+          iziToast.error({
+            title: "Lỗi",
+            message: "Không thể tải danh sách đơn hàng.",
+            position: "topRight",
+          });
         }
       } finally {
-        this.loading = false;
+        loading.value = false;
       }
-    },
-    applyFilters() {
-      let result = [...this.orders];
+    };
 
-      if (this.filters.status.length > 0) {
-        result = result.filter((o) => this.filters.status.includes(o.status));
+    // Change page
+    const changePage = (page) => {
+      if (page >= 0 && page < totalPages.value) {
+        fetchOrders(page);
+      }
+    };
+
+    // Filtered orders
+    const filteredOrders = computed(() => {
+      let result = [...orders.value];
+
+      if (filters.value.status.length > 0) {
+        result = result.filter((o) => filters.value.status.includes(o.status));
       }
 
-      if (this.filters.startDate && this.filters.endDate) {
-        const start = new Date(this.filters.startDate);
-        const end = new Date(this.filters.endDate);
+      if (filters.value.startDate && filters.value.endDate) {
+        const start = new Date(filters.value.startDate);
+        const end = new Date(filters.value.endDate);
         end.setHours(23, 59, 59, 999);
         result = result.filter((o) => {
           const orderDate = new Date(o.orderDate);
@@ -273,68 +251,191 @@ export default {
         });
       }
 
-      if (this.filters.userFullName.trim()) {
-        const search = this.filters.userFullName.trim().toLowerCase();
+      if (filters.value.userFullName.trim()) {
+        const search = filters.value.userFullName.trim().toLowerCase();
         result = result.filter((o) =>
           (o.userFullName || "").toLowerCase().includes(search)
         );
       }
 
-      // ✅ Sort theo trạng thái tăng dần
+      // Sort theo trạng thái tăng dần
       result.sort((a, b) => a.status - b.status);
 
-      this.filteredOrders = result;
-    },
-    clearFilters() {
-      this.filters = {
+      return result;
+    });
+
+    // Displayed pages for pagination
+    const displayedPages = computed(() => {
+      const pages = [];
+      const maxPagesToShow = 5;
+
+      if (totalPages.value <= maxPagesToShow) {
+        for (let i = 1; i <= totalPages.value; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        if (currentPage.value < 3) {
+          pages.push(2, 3, 4);
+          if (totalPages.value > 4) {
+            pages.push("...");
+          }
+          pages.push(totalPages.value);
+        } else if (currentPage.value >= totalPages.value - 2) {
+          if (totalPages.value > 4) {
+            pages.push("...");
+          }
+          pages.push(
+            totalPages.value - 3,
+            totalPages.value - 2,
+            totalPages.value - 1,
+            totalPages.value
+          );
+        } else {
+          pages.push("...");
+          const startPage = currentPage.value + 1;
+          const endPage = Math.min(currentPage.value + 3, totalPages.value - 1);
+          for (let i = startPage; i <= endPage; i++) {
+            if (!pages.includes(i)) pages.push(i);
+          }
+          if (endPage < totalPages.value) {
+            pages.push(totalPages.value);
+          }
+        }
+      }
+
+      return pages;
+    });
+
+    // Clear filters
+    const clearFilters = () => {
+      filters.value = {
         status: [],
         startDate: null,
         endDate: null,
         userFullName: "",
       };
-      this.applyFilters();
-      // this.toast.info("Đã xóa tất cả bộ lọc.");
-    },
-    viewOrder(orderId) {
-      this.$emit("view-order", orderId);
-    },
-    async cancelOrder(orderId) {
-      if (!confirm("Bạn có chắc muốn hủy đơn hàng này?")) return;
-      this.loading = true;
-      try {
-        const order = await getOrderById(orderId);
-        if (![0, 1].includes(order.status)) {
-          this.toast.warning(
-            'Chỉ có thể hủy đơn hàng ở trạng thái "Chờ xác nhận" hoặc "Chờ lấy hàng".'
-          );
-          return;
-        }
-        // Nếu là VNPAY thì không cho hủy
-        if (order.paymentMethod && order.paymentMethod.toUpperCase() === "VNPAY") {
-          this.toast.warning(
-            "Đơn hàng thanh toán qua VNPAY không thể tự hủy. Vui lòng liên hệ hỗ trợ."
-          );
-          return;
-        }
+      // iziToast.info({
+      //   title: "Thông báo",
+      //   message: "Đã xóa tất cả bộ lọc.",
+      //   position: "topRight",
+      // });
+    };
 
-        await updateOrder(orderId, { ...order, status: 5 });
-        await this.fetchOrders();
-        this.toast.success("Đơn hàng đã được hủy.");
-        this.$emit("order-updated");
-      } catch (err) {
-        this.toast.error(err.message || "Lỗi khi hủy đơn hàng.");
-      } finally {
-        this.loading = false;
+    // Extract phone
+    const extractPhone = (address) => {
+      return address?.split(" - ")[0] || "Không xác định";
+    };
+
+    // Format price
+    const formatPrice = (price) => {
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(price);
+    };
+
+    // Order status
+    const orderStatus = (status) => {
+      return statusOptions[status] || "Không xác định";
+    };
+
+    // Cancel order
+    const cancelOrder = async (orderId) => {
+      const result = await Swal.fire({
+        title: "Bạn có chắc chắn?",
+        text: "Đơn hàng sẽ bị hủy vĩnh viễn!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Có",
+        cancelButtonText: "Không",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+      });
+
+      if (result.isConfirmed) {
+        loading.value = true;
+        try {
+          const order = await getOrderById(orderId);
+          if (![0, 1].includes(order.status)) {
+            iziToast.warning({
+              title: "Cảnh báo",
+              message:
+                'Chỉ có thể hủy đơn hàng ở trạng thái "Chờ xác nhận" hoặc "Chờ lấy hàng".',
+              position: "topRight",
+            });
+            return;
+          }
+          if (order.paymentMethod && order.paymentMethod.toUpperCase() === "VNPAY") {
+            iziToast.warning({
+              title: "Cảnh báo",
+              message:
+                "Đơn hàng thanh toán qua VNPAY không thể tự hủy. Vui lòng liên hệ hỗ trợ.",
+              position: "topRight",
+            });
+            return;
+          }
+
+          await updateOrder(orderId, { ...order, status: 5 });
+          await fetchOrders(currentPage.value);
+          iziToast.success({
+            title: "Thành công",
+            message: "Đơn hàng đã được hủy.",
+            position: "topRight",
+          });
+        } catch (err) {
+          iziToast.error({
+            title: "Lỗi",
+            message: err.message || "Lỗi khi hủy đơn hàng.",
+            position: "topRight",
+          });
+        } finally {
+          loading.value = false;
+        }
       }
-    },
-  },
-  mounted() {
-    if (!localStorage.getItem("token")) {
-      this.toast.error("Vui lòng đăng nhập tài khoản admin.");
-      this.$router.push("/login");
-    } else {
-      this.fetchOrders();
-    }
+    };
+
+    // Watch filters
+    watch(
+      filters,
+      () => {
+        currentPage.value = 0;
+        fetchOrders(0);
+      },
+      { deep: true }
+    );
+
+    // Mounted
+    onMounted(() => {
+      if (!token) {
+        iziToast.error({
+          title: "Lỗi",
+          message: "Vui lòng đăng nhập tài khoản admin.",
+          position: "topRight",
+        });
+        this.$router.push("/login");
+      } else {
+        fetchOrders(0);
+      }
+    });
+
+    return {
+      orders,
+      filteredOrders,
+      loading,
+      filters,
+      statusOptions,
+      totalPages,
+      currentPage,
+      displayedPages,
+      fetchOrders,
+      changePage,
+      clearFilters,
+      extractPhone,
+      formatPrice,
+      orderStatus,
+      cancelOrder,
+    };
   },
 };
 </script>

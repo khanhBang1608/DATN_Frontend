@@ -38,9 +38,10 @@
       <div class="container">
         <h2 class="section-title">Về Chúng Tôi</h2>
         <p class="section-paragraph">
-          LHEX được thành lập với mục tiêu mang đến cho giới trẻ Việt Nam những thiết kế thời trang hiện đại, 
-          cá tính và luôn bắt kịp xu hướng quốc tế. Chúng tôi không chỉ bán sản phẩm, mà còn truyền tải phong cách 
-          sống năng động, tự tin và sáng tạo cho thế hệ mới.
+          LHEX được thành lập với mục tiêu mang đến cho giới trẻ Việt Nam những thiết kế
+          thời trang hiện đại, cá tính và luôn bắt kịp xu hướng quốc tế. Chúng tôi không
+          chỉ bán sản phẩm, mà còn truyền tải phong cách sống năng động, tự tin và sáng
+          tạo cho thế hệ mới.
         </p>
       </div>
     </section>
@@ -52,13 +53,19 @@
           <div class="col-md-4">
             <div class="value-card p-4 h-100">
               <h4>Tầm Nhìn</h4>
-              <p>Trở thành thương hiệu thời trang Việt dẫn đầu tại Đông Nam Á, vươn tầm quốc tế.</p>
+              <p>
+                Trở thành thương hiệu thời trang Việt dẫn đầu tại Đông Nam Á, vươn tầm
+                quốc tế.
+              </p>
             </div>
           </div>
           <div class="col-md-4">
             <div class="value-card p-4 h-100">
               <h4>Sứ Mệnh</h4>
-              <p>Mang lại sản phẩm thời trang chất lượng, sáng tạo và phù hợp phong cách sống hiện đại.</p>
+              <p>
+                Mang lại sản phẩm thời trang chất lượng, sáng tạo và phù hợp phong cách
+                sống hiện đại.
+              </p>
             </div>
           </div>
           <div class="col-md-4">
@@ -77,13 +84,25 @@
         <h2 class="section-title">Không Gian & Bộ Sưu Tập</h2>
         <div class="row g-4">
           <div class="col-md-4">
-            <img src="@/assets/img/slideshow_1.png" alt="LHEX Logo" class="img-fluid rounded shadow-sm" />
+            <img
+              src="@/assets/img/AO31.jpg"
+              alt="LHEX Logo"
+              class="img-fluid rounded shadow-sm"
+            />
           </div>
           <div class="col-md-4">
-            <img src="@/assets/img/slideshow_1.png" alt="LHEX Logo" class="img-fluid rounded shadow-sm" />
+            <img
+              src="@/assets/img/slideshow_1.png"
+              alt="LHEX Logo"
+              class="img-fluid rounded shadow-sm"
+            />
           </div>
           <div class="col-md-4">
-            <img src="@/assets/img/slideshow_1.png" alt="LHEX Logo" class="img-fluid rounded shadow-sm" />
+            <img
+              src="@/assets/img/AO34.jpeg"
+              alt="LHEX Logo"
+              class="img-fluid rounded shadow-sm"
+            />
           </div>
         </div>
       </div>
@@ -118,7 +137,9 @@
     <section class="cta-section text-center py-5">
       <div class="container">
         <h2 class="mb-3">Khám Phá Thế Giới Thời Trang Cùng LHEX</h2>
-        <p class="mb-4">Trải nghiệm phong cách hiện đại và cá tính từ những bộ sưu tập mới nhất.</p>
+        <p class="mb-4">
+          Trải nghiệm phong cách hiện đại và cá tính từ những bộ sưu tập mới nhất.
+        </p>
         <a href="/product" class="btn btn-dark px-4 py-2">Mua Sắm Ngay</a>
       </div>
     </section>
@@ -152,7 +173,6 @@
   margin-top: 10px;
   opacity: 0.9;
 }
-
 
 /* Highlights */
 .highlights {
@@ -208,7 +228,7 @@
 .value-card {
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 6px 25px rgba(0,0,0,0.06);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   border: 1px solid #eee;
 }
@@ -222,7 +242,7 @@
 }
 .value-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
 }
 
 /* Gallery */
@@ -232,7 +252,7 @@
 }
 .gallery-section img:hover {
   transform: scale(1.05);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
 /* Timeline */
@@ -251,11 +271,13 @@
 }
 .timeline li::before {
   content: "";
-  width: 16px; height: 16px;
+  width: 16px;
+  height: 16px;
   background: #111;
   border-radius: 50%;
   position: absolute;
-  left: -9px; top: 28px;
+  left: -9px;
+  top: 28px;
   box-shadow: 0 0 0 4px #fff;
 }
 .timeline .year {
@@ -287,5 +309,4 @@
   background: #fff;
   color: #111;
 }
-
 </style>

@@ -15,7 +15,7 @@
         </div>
         <div class="col-md-6">
           <label class="form-label fw-bold">Địa chỉ</label>
-          <textarea  class="form-control" :value="extractedAddress" disabled></textarea>
+          <textarea class="form-control" :value="extractedAddress" disabled></textarea>
         </div>
         <div class="col-md-6">
           <label class="form-label fw-bold">Số điện thoại</label>
@@ -78,7 +78,12 @@
         </div>
         <div class="col-md-6">
           <label class="form-label fw-bold">Tên người nhận</label>
-          <input type="text" class="form-control" :value="extractedCustomerName" disabled />
+          <input
+            type="text"
+            class="form-control"
+            :value="extractedCustomerName"
+            disabled
+          />
         </div>
       </div>
 
@@ -111,10 +116,14 @@
                 />
               </td>
               <td class="align-middle">{{ detail.productName }}</td>
-              <td class="align-middle">Size: {{ detail.size }}, Màu: {{ detail.color }}</td>
+              <td class="align-middle">
+                Size: {{ detail.size }}, Màu: {{ detail.color }}
+              </td>
               <td class="align-middle text-center">{{ detail.quantity }}</td>
               <td class="align-middle text-end">{{ formatPrice(detail.price) }}</td>
-              <td class="align-middle text-end">{{ formatPrice(detail.price * detail.quantity) }}</td>
+              <td class="align-middle text-end">
+                {{ formatPrice(detail.price * detail.quantity) }}
+              </td>
             </tr>
           </tbody>
         </table>
@@ -155,7 +164,7 @@
       <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
         <button class="btn btn-brand" :disabled="loading" @click="exportToPDF">
           <i class="bi bi-file-earmark-pdf me-2"></i>
-          {{ loading ? 'Đang tải...' : 'Xuất hóa đơn PDF' }}
+          {{ loading ? "Đang tải..." : "Xuất hóa đơn PDF" }}
         </button>
         <button
           v-if="order.status === 4"
@@ -238,8 +247,8 @@
 </style>
 
 <script setup>
-import { onMounted, ref, watch, computed } from 'vue';
-import { useRoute} from 'vue-router';
+import { onMounted, ref, watch, computed } from "vue";
+import { useRoute } from "vue-router";
 import Swal from "sweetalert2";
 import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
@@ -251,9 +260,9 @@ import {
   approveReturnRequest,
   rejectReturnRequest,
   getReturnRequestByOrder,
-} from '@/api/admin/orderAPI';
+} from "@/api/admin/orderAPI";
 
-const BASE_IMAGE_URL = 'http://localhost:8080';
+const BASE_IMAGE_URL = "http://localhost:8080";
 
 const route = useRoute();
 const orderId = computed(() => parseInt(route.params.orderId));
@@ -262,41 +271,41 @@ const error = ref(null);
 const returnRequest = ref(null);
 const loading = ref(false);
 const statusOptions = [
-  'Chờ xác nhận',
-  'Chờ lấy hàng',
-  'Chờ giao hàng',
-  'Đã giao',
-  'Yêu cầu trả hàng',
-  'Đã hủy',
-  'Trả hàng đã duyệt',
-  'Từ chối trả hàng',
+  "Chờ xác nhận",
+  "Chờ lấy hàng",
+  "Chờ giao hàng",
+  "Đã giao",
+  "Yêu cầu trả hàng",
+  "Đã hủy",
+  "Trả hàng đã duyệt",
+  "Từ chối trả hàng",
 ];
 
 const extractedPhone = computed(() => {
-  if (!order.value?.address) return 'Không xác định';
-  const parts = order.value.address.split(' - ');
-  return parts.length > 1 ? parts[0] : 'Không xác định';
+  if (!order.value?.address) return "Không xác định";
+  const parts = order.value.address.split(" - ");
+  return parts.length > 1 ? parts[0] : "Không xác định";
 });
 
 const extractedAddress = computed(() => {
-  if (!order.value?.address) return 'Không xác định';
-  const parts = order.value.address.split(' - ');
+  if (!order.value?.address) return "Không xác định";
+  const parts = order.value.address.split(" - ");
   return parts.length > 1 ? parts[2] : order.value.address;
 });
 
 const extractedCustomerName = computed(() => {
-  if (!order.value?.address) return 'Không xác định';
-  const parts = order.value.address.split(' - ');
+  if (!order.value?.address) return "Không xác định";
+  const parts = order.value.address.split(" - ");
   return parts.length > 1 ? parts[1] : order.value.address;
 });
 
 const resolveFileUrl = (url) => {
-  if (!url) return '';
-  return url.startsWith('http') ? url : `${BASE_IMAGE_URL}${url}`;
+  if (!url) return "";
+  return url.startsWith("http") ? url : `${BASE_IMAGE_URL}${url}`;
 };
 
 const formatPrice = (price) =>
-  new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
 async function fetchOrderData() {
   try {
@@ -310,9 +319,9 @@ async function fetchOrderData() {
       returnRequest.value = null;
     }
   } catch (err) {
-    console.error('Fetch error:', err);
-    error.value = err.response?.data?.message || 'Không thể tải chi tiết đơn hàng.';
-    iziToast.error({ title: "Lỗi", message: error.value });
+    console.error("Fetch error:", err);
+    error.value = err.response?.data?.message || "Không thể tải chi tiết đơn hàng.";
+    iziToast.error({ title: "Lỗi", message: error.value, position: "topRight" });
   } finally {
     loading.value = false;
   }
@@ -324,7 +333,11 @@ async function updateStatusFlow() {
   const next = flow[current];
 
   if (next === undefined) {
-    iziToast.error({ title: "Lỗi", message: 'Không thể cập nhật trạng thái ở bước hiện tại.' });
+    iziToast.error({
+      title: "Lỗi",
+      message: "Không thể cập nhật trạng thái ở bước hiện tại.",
+      position: "topRight",
+    });
     return;
   }
 
@@ -334,7 +347,7 @@ async function updateStatusFlow() {
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Có",
-    cancelButtonText: "Không"
+    cancelButtonText: "Không",
   });
 
   if (!confirmResult.isConfirmed) return;
@@ -343,9 +356,17 @@ async function updateStatusFlow() {
     loading.value = true;
     order.value.status = next;
     await updateOrder(orderId.value, order.value);
-    iziToast.success({ title: "Thành công", message: "Cập nhật trạng thái thành công" });
+    iziToast.success({
+      title: "Thành công",
+      message: "Cập nhật trạng thái thành công",
+      position: "topRight",
+    });
   } catch (err) {
-    iziToast.error({ title: "Lỗi", message: err.response?.data?.message || 'Không thể cập nhật trạng thái đơn hàng.' });
+    iziToast.error({
+      title: "Lỗi",
+      message: err.response?.data?.message || "Không thể cập nhật trạng thái đơn hàng.",
+      position: "topRight",
+    });
   } finally {
     loading.value = false;
   }
@@ -353,7 +374,11 @@ async function updateStatusFlow() {
 
 async function cancelOrder() {
   if (order.value.status !== 0) {
-    iziToast.error({ title: "Lỗi", message: 'Chỉ có thể hủy đơn hàng khi trạng thái là "Chờ xác nhận".' });
+    iziToast.error({
+      title: "Lỗi",
+      message: 'Chỉ có thể hủy đơn hàng khi trạng thái là "Chờ xác nhận".',
+      position: "topRight",
+    });
     return;
   }
 
@@ -363,7 +388,9 @@ async function cancelOrder() {
     icon: "warning",
     showCancelButton: true,
     confirmButtonText: "Có",
-    cancelButtonText: "Không"
+    cancelButtonText: "Không",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
   });
 
   if (!confirmResult.isConfirmed) return;
@@ -372,9 +399,17 @@ async function cancelOrder() {
     loading.value = true;
     order.value.status = 5;
     await updateOrder(orderId.value, order.value);
-    iziToast.success({ title: "Thành công", message: "Đơn hàng đã được hủy" });
+    iziToast.success({
+      title: "Thành công",
+      message: "Đơn hàng đã được hủy",
+      position: "topRight",
+    });
   } catch (err) {
-    iziToast.error({ title: "Lỗi", message: err.response?.data?.message || 'Không thể hủy đơn hàng.' });
+    iziToast.error({
+      title: "Lỗi",
+      message: err.response?.data?.message || "Không thể hủy đơn hàng.",
+      position: "topRight",
+    });
   } finally {
     loading.value = false;
   }
@@ -387,7 +422,9 @@ async function approveReturn() {
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Có",
-    cancelButtonText: "Không"
+    cancelButtonText: "Không",
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
   });
 
   if (!confirmResult.isConfirmed) return;
@@ -396,9 +433,17 @@ async function approveReturn() {
     loading.value = true;
     await approveReturnRequest(orderId.value);
     order.value.status = 6;
-    iziToast.success({ title: "Thành công", message: "Đã duyệt yêu cầu trả hàng" });
+    iziToast.success({
+      title: "Thành công",
+      message: "Đã duyệt yêu cầu trả hàng",
+      position: "topRight",
+    });
   } catch (err) {
-    iziToast.error({ title: "Lỗi", message: err.response?.data?.message || 'Không thể duyệt yêu cầu trả hàng.' });
+    iziToast.error({
+      title: "Lỗi",
+      message: err.response?.data?.message || "Không thể duyệt yêu cầu trả hàng.",
+      position: "topRight",
+    });
   } finally {
     loading.value = false;
   }
@@ -411,7 +456,7 @@ async function rejectReturn() {
     icon: "warning",
     showCancelButton: true,
     confirmButtonText: "Có",
-    cancelButtonText: "Không"
+    cancelButtonText: "Không",
   });
 
   if (!confirmResult.isConfirmed) return;
@@ -420,9 +465,17 @@ async function rejectReturn() {
     loading.value = true;
     await rejectReturnRequest(orderId.value);
     order.value.status = 7;
-    iziToast.info({ title: "Thông báo", message: "Đã từ chối yêu cầu trả hàng" });
+    iziToast.info({
+      title: "Thông báo",
+      message: "Đã từ chối yêu cầu trả hàng",
+      position: "topRight",
+    });
   } catch (err) {
-    iziToast.error({ title: "Lỗi", message: err.response?.data?.message || 'Không thể từ chối yêu cầu trả hàng.' });
+    iziToast.error({
+      title: "Lỗi",
+      message: err.response?.data?.message || "Không thể từ chối yêu cầu trả hàng.",
+      position: "topRight",
+    });
   } finally {
     loading.value = false;
   }
@@ -431,9 +484,13 @@ async function rejectReturn() {
 async function exportToPDF() {
   try {
     await downloadInvoicePDF(orderId.value);
-    iziToast.success({ title: "Thành công", message: "Tải hóa đơn PDF thành công" });
+    iziToast.success({
+      title: "Thành công",
+      message: "Tải hóa đơn PDF thành công",
+      position: "topRight",
+    });
   } catch (err) {
-    let errorMessage = 'Không thể xuất hóa đơn PDF.';
+    let errorMessage = "Không thể xuất hóa đơn PDF.";
     if (err.response) {
       try {
         const text = await err.response.data.text();
@@ -444,7 +501,7 @@ async function exportToPDF() {
     } else {
       errorMessage = err.message || errorMessage;
     }
-    console.error('Export PDF Error:', err);
+    console.error("Export PDF Error:", err);
     iziToast.error({ title: "Lỗi", message: errorMessage });
   } finally {
     loading.value = false;
@@ -459,7 +516,6 @@ watch(
   () => orderId.value,
   (newVal) => {
     if (!isNaN(newVal)) fetchOrderData();
-  },
+  }
 );
 </script>
-

@@ -92,7 +92,7 @@
         <div class="col-12 col-md-6 dreams-image">
           <a href="#">
             <img
-              src="https://placehold.co/700x500?text=Fashion+Store+L'hex"
+              src="https://vkingdecor.com/wp-content/uploads/2024/09/shop-nam-co-dien-2.jpg"
               alt="Cửa hàng thời trang L'hex"
             />
           </a>
@@ -108,7 +108,7 @@
               biệt.
             </p>
           </a>
-          <a href="#" class="dreams-btn">KHÁM PHÁ NGAY</a>
+          <a href="/about" class="dreams-btn">KHÁM PHÁ NGAY</a>
         </div>
       </div>
     </section>
@@ -228,7 +228,7 @@
     </div>
 
     <!-- Đã xem gần đây -->
-    <div class="product-content-wrapper" v-if="recentViewedProducts.length > 0">
+    <div class="product-content-wrapper mb-3" v-if="recentViewedProducts.length > 0">
       <div class="container mt-5">
         <h3 class="text-center mb-4 fw-bold">ĐÃ XEM GẦN ĐÂY</h3>
         <div class="row g-3">
